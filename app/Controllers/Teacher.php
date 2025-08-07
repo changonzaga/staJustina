@@ -101,4 +101,10 @@ class Teacher extends BaseController
         // Teacher logout logic would go here
         return redirect()->to('teacher/login');
     }
+    
+    // New Feature Methods
+    
+
+    
+
 }

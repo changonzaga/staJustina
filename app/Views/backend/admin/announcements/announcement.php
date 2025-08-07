@@ -5,12 +5,12 @@
     <div class="row">
         <div class="col-md-12 col-sm-12">
             <div class="title">
-                <h4><i class="dw dw-megaphone text-primary"></i> Announcements & Notifications</h4>
+                <h4>Announcements & Notifications</h4>
             </div>
             <nav aria-label="breadcrumb" role="navigation">
                 <ol class="breadcrumb bg-light px-3 py-2 rounded">
                     <li class="breadcrumb-item">
-                        <a href="<?= route_to('admin.home')?>"><i class="dw dw-house-1"></i> Home</a>
+                        <a href="<?= route_to('admin.home')?>">Home</a>
                     </li>
                     <li class="breadcrumb-item active" aria-current="page">
                         Announcements

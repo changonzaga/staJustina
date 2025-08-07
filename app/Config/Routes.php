@@ -121,6 +121,8 @@ $routes->group('teacher', function($routes) {
     $routes->get('manage-students/attendance', 'Teacher::attendanceRecords'); // Alternative route
     $routes->get('manage-students/report-cards', 'Teacher::reportCards');
     $routes->get('manage-students/grades', 'Teacher::reportCards'); // Alternative route
+    
+
 });
 
 // Student routes (public-facing)
