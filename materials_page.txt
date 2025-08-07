@@ -1,0 +1,84 @@
+﻿
+
+StatusCode        : 200
+StatusDescription : OK
+Content           : <!-- DEBUG-VIEW START 2 
+                    APPPATH\Views\backend\student\classes\materials.php -->
+                    <!-- DEBUG-VIEW START 1 
+                    APPPATH\Views\backend\student\layout\pages-layout.php -->
+                    <!DOCTYPE html>
+                    <html>
+                    	<head>
+                    <s...
+RawContent        : HTTP/1.1 200 OK
+                    Host: localhost:8080
+                    Connection: close
+                    Cache-Control: no-store, max-age=0, no-cache
+                    Content-Type: text/html; charset=UTF-8
+                    Date: Sat, 26 Jul 2025 02:07:33 GMT
+                    X-Powered-By: PHP/8...
+Forms             : 
+Headers           : {[Host, localhost:8080], [Connection, close], [Cache-Control, 
+                    no-store, max-age=0, no-cache], [Content-Type, text/html; 
+                    charset=UTF-8]...}
+Images            : {}
+InputFields       : {@{outerHTML=<input
+                    								type="text"
+                    								class="form-control search-input"
+                    								placeholder="Search Here"
+                    							/>; tagName=INPUT; type=text; class=form-control 
+                    search-input; placeholder=Search Here}, @{outerHTML=<input
+                    												class="form-control form-control-sm 
+                    form-control-line"
+                    												type="text"
+                    											/>; tagName=INPUT; class=form-control 
+                    form-control-sm form-control-line; type=text}, 
+                    @{outerHTML=<input
+                    												class="form-control form-control-sm 
+                    form-control-line"
+                    												type="text"
+                    											/>; tagName=INPUT; class=form-control 
+                    form-control-sm form-control-line; type=text}, 
+                    @{outerHTML=<input
+                    												class="form-control form-control-sm 
+                    form-control-line"
+                    												type="text"
+                    											/>; tagName=INPUT; class=form-control 
+                    form-control-sm form-control-line; type=text}...}
+Links             : {@{outerHTML=<a
+                    									class="dropdown-toggle no-arrow"
+                    									href="#"
+                    									role="button"
+                    									data-toggle="dropdown"
+                    								>
+                    									<i class="ion-arrow-down-c"></i>
+                    								</a>; tagName=A; class=dropdown-toggle no-arrow; 
+                    href=#; role=button; data-toggle=dropdown}, @{outerHTML=<a
+                    							class="dropdown-toggle no-arrow"
+                    							href="javascript:;"
+                    							data-toggle="right-sidebar"
+                    						>
+                    							<i class="dw dw-settings2"></i>
+                    						</a>; tagName=A; class=dropdown-toggle no-arrow; 
+                    href=javascript:;; data-toggle=right-sidebar}, @{outerHTML=<a
+                    							class="dropdown-toggle no-arrow"
+                    							href="#"
+                    							role="button"
+                    							data-toggle="dropdown"
+                    						>
+                    							<i class="icon-copy dw dw-notification"></i>
+                    							<span class="badge notification-active"></span>
+                    						</a>; tagName=A; class=dropdown-toggle no-arrow; href=#; 
+                    role=button; data-toggle=dropdown}, @{outerHTML=<a href="#">
+                    											<img src="/backend/vendors/images/img.jpg" alt="" />
+                    											<h3>John Doe</h3>
+                    											<p>
+                    												Lorem ipsum dolor sit amet, consectetur adipisicing
+                    												elit, sed...
+                    											</p>
+                    										</a>; tagName=A; href=#}...}
+ParsedHtml        : 
+RawContentLength  : 59521
+
+
+

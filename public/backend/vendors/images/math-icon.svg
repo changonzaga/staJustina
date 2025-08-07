@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="40" fill="#0078D7"/>
+  <text x="40" y="45" font-family="Arial" font-size="14" fill="white" text-anchor="middle" dominant-baseline="middle">Math</text>
+  <path d="M25,30 L55,30 M40,15 L40,45 M30,55 L50,55" stroke="white" stroke-width="3" fill="none"/>
+</svg>

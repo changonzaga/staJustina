@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" viewBox="0 0 80 80">
+  <circle cx="40" cy="40" r="40" fill="#2D7D9A"/>
+  <text x="40" y="55" font-family="Arial" font-size="12" fill="white" text-anchor="middle" dominant-baseline="middle">Science</text>
+  <path d="M40,15 L40,30 M30,30 L50,30" stroke="white" stroke-width="2" fill="none"/>
+  <path d="M35,30 C25,35 25,45 35,50 C45,55 45,65 35,70" stroke="white" stroke-width="2" fill="none"/>
+  <path d="M45,30 C55,35 55,45 45,50 C35,55 35,65 45,70" stroke="white" stroke-width="2" fill="none"/>
+</svg>
