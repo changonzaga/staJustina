@@ -18,21 +18,16 @@ class StudentController extends BaseController
             return redirect()->to('admin/student')->with('error', 'Student ID is required.');
         }
         
-        $db = \Config\Database::connect();
-        
-        // Get student data with teacher and parent information
-        $student = $db->table('student s')
-            ->select('s.*, t.name as teacher_name, p.name as parent_name')
-            ->join('teacher t', 's.teacher_id = t.id', 'left')
-            ->join('parent p', 's.parent_id = p.id', 'left')
-            ->where('s.id', $id)
-            ->get()->getRowArray();
+        // Use StudentModel to fetch normalized complete profile
+        $model = new \App\Models\StudentModel();
+        $student = $model->getStudentCompleteProfile($id);
         
         if (!$student) {
             return redirect()->to('admin/student')->with('error', 'Student not found.');
         }
         
         // Get recent attendance records (last 5)
+        $db = \Config\Database::connect();
         $attendance = $db->table('attendance')
             ->where('student_id', $id)
             ->orderBy('date', 'DESC')

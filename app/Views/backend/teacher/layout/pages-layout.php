@@ -38,7 +38,7 @@
 
 		<!-- Google Font -->
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700;900&display=swap"
 			rel="stylesheet"
 		/>
 		<!-- CSS -->
@@ -51,24 +51,26 @@
 		<!-- FontAwesome 6 for icons -->
 		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 		<link rel="stylesheet" type="text/css" href="/backend/vendors/styles/style.css" />
+		<link rel="stylesheet" type="text/css" href="/backend/vendors/fonts/dropways.css" />
+		<link rel="stylesheet" type="text/css" href="/backend/vendors/styles/back-to-top.css" />
 		<?= $this->renderSection('stylesheets') ?>
 	</head>
 	<body>
 				
 
-					<!-- <div class="pre-loader">
-							<div class="pre-loader-box">
-								<div class="loader-logo" style="text-align: center;">
-								<img src="https://scontent.fwnp1-1.fna.fbcdn.net/v/t1.15752-9/486190369_1714804709415712_2378757229292270536_n.png?_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeEqrWJFfuB7YB8JxW_hcNk8q2NSk0-s-t2rY1KTT6z63W0U5K45PTewWLZ2ewpgYB8JrlYnmEvkgC3ixYo7tyci&_nc_ohc=6zAZgtJdQkMQ7kNvwGgfAxy&_nc_oc=AdkO9ULrzKriaf70grx1MqhpIGYmXeiFhvGil63jKIvfmAzJA5FhEPPH0KbgDug7ZRs&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fwnp1-1.fna&oh=03_Q7cD2AHaoB5rLJ5WP_L8O3eMWwhvIlvsP4EBLZsH_QkWC3crng&oe=6826D331" 
-								alt="Sta Justina National High School Logo" style="width: 100px;" />
-								</div>
-								<div class="loader-progress" id="progress_div">
-								<div class="bar" id="bar1" style="background-color: #800000;"></div>
-								</div>
-								<div class="percent" id="percent1">0%</div>
-								<div class="loading-text">PLEASE WAIT FOR THE SYSTEM TO LOAD...</div>
+					<div class="pre-loader">
+						<div class="pre-loader-box">
+							<div class="loader-logo" style="text-align: center;">
+							<img src="/backend/vendors/images/logo-login-removebg-preview.png" 
+							alt="Sta Justina National High School Logo" style="width: 100px;" />
 							</div>
-							</div> -->
+							<div class="loader-progress" id="progress_div">
+							<div class="bar" id="bar1" style="background-color: #800000;"></div>
+							</div>
+							<div class="percent" id="percent1">0%</div>
+							<div class="loading-text">PLEASE WAIT FOR THE SYSTEM TO LOAD...</div>
+						</div>
+					</div>
 
 
 		<?php include('inc/header.php'); ?>
@@ -88,12 +90,17 @@
 				<?php include('inc/footer.php'); ?>
 			</div>
 		</div>
+
+		<button id="backToTop" class="go-to-top" aria-label="Go to top of page" style="display: none;">
+			<i class="fas fa-arrow-up"></i>
+		</button>
 	
 		<!-- js -->
 		<script src="/backend/vendors/scripts/core.js"></script>
 		<script src="/backend/vendors/scripts/script.min.js"></script>
 		<script src="/backend/vendors/scripts/process.js"></script>
 		<script src="/backend/vendors/scripts/layout-settings.js"></script>
+		<script src="/backend/vendors/scripts/back-to-top.js"></script>
 		<?= $this->renderSection('scripts') ?>
 	</body>
 </html>

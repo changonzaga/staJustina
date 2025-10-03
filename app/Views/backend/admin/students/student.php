@@ -24,32 +24,14 @@
     </div>
 </div>
 
-<div class="row mb-3">
-        <div class="col-md-12 d-flex justify-content-end">
-            <div class="dt-buttons btn-group flex-wrap">
-                <button id="copyBtn" class="btn btn-secondary buttons-copy buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button" onclick="handleCopyClick(this)">
-                    <i class="icon-copy bi bi-clipboard"></i> <span>Copy</span>
-                </button>
-                <button class="btn btn-secondary buttons-csv buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
-                    <i class="icon-copy bi bi-filetype-csv"></i> <span>CSV</span>
-                </button>
-                <button class="btn btn-secondary buttons-pdf buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
-					<i class="icon-copy bi bi-file-pdf"></i> <span>PDF</span></button>
-                <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="DataTables_Table_2" type="button">
-					<i class="icon-copy bi bi-printer"></i> <span>Print</span>
-                </button>
-            </div>
-        </div>
-</div>
-
 <!-- Main Student Management Card -->
 <div class="card-box mb-30">
     <!-- Search and Filter Section -->
     <div class="pd-20">
-        <div class="row">
+        <div class="row align-items-end">
             <div class="col-md-3">
                 <div class="form-group">
-                    <label>Filter by Section:</label>
+                    <label>Filter by Grade & Section:</label>
                     <select class="form-control" id="sectionFilter" onchange="filterTable()">
                         <option value="">All Sections</option>
                         <?php if (isset($sections) && !empty($sections)): ?>
@@ -60,29 +42,35 @@
                     </select>
                 </div>
             </div>
-            <div class="col-md-3">
-                <div class="form-group">
-                    <label>Filter by Grade Level:</label>
-                    <select class="form-control" id="gradeFilter" onchange="filterTable()">
-                        <option value="">All Grades</option>
-                        <?php if (isset($grade_levels) && !empty($grade_levels)): ?>
-                            <?php foreach ($grade_levels as $grade): ?>
-                                <option value="<?= esc($grade) ?>"><?= esc($grade) ?></option>
-                            <?php endforeach; ?>
-                        <?php endif; ?>
-                    </select>
-                </div>
-            </div>
-            <div class="col-md-3">
+            <div class="col-md-4">
                 <div class="form-group">
                     <label>Search Student:</label>
                     <input type="text" class="form-control" id="searchInput" placeholder="Search by name or LRN..." onkeyup="filterTable()">
                 </div>
             </div>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <div class="form-group">
                     <label>&nbsp;</label>
                     <button class="btn btn-secondary btn-block" onclick="clearFilters()">Clear Filters</button>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <div class="dt-buttons btn-group flex-wrap w-100 justify-content-end">
+                        <button id="copyBtn" class="btn btn-secondary buttons-copy buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button" onclick="handleCopyClick(this)">
+                            <i class="icon-copy bi bi-clipboard"></i>
+                        </button>
+                        <button class="btn btn-secondary buttons-csv buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
+                            <i class="icon-copy bi bi-filetype-csv"></i>
+                        </button>
+                        <button class="btn btn-secondary buttons-pdf buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
+                            <i class="icon-copy bi bi-file-pdf"></i>
+                        </button>
+                        <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="DataTables_Table_2" type="button">
+                            <i class="icon-copy bi bi-printer"></i>
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -90,7 +78,8 @@
 
     <!-- Student Table -->
     <div class="pb-20">
-        <table class="data-table table stripe hover nowrap" id="studentsTable">
+        <div class="table-responsive">
+            <table class="data-table table stripe hover table-sm" id="studentsTable" style="font-size: 0.875rem; white-space: normal;">
             <thead>
                 <tr>
                     <th class="table-plus">
@@ -99,11 +88,12 @@
                     <th>Photo</th>
                     <th>LRN</th>
                     <th>Name</th>
-                    <th>Grade Level</th>
                     <th>Section</th>
-                    <th>Guardian</th>
-                    <th>Contact</th>
-                    <th>Teacher</th>
+                    <th>Grade Level</th>
+                    <th style="min-width: 100px; max-width: 120px;">Date of Birth</th>
+                    <th style="min-width: 100px; max-width: 150px;">Guardian</th>
+                    <th style="min-width: 100px; max-width: 130px;">Contact</th>
+                    <th style="min-width: 100px; max-width: 120px;">Approved Date</th>
                     <th>Status</th>
                     <th>Actions</th>
                 </tr>
@@ -117,8 +107,11 @@
                             </td>
                             <td>
                                 <?php if (!empty($student['profile_picture'])): ?>
-                                    <img src="<?= base_url('uploads/students/' . $student['profile_picture']) ?>" 
-                                         alt="Profile" class="avatar-photo" style="width: 40px; height: 40px; border-radius: 50%;">
+                                    <?php $pp = $student['profile_picture'] ?? ''; $ppPath = !empty($pp) ? ((strpos($pp, 'uploads/') === 0) ? $pp : 'uploads/students/' . $pp) : ''; ?>
+                                    <span style="display: inline-block; width: 40px; height: 40px; border-radius: 50%; overflow: hidden;">
+                                        <img src="<?= base_url($ppPath) ?>" alt="Profile"
+                                             style="width: 100%; height: 100%; object-fit: cover; display: block;">
+                                    </span>
                                 <?php else: ?>
                                     <div class="avatar-photo" style="width: 40px; height: 40px; background: #007bff; color: white; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-weight: bold;">
                                         <?= strtoupper(substr($student['name'], 0, 2)) ?>
@@ -130,30 +123,45 @@
                                 <strong><?= esc($student['name']) ?></strong>
                                 <br><small class="text-muted"><?= esc($student['gender']) ?>, <?= esc($student['age']) ?> years old</small>
                             </td>
-                            <td><span class="badge badge-primary"><?= esc($student['grade_level']) ?></span></td>
                             <td><span class="badge badge-secondary"><?= esc($student['section']) ?></span></td>
+                            <td><span class="badge badge-primary"><?= esc($student['grade_level']) ?></span></td>
+                            <td>
+                                <?php if (!empty($student['formatted_birth_date'])): ?>
+                                    <small><?= esc($student['formatted_birth_date']) ?></small>
+                                <?php else: ?>
+                                    <small class="text-muted">Not provided</small>
+                                <?php endif; ?>
+                            </td>
                             <td><?= esc($student['guardian']) ?></td>
                             <td><?= esc($student['contact']) ?></td>
                             <td>
-                                <?php if (isset($student['teacher_name'])): ?>
-                                    <small class="text-success"><?= esc($student['teacher_name']) ?></small>
+                                <?php if (!empty($student['created_at'])): ?>
+                                    <small class="text-info"><?= esc(date('M d, Y', strtotime($student['created_at']))) ?></small>
                                 <?php else: ?>
-                                    <small class="text-muted">Not Assigned</small>
+                                    <small class="text-muted">Not provided</small>
                                 <?php endif; ?>
                             </td>
                             <td>
-                                <?php 
-                                $attendance_status = isset($student['today_attendance']) ? $student['today_attendance'] : 'Not Marked';
-                                $status_class = '';
-                                switch($attendance_status) {
-                                    case 'Present': $status_class = 'badge-success'; break;
-                                    case 'Absent': $status_class = 'badge-danger'; break;
-                                    case 'Late': $status_class = 'badge-warning'; break;
-                                    case 'Excused': $status_class = 'badge-info'; break;
-                                    default: $status_class = 'badge-secondary';
-                                }
+                                <?php
+                                    $studentStatusRaw = strtolower(trim($student['student_status'] ?? ''));
+                                    $statusLabel = 'Not Provided';
+                                    $statusClass = 'badge-secondary';
+
+                                    if ($studentStatusRaw === 'active') {
+                                        $statusLabel = 'Active';
+                                        $statusClass = 'badge-success';
+                                    } elseif ($studentStatusRaw === 'inactive') {
+                                        $statusLabel = 'Inactive';
+                                        $statusClass = 'badge-secondary';
+                                    } elseif ($studentStatusRaw === 'suspended') {
+                                        $statusLabel = 'Suspended';
+                                        $statusClass = 'badge-danger';
+                                    } elseif ($studentStatusRaw === 'pending' || $studentStatusRaw === 'new') {
+                                        $statusLabel = 'Pending';
+                                        $statusClass = 'badge-warning';
+                                    }
                                 ?>
-                                <span class="badge <?= $status_class ?>"><?= esc($attendance_status) ?></span>
+                                <span class="badge <?= $statusClass ?>"><?= esc($statusLabel) ?></span>
                             </td>
                             <td>
                                 <div class="dropdown">
@@ -165,29 +173,21 @@
                                     <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
                                         <a class="dropdown-item" 
                                            href="<?= site_url('admin/student/profile/' . $student['id']) ?>">
-                                            <i class="dw dw-user1"></i> Student Profile
+                                            <i class="dw dw-user1"></i>Student Profile
                                         </a>
                                         <a class="dropdown-item" 
                                            href="<?= site_url('admin/student/edit/' . $student['id']) ?>">
                                             <i class="dw dw-edit2"></i> Edit Student
                                         </a>
-                                        <a class="dropdown-item" 
-                                           href="<?= site_url('admin/student/attendance/' . $student['id']) ?>">
-                                            <i class="dw dw-calendar1"></i> Attendance History
+                                        <a class="dropdown-item text-danger" 
+                                           href="javascript:void(0);" 
+                                           onclick="(<??>)">
+                                            <i class="dw dw-delete-3"></i> Suspend Student
                                         </a>
-                                        <a class="dropdown-item" 
-                                           href="<?= site_url('admin/student/grades/' . $student['id']) ?>">
-                                            <i class="dw dw-diploma-1"></i> Grades & Report Cards
-                                        </a>
-                                        <a class="dropdown-item" 
-                                           href="<?= site_url('admin/student/parent/' . $student['id']) ?>">
-                                            <i class="dw dw-user-2"></i> Parent Information
-                                        </a>
-                                        <div class="dropdown-divider"></div>
                                         <a class="dropdown-item text-danger" 
                                            href="javascript:void(0);" 
                                            onclick="confirmDelete(<?= $student['id'] ?>)">
-                                            <i class="dw dw-delete-3"></i> Delete Student
+                                            <i class="dw dw-delete-3"></i> Permanent Delete Student
                                         </a>
                                     </div>
                                 </div>
@@ -196,7 +196,7 @@
                     <?php endforeach; ?>
                 <?php else: ?>
                     <tr>
-                        <td colspan="11" class="text-center">
+                        <td colspan="12" class="text-center">
                             <div class="py-4">
                                 <i class="dw dw-user-11 font-48 text-muted"></i>
                                 <h5 class="text-muted mt-3">No students found</h5>
@@ -210,6 +210,7 @@
                 <?php endif; ?>
             </tbody>
         </table>
+        </div>
 
         <!-- Pagination Alignment Fix -->
         <?php if (isset($pager) && $pager): ?>
@@ -336,7 +337,6 @@
 // Filter and Search Functions
 function filterTable() {
     const sectionFilter = document.getElementById('sectionFilter').value.toLowerCase();
-    const gradeFilter = document.getElementById('gradeFilter').value.toLowerCase();
     const searchInput = document.getElementById('searchInput').value.toLowerCase();
     const table = document.getElementById('studentsTable');
     const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
@@ -349,11 +349,10 @@ function filterTable() {
             const name = row.cells[3].textContent.toLowerCase();
             const lrn = row.cells[2].textContent.toLowerCase();
 
-            const sectionMatch = !sectionFilter || section.includes(sectionFilter);
-            const gradeMatch = !gradeFilter || grade.includes(gradeFilter);
+            const sectionMatch = !sectionFilter || section.includes(sectionFilter) || grade.includes(sectionFilter);
             const searchMatch = !searchInput || name.includes(searchInput) || lrn.includes(searchInput);
 
-            if (sectionMatch && gradeMatch && searchMatch) {
+            if (sectionMatch && searchMatch) {
                 row.style.display = '';
             } else {
                 row.style.display = 'none';
@@ -364,7 +363,6 @@ function filterTable() {
 
 function clearFilters() {
     document.getElementById('sectionFilter').value = '';
-    document.getElementById('gradeFilter').value = '';
     document.getElementById('searchInput').value = '';
     filterTable();
 }

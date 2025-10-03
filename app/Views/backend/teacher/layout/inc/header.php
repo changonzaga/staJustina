@@ -163,26 +163,88 @@
 							role="button"
 							data-toggle="dropdown"
 						>
-							<span class="user-icon">
-								<img src="https://scontent.fmnl13-3.fna.fbcdn.net/v/t1.15752-9/486190369_1714804709415712_2378757229292270536_n.png?_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeEqrWJFfuB7YB8JxW_hcNk8q2NSk0-s-t2rY1KTT6z63W0U5K45PTewWLZ2ewpgYB8JrlYnmEvkgC3ixYo7tyci&_nc_ohc=7Ep537vZeNwQ7kNvwFw_tYE&_nc_oc=Adl4e345h5014RDN5sGoX3pShnmDSp44s4DB936Dinb0WA3OHgXDPJSxknP5BHc-Oaw&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fmnl13-3.fna&oh=03_Q7cD2QHMqHk1lpaK_xcKcY_B9FAVYjYWixE2FCtEXacB1acYZA&oe=6856B9B1" alt="" />
-							</span>
-							<span class="user-name">SJNHS Teacher</span>
+                            <span class="user-icon">
+                                <?php 
+                                $userInfo = session()->get('userdata');
+                                $profilePicture = session()->get('profile_picture');
+                                $teacherModel = new \App\Models\TeacherModel();
+                                $teacher = $teacherModel->getByEmail($userInfo['email'] ?? '');
+
+                                // Normalize a picture value to an absolute URL
+                                $resolvePictureUrl = function($raw, $role) use ($teacher) {
+                                    if (!$raw) {
+                                        // Fallback to teacher uploaded picture if available
+                                        if (isset($teacher['profile_picture']) && !empty($teacher['profile_picture'])) {
+                                            $raw = $teacher['profile_picture'];
+                                            $role = 'teacher';
+                                        } else {
+                                            return null;
+                                        }
+                                    }
+                                    // External absolute URL (e.g., Google avatar)
+                                    if (preg_match('#^https?://#', $raw)) {
+                                        return $raw;
+                                    }
+                                    // If raw already contains uploads/ path, wrap with base_url
+                                    if (strpos($raw, 'uploads/') !== false) {
+                                        // Use root-relative path to avoid baseURL port mismatches
+                                        return '/' . ltrim($raw, '/');
+                                    }
+                                    // Otherwise treat as filename and prefix by role
+                                    $prefix = ($role === 'teacher') ? 'uploads/teachers/' : 'uploads/profile_pictures/';
+                                    return '/' . $prefix . ltrim($raw, '/');
+                                };
+
+                                // Priority: session profile > userdata picture > teacher uploaded
+                                $rawPicture = $profilePicture ?: ($userInfo['picture'] ?? null);
+                                $pictureUrl = $resolvePictureUrl($rawPicture, 'teacher');
+
+                                // Compute display name: prefer teacher first_name, otherwise first token from session name
+                                $displayName = 'Teacher';
+                                if (!empty($teacher['first_name'])) {
+                                    $displayName = $teacher['first_name'];
+                                } else {
+                                    $rawName = $userInfo['name'] ?? (session()->get('name') ?? null);
+                                    if (!empty($rawName)) {
+                                        $parts = preg_split('/\s+/', trim($rawName));
+                                        if (!empty($parts[0])) { $displayName = $parts[0]; }
+                                    }
+                                }
+                                ?>
+                                <?php if ($pictureUrl): ?>
+                                    <img src="<?= esc($pictureUrl) ?>" 
+                                         alt="Profile Picture" 
+                                         class="rounded-circle border border-white shadow-sm" 
+                                         style="width: 50px; height: 50px; object-fit: cover; object-position: center;" />
+                                <?php else: ?>
+                                    <img src="<?= base_url('backend/vendors/images/person.svg') ?>" alt="Default Avatar" 
+                                         class="rounded-circle border border-white shadow-sm" 
+                                         style="width: 50px; height: 50px; object-fit: cover; object-position: center;" />
+                                <?php endif; ?>
+                            </span>
+                            <span class="user-name"><?= esc($displayName) ?></span>
 						</a>
-						<div
-							class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"
-						>
-							<a class="dropdown-item" href="<?= route_to('admin.profile'); ?>"
-								><i class="dw dw-user1"></i> Profile</a
-							>
-							<a class="dropdown-item" href="profile.html"
-								><i class="dw dw-settings2"></i> Setting</a
-							>
-							<a class="dropdown-item" href="faq.html"
-								><i class="dw dw-help"></i> Help</a
-							>
-							<a class="dropdown-item" href="<?= route_to('admin.logout')?>"
-								><i class="dw dw-logout"></i> Log Out</a
-							>
+						<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+							<a class="dropdown-item" href="<?= site_url('teacher/profile') ?>">
+								<i class="dw dw-user1"></i> Profile
+							</a>
+							<a class="dropdown-item" href="<?= site_url('teacher/profile/complete') ?>">
+								<i class="dw dw-settings2"></i> Settings
+							</a>
+							<a class="dropdown-item" href="#">
+								<i class="dw dw-help"></i> Help
+							</a>
+							<a class="dropdown-item" href="<?= site_url('logout') ?>" onclick="handleLogout(event)">
+								<i class="dw dw-logout"></i> Log Out
+							</a>
+							<script>
+							function handleLogout(event) {
+								event.preventDefault();
+								if (confirm('Are you sure you want to logout?')) {
+									window.location.href = '<?= site_url('logout') ?>';
+								}
+							}
+							</script>
 						</div>
 					</div>
 				</div>

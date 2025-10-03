@@ -82,25 +82,59 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>Address</label>
-                        <textarea name="address" class="form-control"><?= esc($student['address']) ?></textarea>
+                        <label>House No.</label>
+                        <input type="text" name="house_no" class="form-control" value="<?= esc($student['house_no'] ?? '') ?>" placeholder="Enter house number">
                     </div>
                 </div>
             </div>
+            
+            <!-- Address Information Section -->
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>Guardian Name</label>
-                        <input type="text" name="guardian" class="form-control" value="<?= esc($student['guardian']) ?>">
+                        <label>Street</label>
+                        <input type="text" name="street" class="form-control" value="<?= esc($student['street'] ?? '') ?>" placeholder="Enter street">
                     </div>
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>Contact Number</label>
-                        <input type="text" name="contact" class="form-control" value="<?= esc($student['contact']) ?>">
+                        <label>Barangay <span class="text-danger">*</span></label>
+                        <input type="text" name="barangay" class="form-control" value="<?= esc($student['barangay'] ?? '') ?>" placeholder="Enter barangay">
                     </div>
                 </div>
             </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Municipality/City <span class="text-danger">*</span></label>
+                        <input type="text" name="municipality" class="form-control" value="<?= esc($student['municipality'] ?? '') ?>" placeholder="Enter municipality/city">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Province <span class="text-danger">*</span></label>
+                        <input type="text" name="province" class="form-control" value="<?= esc($student['province'] ?? '') ?>" placeholder="Enter province">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>ZIP Code</label>
+                        <input type="text" name="zip_code" class="form-control" value="<?= esc($student['zip_code'] ?? '') ?>" placeholder="Enter ZIP code">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Country</label>
+                        <input type="text" name="country" class="form-control" value="<?= esc($student['country'] ?? 'Philippines') ?>" placeholder="Enter country">
+                    </div>
+                </div>
+            </div>
+            <!-- Guardian/Emergency Contact information is now managed through parent relationships -->
+            <!-- Use the Parents section to manage emergency contacts -->
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">

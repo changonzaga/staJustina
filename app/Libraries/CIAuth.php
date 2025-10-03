@@ -8,6 +8,8 @@ class CIAuth
         $array = ['logged_in' =>true];
         $userdate = $result;
         $session->set('userdata', $userdate);
+        $session->set('name', $result['name']);
+        $session->set('profile_picture', $result['picture'] ?? null);
         $session->set($array);
         
     }

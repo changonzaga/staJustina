@@ -1,0 +1,40 @@
+# Enable proper MIME type handling for SVG files
+<Files "*.svg">
+    ForceType image/svg+xml
+</Files>
+
+# Handle files with image extensions that are actually SVG
+<FilesMatch "\.(png|jpg|jpeg|gif)$">
+    <IfModule mod_rewrite.c>
+        RewriteEngine On
+        
+        # Check if the file content starts with SVG
+        RewriteCond %{REQUEST_FILENAME} -f
+        RewriteCond %{REQUEST_FILENAME} "\.svg$" [OR]
+        RewriteCond %{REQUEST_FILENAME} -f
+        
+        # Force SVG content type for SVG files with wrong extensions
+        Header always set Content-Type "image/svg+xml" env=IS_SVG
+        
+        # Set environment variable for SVG detection
+        RewriteRule ^(.*)$ - [E=IS_SVG:1]
+    </IfModule>
+</FilesMatch>
+
+# Alternative approach: serve all files with proper content type detection
+<IfModule mod_mime.c>
+    # Add SVG MIME type
+    AddType image/svg+xml .svg
+    
+    # Override content type for files that are actually SVG
+    <FilesMatch "\.(png|jpg|jpeg|gif)$">
+        ForceType image/svg+xml
+    </FilesMatch>
+</IfModule>
+
+# Enable CORS for images
+<IfModule mod_headers.c>
+    Header always set Access-Control-Allow-Origin "*"
+    Header always set Access-Control-Allow-Methods "GET, POST, OPTIONS"
+    Header always set Access-Control-Allow-Headers "Content-Type"
+</IfModule>

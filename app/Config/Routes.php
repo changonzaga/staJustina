@@ -18,6 +18,35 @@ $routes->get('landing-page', function() {
 //db connection test
 $routes->get('test_db', 'TestController::dbConnection');
 
+// Debug test routes
+$routes->get('debug/test-approval', 'DebugController::testApproval');
+
+// Email workflow test routes
+$routes->get('test-email-workflow', 'TestController::testEmailWorkflow');
+$routes->get('simulate-approval', 'TestController::simulateApproval');
+
+// Email test route
+$routes->get('send-test-email', 'MailTest::index');
+$routes->get('simple-email-test', 'SimpleEmailTestController::index');
+$routes->get('test-enrollment-template', 'EmailTemplateTestController::testEnrollmentTemplate');
+$routes->get('test-enrollment-email/(:num)', 'EmailTestController::testEnrollmentEmail/$1');
+$routes->get('test-enrollment-email', 'EmailTestController::testEnrollmentEmail');
+
+// Public enrollment routes
+$routes->get('enrollment', 'EnrollmentController::index', ['as' => 'public.enrollment']);
+$routes->get('enrollment/manual', 'EnrollmentController::manual', ['as' => 'public.enrollment.manual']);
+$routes->get('enrollment/ocr', 'EnrollmentController::ocr', ['as' => 'public.enrollment.ocr']);
+$routes->get('enrollment/test', 'EnrollmentController::test', ['as' => 'enrollment.test']);
+$routes->post('enrollment/store', 'EnrollmentController::store', ['as' => 'enrollment.store']);
+$routes->post('enrollment/store-ocr', 'EnrollmentController::storeOcr', ['as' => 'enrollment.store.ocr']);
+$routes->get('enrollment/status/(:segment)', 'EnrollmentController::status/$1', ['as' => 'enrollment.status']);
+
+// File serving route for uploads with proper content type detection
+$routes->get('uploads/(.+)', 'FileController::serve/$1', ['as' => 'file.serve']);
+
+// Temporary: Admin enrollment details route without auth for testing
+$routes->get('admin/enrollment/details/(:num)', 'AdminController::getEnrollmentDetails/$1', ['as' => 'admin.enrollment.details.test']);
+
 $routes->group('admin', static function ($routes){
 
     $routes->group('', ['filter'=>'cifilter:auth'], static function ($routes){
@@ -28,9 +57,38 @@ $routes->group('admin', static function ($routes){
         $routes->get('teacher', 'AdminController::teacher', ['as' => 'admin.teacher']);
         $routes->get('parent', 'AdminController::parent', ['as' => 'admin.parent']);
         $routes->get('announcement', 'AdminController::announcement', ['as' => 'admin.announcement']);
+        $routes->get('announcements', 'AdminController::announcement', ['as' => 'admin.announcements']);
+        $routes->get('announcements/create-announcement', 'AdminController::createAnnouncement', ['as' => 'admin.announcements.create']);
+        $routes->get('announcements/history', 'AdminController::announcementHistory', ['as' => 'admin.announcements.history']);
         $routes->get('event', 'AdminController::event', ['as' => 'admin.event']); 
         $routes->get('users', 'AdminController::users', ['as' => 'admin.users']);
         $routes->get('student', 'AdminController::student', ['as' => 'admin.student']);
+        
+        // OAuth Logs routes
+        $routes->get('oauth/logs', 'OAuthController::logs', ['as' => 'admin.oauth.logs']);
+        $routes->post('oauth/logs/clear', 'OAuthController::clearLogs', ['as' => 'admin.oauth.logs.clear']);
+        $routes->get('oauth/logs/failed', 'OAuthController::getFailedAttempts', ['as' => 'admin.oauth.logs.failed']);
+        $routes->get('oauth/logs/by-email', 'OAuthController::getAttemptsByEmail', ['as' => 'admin.oauth.logs.by-email']);
+        
+        // Enrollment routes
+        $routes->get('enrollment', 'AdminController::enrollment', ['as' => 'admin.enrollment']);
+        // $routes->get('enrollment/details/(:num)', 'AdminController::getEnrollmentDetails/$1', ['as' => 'admin.enrollment.details']);
+        $routes->post('enrollment/approve/(:num)', 'AdminController::approveEnrollment/$1', ['as' => 'admin.enrollment.approve']);
+        $routes->post('enrollment/decline/(:num)', 'AdminController::declineEnrollment/$1', ['as' => 'admin.enrollment.decline']);
+        $routes->get('enrollment/manage', 'EnrollmentController::manage', ['as' => 'admin.enrollment.manage']);
+        $routes->get('enrollment/reports', 'EnrollmentController::reports', ['as' => 'admin.enrollment.reports']);
+        
+        // Subjects routes
+        $routes->get('subjects', 'AdminController::subjects', ['as' => 'admin.subjects']);
+        $routes->post('subjects/store', 'AdminController::storeSubject', ['as' => 'admin.subjects.store']);
+        $routes->post('subjects/update/(:num)', 'AdminController::updateSubject/$1', ['as' => 'admin.subjects.update']);
+        $routes->post('subjects/delete/(:num)', 'AdminController::deleteSubject/$1', ['as' => 'admin.subjects.delete']);
+        
+        // Class routes
+        $routes->get('class', 'AdminController::classManagement', ['as' => 'admin.class']);
+        $routes->post('class/store', 'AdminController::storeClass', ['as' => 'admin.class.store']);
+        $routes->post('class/update/(:num)', 'AdminController::updateClass/$1', ['as' => 'admin.class.update']);
+        $routes->post('class/delete/(:num)', 'AdminController::deleteClass/$1', ['as' => 'admin.class.delete']);
         
         // Settings routes
         $routes->get('settings/general', function() {
@@ -55,51 +113,65 @@ $routes->group('admin', static function ($routes){
         });
         
         // Student routes with enhanced view
-        $routes->get('student/profile/(:num)', 'Backend\\StudentController::profile/$1', ['as' => 'admin.student.profile']);
-        $routes->get('student/create', 'Backend\\Pages\\StudentsController::create', ['as' => 'admin.student.create']);
-        $routes->post('student/store', 'Backend\\Pages\\StudentsController::store', ['as' => 'admin.student.store']);
-        $routes->get('student/edit/(:num)', 'Backend\\Pages\\StudentsController::edit/$1', ['as' => 'admin.student.edit']);
-        $routes->post('student/update/(:num)', 'Backend\\Pages\\StudentsController::update/$1', ['as' => 'admin.student.update']);
-        $routes->get('student/delete/(:num)', 'Backend\\Pages\\StudentsController::delete/$1', ['as' => 'admin.student.delete']);
-        $routes->get('student/attendance/(:num)', 'Backend\\Pages\\StudentsController::attendance/$1', ['as' => 'admin.student.attendance']);
-        $routes->get('student/grades/(:num)', 'Backend\\Pages\\StudentsController::grades/$1', ['as' => 'admin.student.grades']);
-        $routes->get('student/parent/(:num)', 'Backend\\Pages\\StudentsController::parent/$1', ['as' => 'admin.student.parent']);
+        $routes->get('student/profile/(:num)', 'Backend\StudentController::profile/$1', ['as' => 'admin.student.profile']);
+        $routes->get('student/create', 'Backend\Pages\StudentsController::create', ['as' => 'admin.student.create']);
+        $routes->post('student/store', 'Backend\Pages\StudentsController::store', ['as' => 'admin.student.store']);
+        $routes->get('student/edit/(:num)', 'Backend\Pages\StudentsController::edit/$1', ['as' => 'admin.student.edit']);
+        $routes->post('student/update/(:num)', 'Backend\Pages\StudentsController::update/$1', ['as' => 'admin.student.update']);
+        $routes->get('student/delete/(:num)', 'Backend\Pages\StudentsController::delete/$1', ['as' => 'admin.student.delete']);
+        $routes->get('student/attendance/(:num)', 'Backend\Pages\StudentsController::attendance/$1', ['as' => 'admin.student.attendance']);
+        $routes->get('student/grades/(:num)', 'Backend\Pages\StudentsController::grades/$1', ['as' => 'admin.student.grades']);
+        $routes->get('student/parent/(:num)', 'Backend\Pages\StudentsController::parent/$1', ['as' => 'admin.student.parent']);
         
         // Teacher routes
+        $routes->get('teacher', 'TeacherController::index', ['as' => 'admin.teacher.index']);
         $routes->get('teacher/create', 'TeacherController::create', ['as' => 'admin.teacher.create']);
         $routes->post('teacher/store', 'TeacherController::store', ['as' => 'admin.teacher.store']);
         $routes->get('teacher/edit/(:num)', 'TeacherController::edit/$1', ['as' => 'admin.teacher.edit']);
         $routes->post('teacher/update/(:num)', 'TeacherController::update/$1', ['as' => 'admin.teacher.update']);
         $routes->post('teacher/delete/(:num)', 'TeacherController::delete/$1', ['as' => 'admin.teacher.delete']);
-        $routes->get('teacher/view/(:num)', 'TeacherController::view/$1', ['as' => 'admin.teacher.view']);
+        $routes->get('teacher/show/(:num)', 'TeacherController::show/$1', ['as' => 'admin.teacher.show']);
         
         // Parent routes
+        $routes->get('parent', 'ParentController::index', ['as' => 'admin.parent.index']);
         $routes->get('parent/create', 'ParentController::create', ['as' => 'admin.parent.create']);
         $routes->post('parent/store', 'ParentController::store', ['as' => 'admin.parent.store']);
         $routes->get('parent/edit/(:num)', 'ParentController::edit/$1', ['as' => 'admin.parent.edit']);
         $routes->post('parent/update/(:num)', 'ParentController::update/$1', ['as' => 'admin.parent.update']);
         $routes->post('parent/delete/(:num)', 'ParentController::delete/$1', ['as' => 'admin.parent.delete']);
         $routes->get('parent/view/(:num)', 'ParentController::view/$1', ['as' => 'admin.parent.view']);
+        $routes->get('parent/data/(:num)', 'AdminController::getParentData/$1', ['as' => 'admin.parent.data']);
     });
     
+    // Legacy admin routes - redirect to centralized login
     $routes->group('', ['filter'=>'cifilter:guest'], static function ($routes){
-        $routes->get('login', 'AuthController::loginForm', ['as' => 'admin.login.form']);
-        $routes->post('login', 'AuthController::loginHandler', ['as' => 'admin.login.handler']);
-        $routes->get('forgot-password', 'AuthController::forgotForm', ['as' => 'admin.forgot.form']);
-        $routes->post('send-password-reset-link', 'AuthController::sendPasswordResetLink', ['as' => 'send_password_reset_link']);
-        $routes->get('password/reset/(:any)', 'AuthController::resetPassword/$1', ['as' => 'admin.reset-password']);
+        $routes->get('login', function() { return redirect()->to('/login'); });
+        $routes->post('login', function() { return redirect()->to('/login'); });
+        $routes->get('forgot-password', function() { return redirect()->to('/forgot-password'); });
+        $routes->get('google', 'CentralAuthController::googleLogin');
+        $routes->get('google/callback', 'CentralAuthController::googleCallback');
     });
 });
 
-// Centralized login for students and teachers
-$routes->get('login', function () {
-    return view('login');
-});
+// Centralized login for all users (admin, teacher, student)
+$routes->get('login', 'CentralAuthController::loginForm', ['as' => 'central.login.form']);
+$routes->post('login', 'CentralAuthController::loginHandler', ['as' => 'central.login.handler']);
+$routes->get('logout', 'CentralAuthController::logout', ['as' => 'central.logout']);
 
-// Authentication routes
+// Google OAuth routes for centralized authentication
+$routes->get('google', 'CentralAuthController::googleLogin', ['as' => 'central.google.login']);
+$routes->get('google/callback', 'CentralAuthController::googleCallback', ['as' => 'central.google.callback']);
+
+// Forgot password routes (will be handled by CentralAuthController)
+$routes->get('forgot-password', 'CentralAuthController::forgotForm', ['as' => 'central.forgot.form']);
+$routes->post('send-password-reset-link', 'CentralAuthController::sendPasswordResetLink', ['as' => 'central.send_password_reset_link']);
+
+// Legacy authentication routes - redirect to centralized system
 $routes->group('auth', function($routes) {
-    $routes->post('student-login', 'AuthController::studentLogin');
-    $routes->post('teacher-login', 'AuthController::teacherLogin');
+    $routes->post('student-login', function() { return redirect()->to('/login'); });
+    $routes->post('teacher-login', function() { return redirect()->to('/login'); });
+    $routes->get('google-teacher-callback', function() { return redirect()->to('/google/callback'); });
+    $routes->post('teacher-logout', function() { return redirect()->to('/logout'); });
 });
 
 // Teacher routes
@@ -107,22 +179,24 @@ $routes->group('teacher', function($routes) {
     $routes->get('login', 'Teacher::login');
     $routes->post('login', 'Teacher::loginHandler');
     $routes->get('logout', 'Teacher::logout');
-    $routes->get('dashboard', 'Teacher::dashboard'); // Teacher dashboard/home
-    $routes->get('home', 'Teacher::dashboard'); // Alternative route for home
+    $routes->get('dashboard', 'TeacherController::dashboard'); // Teacher dashboard/home
+    $routes->get('home', 'TeacherController::dashboard'); // Alternative route for home
     $routes->get('classroom', 'Teacher::classroom');
     $routes->get('exams', 'Teacher::examSchedule');
     $routes->get('exam-schedule', 'Teacher::examSchedule'); // Alternative route
     $routes->get('announcements', 'Teacher::announcements');
     $routes->get('events', 'Teacher::events');
     $routes->get('profile', 'Teacher::profile');
+    
+    // Profile completion routes
+    $routes->get('profile/complete', 'TeacherController::profileComplete');
+    $routes->post('profile/complete', 'TeacherController::profileCompleteHandler');
 
     // Teacher Submenu Routes for Manage Students
     $routes->get('manage-students/attendance-records', 'Teacher::attendanceRecords');
     $routes->get('manage-students/attendance', 'Teacher::attendanceRecords'); // Alternative route
     $routes->get('manage-students/report-cards', 'Teacher::reportCards');
     $routes->get('manage-students/grades', 'Teacher::reportCards'); // Alternative route
-    
-
 });
 
 // Student routes (public-facing)
@@ -144,8 +218,6 @@ $routes->group('student', function($routes) {
     $routes->get('profile', 'Student::profile');
     $routes->get('exams', 'Student::exams');
 });
-
-// Debug route removed - now using proper controller routing
 
 // Backend Admin Routes (if you need backend/admin URLs)
 $routes->group('backend/admin', ['filter'=>'cifilter:auth'], static function ($routes){

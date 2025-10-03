@@ -28,12 +28,40 @@ class CIFilter implements FilterInterface
     {
         if ($arguments[0] == 'guest'){
             if (CIAuth::check()) {
-                return redirect()->route('admin.home');
+                // Check if this is an AJAX request
+                if ($request->isAJAX()) {
+                    $response = service('response');
+                    return $response->setJSON([
+                        'success' => false,
+                        'message' => 'Already logged in',
+                        'redirect' => '/admin/home'
+                    ]);
+                }
+                
+                // Redirect based on user role
+                $userInfo = CIAuth::user();
+                if ($userInfo && $userInfo['role'] === 'admin') {
+                    return redirect()->to('/admin/home');
+                } elseif ($userInfo && $userInfo['role'] === 'teacher') {
+                    return redirect()->to('/teacher/dashboard');
+                } else {
+                    return redirect()->to('/login');
+                }
             }
         } 
             if($arguments[0] == 'auth'){
                 if (!CIAuth::check()) {
-                    return redirect()->route('admin.login.form')->with('fail', 'You must login first!');
+                    // Check if this is an AJAX request
+                    if ($request->isAJAX()) {
+                        $response = service('response');
+                        return $response->setJSON([
+                            'success' => false,
+                            'message' => 'Authentication required. Please login first.',
+                            'redirect' => '/login'
+                        ]);
+                    }
+                    
+                    return redirect()->to('/login')->with('fail', 'You must login first!');
                 }
 
         }

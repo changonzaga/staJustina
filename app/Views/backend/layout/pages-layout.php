@@ -38,35 +38,44 @@
 
 		<!-- Google Font -->
 		<link
-			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+			href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Roboto:wght@300;400;500;700;900&display=swap"
 			rel="stylesheet"
 		/>
 		<!-- CSS -->
-		<link rel="stylesheet" type="text/css" href="/backend/vendors/styles/core.css" />
+        <link rel="stylesheet" type="text/css" href="/backend/vendors/styles/core.css" />
 		<link
 			rel="stylesheet"
 			type="text/css"
-			href="/backend/vendors/styles/icon-font.min.css"
+            href="/backend/vendors/styles/icon-font.min.css"
 		/>
-		<link rel="stylesheet" type="text/css" href="/backend/vendors/styles/style.css" />
+		<!-- Font Awesome for icons -->
+		<link
+			rel="stylesheet"
+			href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css"
+		/>
+        <link rel="stylesheet" type="text/css" href="/backend/vendors/styles/style.css" />
+        <link rel="stylesheet" type="text/css" href="/backend/vendors/fonts/dropways.css" />
+        <link rel="stylesheet" type="text/css" href="/backend/src/plugins/sweetalert2/sweetalert2.css" />
+		<!-- Font Awesome Icons -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" integrity="sha512-iecdLmaskl7CVkqkXNQ/ZH/XLlvWZOJyj7Yy7tcenmpD1ypASozpmT/E0iPtmFIB46ZmdtAc9eNBvH0H/ZpiBw==" crossorigin="anonymous" referrerpolicy="no-referrer" />
 		<?= $this->renderSection('stylesheets') ?>
 	</head>
 	<body>
 				
 
-					<!-- <div class="pre-loader">
-							<div class="pre-loader-box">
-								<div class="loader-logo" style="text-align: center;">
-								<img src="https://scontent.fwnp1-1.fna.fbcdn.net/v/t1.15752-9/486190369_1714804709415712_2378757229292270536_n.png?_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeEqrWJFfuB7YB8JxW_hcNk8q2NSk0-s-t2rY1KTT6z63W0U5K45PTewWLZ2ewpgYB8JrlYnmEvkgC3ixYo7tyci&_nc_ohc=6zAZgtJdQkMQ7kNvwGgfAxy&_nc_oc=AdkO9ULrzKriaf70grx1MqhpIGYmXeiFhvGil63jKIvfmAzJA5FhEPPH0KbgDug7ZRs&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fwnp1-1.fna&oh=03_Q7cD2AHaoB5rLJ5WP_L8O3eMWwhvIlvsP4EBLZsH_QkWC3crng&oe=6826D331" 
-								alt="Sta Justina National High School Logo" style="width: 100px;" />
-								</div>
-								<div class="loader-progress" id="progress_div">
-								<div class="bar" id="bar1" style="background-color: #800000;"></div>
-								</div>
-								<div class="percent" id="percent1">0%</div>
-								<div class="loading-text">PLEASE WAIT FOR THE SYSTEM TO LOAD...</div>
+					<div class="pre-loader">
+						<div class="pre-loader-box">
+							<div class="loader-logo" style="text-align: center;">
+							<img src="/backend/vendors/images/logo-login-removebg-preview.png" 
+							alt="Sta Justina National High School Logo" style="width: 100px;" />
 							</div>
-							</div> -->
+							<div class="loader-progress" id="progress_div">
+							<div class="bar" id="bar1" style="background-color: #800000;"></div>
+							</div>
+							<div class="percent" id="percent1">0%</div>
+							<div class="loading-text">PLEASE WAIT FOR THE SYSTEM TO LOAD...</div>
+						</div>
+						</div>
 
 
 		<?php include('inc/header.php'); ?>
@@ -88,10 +97,111 @@
 		</div>
 	
 		<!-- js -->
-		<script src="/backend/vendors/scripts/core.js"></script>
-		<script src="/backend/vendors/scripts/script.min.js"></script>
-		<script src="/backend/vendors/scripts/process.js"></script>
-		<script src="/backend/vendors/scripts/layout-settings.js"></script>
+        <script src="/backend/vendors/scripts/core.js"></script>
+        <script src="/backend/vendors/scripts/script.min.js"></script>
+        <script src="/backend/vendors/scripts/process.js"></script>
+        <script src="/backend/vendors/scripts/layout-settings.js"></script>
+        <script src="/backend/src/plugins/sweetalert2/sweetalert2.all.js"></script>
+        <script src="/backend/src/plugins/sweetalert2/sweet-alert.init.js"></script>
 		<?= $this->renderSection('scripts') ?>
+	<!-- ───────── GO TO TOP BUTTON ───────── -->
+    <button id="backToTop" class="go-to-top" aria-label="Go to top of page">
+        <i class="fas fa-arrow-up"></i>
+    </button>
+
+    <style>
+    /* ───────── GO TO TOP BUTTON ───────── */
+    .go-to-top {
+        position: fixed;
+        bottom: 30px;
+        right: 30px;
+        width: 45px;
+        height: 45px;
+        background: #ffffff;
+        color: #000000;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        display: none;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.2rem;
+        box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15), 0 4px 10px rgba(0, 0, 0, 0.1);
+        transition: all 0.3s ease;
+        z-index: 1000;
+    }
+    
+    .go-to-top:hover {
+        background: #f8f9fa;
+        transform: translateY(-3px);
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.2), 0 6px 15px rgba(0, 0, 0, 0.15);
+    }
+    
+    @media (max-width: 768px) {
+        .go-to-top {
+            width: 40px;
+            height: 40px;
+            bottom: 20px;
+            right: 20px;
+            font-size: 0.9rem;
+        }
+    }
+    </style>
+
+    <script>
+    /* Go to Top Button Functionality */
+    document.addEventListener('DOMContentLoaded', function() {
+        const backToTopBtn = document.getElementById('backToTop');
+        
+        // Debug: Check if button exists in DOM
+        console.log('Back to Top button:', backToTopBtn ? 'Found' : 'Not found');
+        if (backToTopBtn) {
+            console.log('Button properties:', {
+                id: backToTopBtn.id,
+                tagName: backToTopBtn.tagName,
+                display: window.getComputedStyle(backToTopBtn).display,
+                zIndex: window.getComputedStyle(backToTopBtn).zIndex,
+                position: window.getComputedStyle(backToTopBtn).position
+            });
+        } else {
+            console.warn('Back to top button not found in the DOM');
+            return;
+        }
+        
+        // Check initial scroll position
+        checkScrollPosition();
+        
+        // Add scroll event listener
+        window.addEventListener('scroll', checkScrollPosition, { passive: true });
+        
+        // Add click event listener for smooth scrolling
+        backToTopBtn.addEventListener('click', function() {
+            console.log('Back to Top button clicked');
+            // For modern browsers
+            if ('scrollBehavior' in document.documentElement.style) {
+                window.scrollTo({
+                    top: 0,
+                    behavior: 'smooth'
+                });
+            } else {
+                // Fallback for older browsers
+                window.scrollTo(0, 0);
+            }
+        });
+        
+        // Function to check scroll position and toggle button visibility
+        function checkScrollPosition() {
+            const scrollY = window.scrollY || window.pageYOffset;
+            
+            if (scrollY > 100) {
+                backToTopBtn.style.display = 'flex';
+                console.log('Scroll position:', scrollY, '- Button should be visible');
+            } else {
+                backToTopBtn.style.display = 'none';
+                console.log('Scroll position:', scrollY, '- Button should be hidden');
+            }
+        }
+    });
+    </script>
 	</body>
 </html>

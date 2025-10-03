@@ -24,45 +24,6 @@
     </div>
 </div>
 
-<!-- Filter, Search, and Export Buttons Row -->
-<div class="mt-3 mb-2">
-    <div class="row align-items-end">
-        <div class="col-md-3">
-            <div class="form-group mb-2 position-relative">
-                <input type="text" class="form-control pl-4" id="searchInput" placeholder="Search by name or Account No." onkeyup="filterTable()">
-                <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;">
-                    <i class="icon-copy bi bi-search"></i>
-                </span>
-            </div>
-        </div>
-        <div class="col-md-3">
-            <div class="form-group mb-2">
-                <select class="form-control" id="categoryFilter" onchange="filterTable()">
-                    <option value="">All Categories</option>
-                    <option value="Regular">Regular</option>
-                    <option value="SPED">SPED</option>
-                    <option value="Transfer">Transfer</option>
-                    <!-- Add more categories as needed -->
-                </select>
-            </div>
-        </div>
-        <div class="col-md-6 d-flex justify-content-end">
-            <div class="dt-buttons btn-group flex-wrap">
-                <button id="copyBtn" class="btn btn-secondary buttons-copy buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button" onclick="handleCopyClick(this)">
-                    <i class="icon-copy bi bi-clipboard"></i> <span>Copy</span>
-                </button>
-                <button class="btn btn-secondary buttons-csv buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
-                    <i class="icon-copy bi bi-filetype-csv"></i> <span>CSV</span>
-                </button>
-                <button class="btn btn-secondary buttons-pdf buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
-					<i class="icon-copy bi bi-file-pdf"></i> <span>PDF</span></button>
-                <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="DataTables_Table_2" type="button">
-					<i class="icon-copy bi bi-printer"></i> <span>Print</span></button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <?php if (session()->has('success')): ?>
 <div class="alert alert-success alert-dismissible fade show" role="alert">
     <?= session('success') ?>
@@ -86,6 +47,54 @@
     <div class="pd-20">
         <h4 class="text-blue h4">Teachers List</h4>
     </div>
+    
+    <!-- Filter, Search, and Export Buttons Section -->
+    <div class="pd-20 pt-0">
+        <div class="row align-items-end">
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Search Teachers:</label>
+                    <div class="position-relative">
+                        <input type="text" class="form-control pl-4" id="searchInput" placeholder="Search by name or Account No." onkeyup="filterTable()">
+                        <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;">
+                            <i class="icon-copy bi bi-search"></i>
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-3">
+                <div class="form-group">
+                    <label>Filter Category:</label>
+                    <select class="form-control" id="categoryFilter" onchange="filterTable()">
+                        <option value="">All Categories</option>
+                        <option value="Regular">Regular</option>
+                        <option value="SPED">SPED</option>
+                        <option value="Transfer">Transfer</option>
+                        <!-- Add more categories as needed -->
+                    </select>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="form-group">
+                    <label>&nbsp;</label>
+                    <div class="d-flex justify-content-end">
+                        <div class="dt-buttons btn-group flex-wrap">
+                            <button id="copyBtn" class="btn btn-secondary buttons-copy buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button" onclick="handleCopyClick(this)">
+                                <i class="icon-copy bi bi-clipboard"></i> <span>Copy</span>
+                            </button>
+                            <button class="btn btn-secondary buttons-csv buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
+                                <i class="icon-copy bi bi-filetype-csv"></i> <span>CSV</span>
+                            </button>
+                            <button class="btn btn-secondary buttons-pdf buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button">
+								<i class="icon-copy bi bi-file-pdf"></i> <span>PDF</span></button>
+                            <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="DataTables_Table_2" type="button">
+								<i class="icon-copy bi bi-printer"></i> <span>Print</span></button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
     <div class="pb-20">
         <div class="table-responsive">
             <table class="table hover multiple-select-row data-table-export nowrap">
@@ -94,11 +103,10 @@
                         <th class="table-plus datatable-nosort">No.</th>
                         <th>Teacher</th>
                         <th>Account No.</th>
-                        <th>Subjects</th>
-                        <th>Gender</th>
-                        <th>Age</th>
-                        <th>Students</th>
-                        <th>Status</th>
+                        <th>Email</th>
+                        <th>Employee ID</th>
+                        <th>Position</th>
+                        <th>Employment Status</th>
                         <th class="datatable-nosort">Action</th>
                     </tr>
                 </thead>
@@ -114,26 +122,42 @@
                                                 <img src="<?= base_url('uploads/teachers/'.$teacher['profile_picture']) ?>" class="border-radius-100 shadow" width="40" height="40" alt="">
                                             <?php else: ?>
                                                 <div class="font-24 text-light-blue weight-500" style="width: 40px; height: 40px; border-radius: 100%; background: #ebf3ff; display: flex; align-items: center; justify-content: center;">
-                                                    <?= substr($teacher['name'], 0, 1) ?>
+                                                    <?= strtoupper(substr($teacher['first_name'], 0, 1) . substr($teacher['last_name'], 0, 1)) ?>
                                                 </div>
                                             <?php endif; ?>
                                         </div>
                                         <div class="txt">
-                                            <div class="weight-600"><?= $teacher['name'] ?></div>
+                                            <div class="weight-600"><?= esc($teacher['first_name'] . ' ' . $teacher['last_name']) ?></div>
+                                            <div class="font-12 color-text-color-2"><?= esc($teacher['specialization'] ?? 'Not specified') ?></div>
                                         </div>
                                     </div>
                                 </td>
-                                <td><?= $teacher['account_no'] ?></td>
-                                <td><?= $teacher['subjects'] ?></td>
-                                <td><?= $teacher['gender'] ?></td>
-                                <td><?= $teacher['age'] ?></td>
-                                <td><?= $teacher['student_count'] ?></td>
+                                <td><span class="badge badge-info"><?= esc($teacher['account_no']) ?></span></td>
+                                <td><?= esc($teacher['email']) ?></td>
+                                <td><?= esc($teacher['employee_id']) ?></td>
+                                <td><?= esc($teacher['position'] ?? 'Not specified') ?></td>
                                 <td>
-                                    <?php if($teacher['status'] == 'Active'): ?>
-                                        <span class="badge badge-success">Active</span>
-                                    <?php else: ?>
-                                        <span class="badge badge-danger">Inactive</span>
-                                    <?php endif; ?>
+                                    <?php 
+                                    $status = $teacher['employment_status'] ?? 'Active';
+                                    $badgeClass = '';
+                                    switch(strtolower($status)) {
+                                        case 'regular':
+                                            $badgeClass = 'badge-success';
+                                            break;
+                                        case 'contractual':
+                                            $badgeClass = 'badge-warning';
+                                            break;
+                                        case 'substitute':
+                                            $badgeClass = 'badge-info';
+                                            break;
+                                        case 'part-time':
+                                            $badgeClass = 'badge-secondary';
+                                            break;
+                                        default:
+                                            $badgeClass = 'badge-primary';
+                                    }
+                                    ?>
+                                    <span class="badge <?= $badgeClass ?>"><?= esc($status) ?></span>
                                 </td>
                                 <td>
                                     <div class="dropdown">
@@ -141,9 +165,9 @@
                                             <i class="dw dw-more"></i>
                                         </a>
                                         <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                            <a class="dropdown-item" href="<?= site_url('admin/teacher/view/'.$teacher['id']) ?>"><i class="dw dw-eye"></i> View</a>
-                                            <a class="dropdown-item" href="<?= site_url('admin/teacher/edit/'.$teacher['id']) ?>"><i class="dw dw-edit2"></i> Edit</a>
-                                            <a class="dropdown-item delete-teacher" href="javascript:;" data-id="<?= $teacher['id'] ?>"><i class="dw dw-delete-3"></i> Delete</a>
+                                            <a class="dropdown-item" href="<?= site_url('/admin/teacher/show/'.$teacher['id']) ?>"><i class="dw dw-eye"></i> View Profile</a>
+                                            <a class="dropdown-item" href="<?= site_url('/admin/teacher/edit/'.$teacher['id']) ?>"><i class="dw dw-edit2"></i> Edit</a>
+                                            <a class="dropdown-item text-danger" href="#" onclick="confirmDelete(<?= $teacher['id'] ?>, '<?= esc($teacher['first_name'] . ' ' . $teacher['last_name']) ?>')"><i class="dw dw-delete-3"></i> Delete</a>
                                         </div>
                                     </div>
                                 </td>
@@ -151,12 +175,12 @@
                         <?php endforeach; ?>
                     <?php else: ?>
                         <tr>
-                            <td colspan="9" class="text-center">
+                            <td colspan="8" class="text-center">
                                 <div class="py-4"> 
                                     <i class="dw dw-user-11 font-48 text-muted"></i> 
                                     <h5 class="text-muted mt-3">No teachers found</h5> 
                                     <p class="text-muted">Start by adding your first teacher to the system.</p> 
-                                    <a href="<?= site_url('admin/teacher/create') ?>" class="btn btn-success"> 
+                                    <a href="<?= site_url('/admin/teacher/create') ?>" class="btn btn-success"> 
                                         <i class="icon-copy bi bi-plus-lg"></i> Add First Teacher 
                                     </a> 
                                 </div>
@@ -239,7 +263,7 @@ function handleCopyClick(button) {
 
 <!-- Delete Confirmation Modal -->
 <div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="deleteModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
+    <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="deleteModalLabel">Confirm Delete</h5>
@@ -247,37 +271,16 @@ function handleCopyClick(button) {
                     <span aria-hidden="true">&times;</span>
                 </button>
             </div>
-            <div class="modal-body text-center">
-                <i class="dw dw-delete-3 text-danger" style="font-size: 48px;"></i>
-                <p class="mt-3">Are you sure you want to delete this teacher?</p>
+            <div class="modal-body">
+                <p>Are you sure you want to delete <strong id="teacherName"></strong>?</p>
+                <p class="text-danger"><small>This action cannot be undone. The teacher's login access will also be removed.</small></p>
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                <form id="deleteForm" method="POST" action="" style="display: inline;">
+                <form id="deleteForm" method="POST" style="display: inline;">
                     <?= csrf_field() ?>
-                    <button type="submit" class="btn btn-danger">Yes, Delete</button>
+                    <button type="submit" class="btn btn-danger">Delete Teacher</button>
                 </form>
-            </div>
-        </div>
-    </div>
-</div>
-
-<!-- Deleted Success Modal -->
-<div class="modal fade" id="deletedSuccessModal" tabindex="-1" role="dialog" aria-labelledby="deletedSuccessModalLabel" aria-hidden="true">
-    <div class="modal-dialog" role="document">
-        <div class="modal-content">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title" id="deletedSuccessModalLabel">Success</h5>
-                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center">
-                <i class="dw dw-check text-success" style="font-size: 48px;"></i>
-                <p class="mt-3">Deleted! Teacher has been deleted successfully.</p>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-success" id="deletedOkBtn">OK</button>
             </div>
         </div>
     </div>
@@ -287,58 +290,17 @@ function handleCopyClick(button) {
 
 <?= $this->section('scripts') ?>
 <script>
-    $(document).ready(function() {
-        // Auto-dismiss alerts after 5 seconds
-        setTimeout(function() {
-            $('.alert-dismissible').alert('close');
-        }, 5000);
-        
-        // Handle delete button click
-        $(document).on('click', '.delete-teacher', function(e) {
-            e.preventDefault();
-            const teacherId = $(this).data('id');
-            console.log('Delete button clicked for teacher ID:', teacherId);
-            $('#deleteForm').attr('action', '<?= site_url("admin/teacher/delete/") ?>' + teacherId);
-            $('#deleteModal').modal('show');
-        });
-        
-        // Handle form submission to show success modal
-        $('#deleteForm').on('submit', function(e) {
-            e.preventDefault();
-            
-            var form = $(this);
-            var actionUrl = form.attr('action');
-            
-            $.ajax({
-                url: actionUrl,
-                type: 'POST',
-                data: form.serialize(),
-                success: function(response) {
-                    // Hide the confirmation modal
-                    $('#deleteModal').modal('hide');
-                    // Show the success modal
-                    $('#deletedSuccessModal').modal('show');
-                },
-                error: function(xhr, status, error) {
-                    // Hide the confirmation modal
-                    $('#deleteModal').modal('hide');
-                    // Show the success modal even on error (like student functionality)
-                    $('#deletedSuccessModal').modal('show');
-                }
-            });
-        });
-        
-        // Handle success modal OK button
-        $('#deletedOkBtn').on('click', function() {
-            $('#deletedSuccessModal').modal('hide');
-            // Refresh the page to see the changes
-            window.location.reload();
-        });
-        
-        // Debug: Check if modal is properly initialized
-        $('#deleteModal').on('shown.bs.modal', function () {
-            console.log('Delete modal is shown');
-        });
-    });
+function confirmDelete(teacherId, teacherName) {
+    document.getElementById('teacherName').textContent = teacherName;
+    document.getElementById('deleteForm').action = '<?= site_url('/admin/teacher/delete/') ?>' + teacherId;
+    $('#deleteModal').modal('show');
+}
+
+// Auto-hide alerts after 5 seconds
+$(document).ready(function() {
+    setTimeout(function() {
+        $('.alert').fadeOut('slow');
+    }, 5000);
+});
 </script>
 <?= $this->endSection() ?>

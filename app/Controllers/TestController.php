@@ -2,6 +2,9 @@
 
 namespace App\Controllers;
 
+use App\Services\EmailService;
+use App\Models\EmailLogModel;
+
 class TestController extends BaseController
 {
     public function dbConnection()
@@ -111,5 +114,163 @@ class TestController extends BaseController
         
         echo "<hr>";
         echo "<p><a href='" . base_url() . "'>← Back to Home</a></p>";
+    }
+    
+    public function testEmailWorkflow()
+    {
+        $response = ['status' => 'success', 'tests' => []];
+        
+        try {
+            // Test 1: Check EmailService instantiation
+            $emailService = new EmailService();
+            $response['tests'][] = ['name' => 'EmailService Instantiation', 'status' => 'passed'];
+            
+            // Test 2: Check EmailLogModel
+            $emailLogModel = new EmailLogModel();
+            $existingLogs = $emailLogModel->findAll();
+            $response['tests'][] = [
+                'name' => 'EmailLogModel', 
+                'status' => 'passed',
+                'data' => 'Found ' . count($existingLogs) . ' existing email logs'
+            ];
+            
+            // Test 3: Check database connection and enrollment data
+            $db = \Config\Database::connect();
+            $query = $db->query("
+                SELECT e.id, e.enrollment_number, e.enrollment_status, 
+                       epi.student_email, epi.first_name, epi.last_name 
+                FROM enrollments e 
+                LEFT JOIN enrollment_personal_info epi ON e.id = epi.enrollment_id 
+                WHERE e.id = 2
+            ");
+            $enrollment = $query->getRow();
+            
+            if ($enrollment) {
+                $response['tests'][] = [
+                    'name' => 'Enrollment Data Retrieval',
+                    'status' => 'passed',
+                    'data' => [
+                        'enrollment_number' => $enrollment->enrollment_number,
+                        'student_name' => trim($enrollment->first_name . ' ' . $enrollment->last_name),
+                        'email' => $enrollment->student_email,
+                        'status' => $enrollment->enrollment_status
+                    ]
+                ];
+                
+                // Test 4: Test email content generation (without actually sending)
+                $accountData = [
+                    'student_name' => trim($enrollment->first_name . ' ' . $enrollment->last_name),
+                    'account_number' => 'TEST-' . date('Ymd-His'),
+                    'password' => 'TestPass123!',
+                    'enrollment_number' => $enrollment->enrollment_number
+                ];
+                
+                $response['tests'][] = [
+                    'name' => 'Account Data Generation',
+                    'status' => 'passed',
+                    'data' => $accountData
+                ];
+                
+                // Test 5: Test email log creation
+                $logData = [
+                    'enrollment_id' => $enrollment->id,
+                    'email_address' => $enrollment->student_email,
+                    'email_type' => 'enrollment_approval_test',
+                    'status' => 'pending',
+                    'sent_at' => date('Y-m-d H:i:s'),
+                    'created_at' => date('Y-m-d H:i:s')
+                ];
+                
+                $logId = $emailLogModel->insert($logData);
+                if ($logId) {
+                    $response['tests'][] = [
+                        'name' => 'Email Log Creation',
+                        'status' => 'passed',
+                        'data' => 'Created test log with ID: ' . $logId
+                    ];
+                } else {
+                    $response['tests'][] = [
+                        'name' => 'Email Log Creation',
+                        'status' => 'failed',
+                        'error' => 'Failed to create email log'
+                    ];
+                }
+                
+            } else {
+                $response['tests'][] = [
+                    'name' => 'Enrollment Data Retrieval',
+                    'status' => 'failed',
+                    'error' => 'No enrollment found with ID 2'
+                ];
+            }
+            
+        } catch (\Exception $e) {
+            $response['status'] = 'error';
+            $response['error'] = $e->getMessage();
+            $response['trace'] = $e->getTraceAsString();
+        }
+        
+        return $this->response->setJSON($response);
+    }
+    
+    public function simulateApproval($enrollmentId = 2)
+    {
+        $response = ['status' => 'success', 'message' => ''];
+        
+        try {
+            $db = \Config\Database::connect();
+            
+            // Get enrollment data
+            $query = $db->query("
+                SELECT e.*, epi.student_email, epi.first_name, epi.last_name 
+                FROM enrollments e 
+                LEFT JOIN enrollment_personal_info epi ON e.id = epi.enrollment_id 
+                WHERE e.id = ?
+            ", [$enrollmentId]);
+            
+            $enrollment = $query->getRow();
+            
+            if (!$enrollment) {
+                throw new \Exception('Enrollment not found');
+            }
+            
+            // Simulate the approval process without actual email sending
+            $accountData = [
+                'student_name' => trim($enrollment->first_name . ' ' . $enrollment->last_name),
+                'account_number' => 'SIM-' . date('Ymd-His'),
+                'password' => 'SimPass123!',
+                'enrollment_number' => $enrollment->enrollment_number
+            ];
+
+            // Create email log entry to simulate the process
+            $emailLogModel = new \App\Models\EmailLogModel();
+            $logData = [
+                'enrollment_id' => $enrollment->id,
+                'email_address' => $enrollment->student_email,
+                'email_type' => 'enrollment_approval_simulation',
+                'status' => 'success',
+                'sent_at' => date('Y-m-d H:i:s'),
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            
+            $logId = $emailLogModel->insert($logData);
+            
+            $response['message'] = 'Simulated approval process completed successfully';
+            $response['email_log_id'] = $logId;
+            $response['account_data'] = $accountData;
+            $response['enrollment_data'] = [
+                'id' => $enrollment->id,
+                'enrollment_number' => $enrollment->enrollment_number,
+                'student_name' => trim($enrollment->first_name . ' ' . $enrollment->last_name),
+                'email' => $enrollment->student_email
+            ];
+            
+        } catch (\Exception $e) {
+            $response['status'] = 'error';
+            $response['error'] = $e->getMessage();
+            $response['trace'] = $e->getTraceAsString();
+        }
+        
+        return $this->response->setJSON($response);
     }
 }

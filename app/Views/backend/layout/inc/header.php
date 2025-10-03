@@ -164,9 +164,22 @@
 							data-toggle="dropdown"
 						>
 							<span class="user-icon">
-								<img src="https://scontent.fmnl13-3.fna.fbcdn.net/v/t1.15752-9/486190369_1714804709415712_2378757229292270536_n.png?_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeEqrWJFfuB7YB8JxW_hcNk8q2NSk0-s-t2rY1KTT6z63W0U5K45PTewWLZ2ewpgYB8JrlYnmEvkgC3ixYo7tyci&_nc_ohc=7Ep537vZeNwQ7kNvwFw_tYE&_nc_oc=Adl4e345h5014RDN5sGoX3pShnmDSp44s4DB936Dinb0WA3OHgXDPJSxknP5BHc-Oaw&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fmnl13-3.fna&oh=03_Q7cD2QHMqHk1lpaK_xcKcY_B9FAVYjYWixE2FCtEXacB1acYZA&oe=6856B9B1" alt="" />
-							</span>
-							<span class="user-name">SJNHS ADMIN</span>
+					<?php 
+						$profilePicture = session()->get('profile_picture');
+						$userData = session()->get('userdata');
+						$pictureUrl = $profilePicture ?: ($userData['picture'] ?? null);
+					?>
+					<?php if($pictureUrl): ?>
+						<img src="<?= $pictureUrl ?>" alt="Profile Picture" 
+							 class="rounded-circle border border-white shadow-sm" 
+							 style="width: 50px; height: 50px; object-fit: cover; object-position: center;" />
+					<?php else: ?>
+						<img src="/backend/vendors/images/logo-login.png" alt="Default Profile" 
+							 class="rounded-circle border border-white shadow-sm" 
+							 style="width: 50px; height: 50px; object-fit: cover; object-position: center;" />
+					<?php endif; ?>
+				</span>
+				<span class="user-name"><?= session()->get('name') ?? 'SJNHS ADMIN' ?></span>
 						</a>
 						<div
 							class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"

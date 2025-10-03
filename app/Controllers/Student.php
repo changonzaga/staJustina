@@ -10,7 +10,8 @@ class Student extends BaseController
 {
     public function login()
     {
-        return view('login');
+        // Render the centralized login view used across roles
+        return view('backend/pages/auth/login');
     }
     
     public function loginHandler()

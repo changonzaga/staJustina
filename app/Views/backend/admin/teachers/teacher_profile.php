@@ -39,14 +39,27 @@
                 </div>
             </div>
             <div class="profile-info text-center">
-                <h5 class="mb-10 text-center h5"><?= $teacher['name'] ?></h5>
-                <p class="font-14 text-center text-muted"><?= $teacher['subjects'] ?></p>
+                <h5 class="mb-10 text-center h5"><?= esc($teacher['first_name'] . ' ' . $teacher['last_name']) ?></h5>
+                <p class="font-14 text-center text-muted"><?= esc($teacher['position'] ?? 'Teacher') ?></p>
                 <div class="mb-2">
-                    <?php if($teacher['status'] == 'Active'): ?>
-                        <span class="badge badge-success">Active</span>
-                    <?php else: ?>
-                        <span class="badge badge-danger">Inactive</span>
-                    <?php endif; ?>
+                    <?php 
+                    $status = $teacher['status'] ?? 'Active';
+                    $badgeClass = '';
+                    switch(strtolower($status)) {
+                        case 'active':
+                            $badgeClass = 'badge-success';
+                            break;
+                        case 'inactive':
+                            $badgeClass = 'badge-danger';
+                            break;
+                        case 'suspended':
+                            $badgeClass = 'badge-warning';
+                            break;
+                        default:
+                            $badgeClass = 'badge-primary';
+                    }
+                    ?>
+                    <span class="badge <?= $badgeClass ?>"><?= esc($status) ?></span>
                 </div>
                 <div class="profile-social text-center">
                     <a href="#" class="btn" data-color="#3b5998"><i class="fa fa-facebook"></i></a>
@@ -92,45 +105,140 @@
                                                         <h5 class="h5 mb-10">Teacher Information</h5>
                                                     </div>
                                                     <div class="pd-20">
+                                                        <!-- Basic Information -->
                                                         <div class="row">
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>Account No.</label>
-                                                                    <p class="form-control-static"><?= $teacher['account_no'] ?></p>
+                                                                    <label><strong>Account No.</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['account_no'] ?? 'Not assigned') ?></p>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>Full Name</label>
-                                                                    <p class="form-control-static"><?= $teacher['name'] ?></p>
+                                                                    <label><strong>Employee ID</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['employee_id'] ?? 'Not assigned') ?></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label><strong>First Name</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['first_name']) ?></p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label><strong>Middle Name</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['middle_name'] ?? 'N/A') ?></p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label><strong>Last Name</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['last_name']) ?></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label><strong>Date of Birth</strong></label>
+                                                                    <p class="form-control-static">
+                                                                        <?php if (!empty($teacher['date_of_birth'])): ?>
+                                                                            <?= date('F j, Y', strtotime($teacher['date_of_birth'])) ?>
+                                                                        <?php else: ?>
+                                                                            Not specified
+                                                                        <?php endif; ?>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label><strong>Gender</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['gender'] ?? 'Not specified') ?></p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-4">
+                                                                <div class="form-group">
+                                                                    <label><strong>Age</strong></label>
+                                                                    <p class="form-control-static">
+                                                                        <?php if (!empty($teacher['date_of_birth'])): ?>
+                                                                            <?= date_diff(date_create($teacher['date_of_birth']), date_create('today'))->y ?> years old
+                                                                        <?php else: ?>
+                                                                            Not calculated
+                                                                        <?php endif; ?>
+                                                                    </p>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="row">
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>Gender</label>
-                                                                    <p class="form-control-static"><?= $teacher['gender'] ?></p>
+                                                                    <label><strong>Contact Number</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['contact_number'] ?? 'Not provided') ?></p>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>Age</label>
-                                                                    <p class="form-control-static"><?= $teacher['age'] ?></p>
+                                                                    <label><strong>Civil Status</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['civil_status_name'] ?? 'Not specified') ?></p>
                                                                 </div>
                                                             </div>
                                                         </div>
                                                         <div class="row">
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>Subjects</label>
-                                                                    <p class="form-control-static"><?= $teacher['subjects'] ?></p>
+                                                                    <label><strong>Nationality</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['nationality'] ?? 'Filipino') ?></p>
                                                                 </div>
                                                             </div>
                                                             <div class="col-md-6">
                                                                 <div class="form-group">
-                                                                    <label>Student Count</label>
-                                                                    <p class="form-control-static"><?= $teacher['student_count'] ?></p>
+                                                                    <label><strong>Account Status</strong></label>
+                                                                    <p class="form-control-static">
+                                                                        <span class="badge <?= $badgeClass ?>"><?= esc($status) ?></span>
+                                                                    </p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        
+                                                        <!-- Professional Information -->
+                                                        <hr class="my-4">
+                                                        <h6 class="text-primary mb-3">Professional Information</h6>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label><strong>Position</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['position'] ?? 'Not specified') ?></p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label><strong>Employment Status</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['employment_status_name'] ?? 'Not specified') ?></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label><strong>Educational Attainment</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['educational_attainment'] ?? 'Not specified') ?></p>
+                                                                </div>
+                                                            </div>
+                                                            <div class="col-md-6">
+                                                                <div class="form-group">
+                                                                    <label><strong>PRC License Number</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['prc_license_number'] ?? 'Not provided') ?></p>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            <div class="col-md-12">
+                                                                <div class="form-group">
+                                                                    <label><strong>Eligibility Status</strong></label>
+                                                                    <p class="form-control-static"><?= esc($teacher['eligibility_status'] ?? 'Not specified') ?></p>
                                                                 </div>
                                                             </div>
                                                         </div>

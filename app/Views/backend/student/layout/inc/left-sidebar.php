@@ -1,8 +1,8 @@
 <div class="left-side-bar"> 
     <div class="brand-logo"> 
         <a href="index.html" style="display: inline-flex; align-items: center;"> 
-            <img src="https://scontent.fmnl13-3.fna.fbcdn.net/v/t1.15752-9/486190369_1714804709415712_2378757229292270536_n.png?_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeEqrWJFfuB7YB8JxW_hcNk8q2NSk0-s-t2rY1KTT6z63W0U5K45PTewWLZ2ewpgYB8JrlYnmEvkgC3ixYo7tyci&_nc_ohc=7Ep537vZeNwQ7kNvwFw_tYE&_nc_oc=Adl4e345h5014RDN5sGoX3pShnmDSp44s4DB936Dinb0WA3OHgXDPJSxknP5BHc-Oaw&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fmnl13-3.fna&oh=03_Q7cD2QHMqHk1lpaK_xcKcY_B9FAVYjYWixE2FCtEXacB1acYZA&oe=6856B9B1" alt="Logo" width="40" height="40" /> 
-            <span style="color: maroon; font-size: 25px; font-family: sans-serif; font-weight: 900; margin-left: 10px;"> 
+            <img src="/backend/vendors/images/logo-login.png" alt="Logo" width="40" height="40" /> 
+            <span style="color: #ffffff; font-size: 25px; font-family: 'Roboto', Arial, sans-serif; font-weight: 900; margin-left: 10px; text-shadow: 2px 2px 4px rgba(0,0,0,0.5);"> 
                 SJNHS 
             </span> 
         </a>    

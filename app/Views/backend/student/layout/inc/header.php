@@ -1,3 +1,4 @@
+<?php helper('url'); ?>
 <div class="header">
 			<div class="header-left">
 				<div class="menu-icon bi bi-list"></div>
@@ -158,32 +159,55 @@
 				</div>
 				<div class="user-info-dropdown">
 					<div class="dropdown">
+                    <?php
+                        $user = session()->get('userdata') ?? [];
+                        // Derive first name from available name fields
+                        $rawName = session()->get('name') ?? ($user['name'] ?? ($user['first_name'] ?? null));
+                        $firstName = 'Student';
+                        if (!empty($rawName)) {
+                            $parts = preg_split('/\s+/', trim($rawName));
+                            if (!empty($parts[0])) { $firstName = $parts[0]; }
+                        } elseif (!empty($user['first_name'])) {
+                            $firstName = $user['first_name'];
+                        }
+
+                        // Normalize to absolute URL: external URLs as-is, local filenames under uploads/profile_pictures/
+                        $resolveStudentPictureUrl = function($raw) {
+                            if (!$raw) { return null; }
+                            if (preg_match('#^https?://#', $raw)) { return $raw; }
+                            if (strpos($raw, 'uploads/') !== false) { return '/' . ltrim($raw, '/'); }
+                            return '/uploads/profile_pictures/' . ltrim($raw, '/');
+                        };
+
+                        $rawPicture = session()->get('profile_picture') ?: ($user['picture'] ?? null);
+                        $pictureUrl = $resolveStudentPictureUrl($rawPicture) ?? base_url('backend/vendors/images/person.svg');
+                    ?>
 						<a
 							class="dropdown-toggle"
 							href="#"
 							role="button"
 							data-toggle="dropdown"
 						>
-							<span class="user-icon">
-								<img src="https://scontent.fmnl13-3.fna.fbcdn.net/v/t1.15752-9/486190369_1714804709415712_2378757229292270536_n.png?_nc_cat=102&ccb=1-7&_nc_sid=0024fc&_nc_eui2=AeEqrWJFfuB7YB8JxW_hcNk8q2NSk0-s-t2rY1KTT6z63W0U5K45PTewWLZ2ewpgYB8JrlYnmEvkgC3ixYo7tyci&_nc_ohc=7Ep537vZeNwQ7kNvwFw_tYE&_nc_oc=Adl4e345h5014RDN5sGoX3pShnmDSp44s4DB936Dinb0WA3OHgXDPJSxknP5BHc-Oaw&_nc_ad=z-m&_nc_cid=0&_nc_zt=23&_nc_ht=scontent.fmnl13-3.fna&oh=03_Q7cD2QHMqHk1lpaK_xcKcY_B9FAVYjYWixE2FCtEXacB1acYZA&oe=6856B9B1" alt="" />
-							</span>
-							<span class="user-name">SJNHS Student</span>
+                            <span class="user-icon">
+                                <img src="<?= esc($pictureUrl) ?>" alt="Profile" />
+                            </span>
+                            <span class="user-name"><?= esc($firstName) ?></span>
 						</a>
 						<div
 							class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"
 						>
-							<a class="dropdown-item" href="<?= route_to('admin.profile'); ?>"
-								><i class="dw dw-user1"></i> Profile</a
-							>
+                            <a class="dropdown-item" href="/student/profile"
+                                ><i class="dw dw-user1"></i> Profile</a
+                            >
 							<a class="dropdown-item" href="profile.html"
 								><i class="dw dw-settings2"></i> Setting</a
 							>
 							<a class="dropdown-item" href="faq.html"
 								><i class="dw dw-help"></i> Help</a
 							>
-							<a class="dropdown-item" href="<?= route_to('admin.logout')?>"
-								><i class="dw dw-logout"></i> Log Out</a
-							>
+                            <a class="dropdown-item" href="<?= site_url('student/logout') ?>" target="_self" onclick="event.preventDefault(); window.location.href='<?= site_url('student/logout') ?>';">
+                                <i class="dw dw-logout"></i> Log Out
+                            </a>
 						</div>
 					</div>
 				</div>

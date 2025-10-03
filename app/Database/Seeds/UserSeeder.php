@@ -11,7 +11,7 @@ class UserSeeder extends Seeder
         $data = array(
             'name' => 'admin',
             'email' => 'admin@email.com',
-            'username' => 'admin',
+            'account_no' => 'admin',
             'password' => password_hash('12345678', PASSWORD_BCRYPT),
         );
 

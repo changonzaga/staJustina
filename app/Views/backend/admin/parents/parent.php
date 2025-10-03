@@ -22,45 +22,208 @@
 		</a>
 	</div>
 </div>
-                <div class="container-fluid px-4 mt-3 mb-2"> 
-    <div class="row align-items-end"> 
-        <div class="col-md-3"> 
-            <div class="form-group mb-2 position-relative"> 
-                <input type="text" class="form-control pl-4" id="searchInput" placeholder="Search by name or email..." onkeyup="filterTable()"> 
-                <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;"> 
-                    <i class="icon-copy bi bi-search"></i> 
-                </span> 
+
+<div class="card-box mb-30"> 
+    <div class="pd-20"> 
+        <h4 class="text-blue h4">Data Table Simple</h4> 
+    </div>
+
+<!-- Parent View Modal -->
+<div class="modal fade bs-example-modal-lg" id="parentViewModal" tabindex="-1" role="dialog" aria-labelledby="parentViewModalLabel" style="display: none;" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h4 class="modal-title" id="parentViewModalLabel">
+                    Parent Information
+                </h4>
+                <button type="button" class="close" data-dismiss="modal" aria-hidden="true">
+                    ×
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-12">
+                        <div class="card-box">
+                            <div class="profile-info">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>First Name:</strong></label>
+                                            <p id="modal-first-name">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Middle Name:</strong></label>
+                                            <p id="modal-middle-name">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Last Name:</strong></label>
+                                            <p id="modal-last-name">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Relationship Type:</strong></label>
+                                            <p id="modal-relationship-type">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Contact Number:</strong></label>
+                                            <p id="modal-contact-number">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Student:</strong></label>
+                                            <p id="modal-student-name">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Parent Type:</strong></label>
+                                            <p id="modal-parent-type">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Same Address as Student:</strong></label>
+                                            <p id="modal-same-address">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <h5><strong>Address Information:</strong></h5>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>House Number:</strong></label>
+                                            <p id="modal-house-number">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Street:</strong></label>
+                                            <p id="modal-street">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Barangay:</strong></label>
+                                            <p id="modal-barangay">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Municipality:</strong></label>
+                                            <p id="modal-municipality">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Province:</strong></label>
+                                            <p id="modal-province">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>ZIP Code:</strong></label>
+                                            <p id="modal-zip-code">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Created At:</strong></label>
+                                            <p id="modal-created-at">-</p>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label><strong>Updated At:</strong></label>
+                                            <p id="modal-updated-at">-</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    Close
+                </button>
+                <a href="#" id="modal-edit-link" class="btn btn-primary">
+                    Edit Parent
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+    
+    <!-- Filter, Search, and Export Buttons Section -->
+    <div class="pd-20 pt-0">
+        <div class="row align-items-end"> 
+            <div class="col-md-3"> 
+                <div class="form-group"> 
+                    <label>Search Parents:</label>
+                    <div class="position-relative"> 
+                        <input type="text" class="form-control pl-4" id="searchInput" placeholder="Search by name..." onkeyup="filterTable()"> 
+                        <span style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: #aaa;"> 
+                            <i class="icon-copy bi bi-search"></i> 
+                        </span> 
+                    </div>
+                </div> 
             </div> 
-        </div> 
-        <div class="col-md-3"> 
-            <div class="form-group mb-2"> 
-                <select class="form-control" id="categoryFilter" onchange="filterTable()"> 
-                    <option value="">All Parents</option> 
-                </select> 
+            <div class="col-md-3"> 
+                <div class="form-group"> 
+                    <label>Filter Category:</label>
+                    <select class="form-control" id="categoryFilter" onchange="filterTable()"> 
+                        <option value="">All Parents</option> 
+                    </select> 
+                </div> 
             </div> 
-        </div> 
-        <div class="col-md-6 d-flex justify-content-end"> 
-            <div class="dt-buttons btn-group flex-wrap"> 
-                <button id="copyBtn" class="btn btn-secondary buttons-copy buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button" onclick="handleCopyClick(this)"> 
-                    <i class="icon-copy bi bi-clipboard"></i> <span>Copy</span> 
-                </button> 
-                <button class="btn btn-secondary buttons-csv buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button"> 
-                    <i class="icon-copy bi bi-filetype-csv"></i> <span>CSV</span> 
-                </button> 
-                <button class="btn btn-secondary buttons-pdf buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button"> 
-                    <i class="icon-copy bi bi-file-pdf"></i> <span>PDF</span>
-                </button> 
-                <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="DataTables_Table_2" type="button"> 
-                    <i class="icon-copy bi bi-printer"></i> <span>Print</span>
-                </button> 
+            <div class="col-md-6"> 
+                <div class="form-group"> 
+                    <label>&nbsp;</label>
+                    <div class="d-flex justify-content-end"> 
+                        <div class="dt-buttons btn-group flex-wrap"> 
+                            <button id="copyBtn" class="btn btn-secondary buttons-copy buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button" onclick="handleCopyClick(this)"> 
+                                <i class="icon-copy bi bi-clipboard"></i> <span>Copy</span> 
+                            </button> 
+                            <button class="btn btn-secondary buttons-csv buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button"> 
+                                <i class="icon-copy bi bi-filetype-csv"></i> <span>CSV</span> 
+                            </button> 
+                            <button class="btn btn-secondary buttons-pdf buttons-html5" tabindex="0" aria-controls="DataTables_Table_2" type="button"> 
+                                <i class="icon-copy bi bi-file-pdf"></i> <span>PDF</span>
+                            </button> 
+                            <button class="btn btn-secondary buttons-print" tabindex="0" aria-controls="DataTables_Table_2" type="button"> 
+                                <i class="icon-copy bi bi-printer"></i> <span>Print</span>
+                            </button> 
+                        </div> 
+                    </div>
+                </div>
             </div> 
         </div> 
     </div> 
-</div> 
- <div class="card-box mb-30"> 
-     <div class="pd-20"> 
-         <h4 class="text-blue h4">Data Table Simple</h4> 
-     </div> 
      <div class="pb-20"> 
          <div id="DataTables_Table_2_wrapper" class="dataTables_wrapper dt-bootstrap4 no-footer"> 
              <div id="DataTables_Table_2_filter" class="dataTables_filter"> 
@@ -75,9 +238,7 @@
                              <th class="table-plus"> 
                                  <input type="checkbox" id="selectAll" onchange="toggleSelectAll()"> 
                              </th> 
-                             <th>Photo</th> 
                              <th>Name</th> 
-                             <th>Email</th> 
                              <th>Contact</th> 
                              <th>Created At</th> 
                              <th>Actions</th> 
@@ -88,18 +249,11 @@
                              <?php foreach($parents as $parent): ?>
                                  <tr> 
                                      <td><input type="checkbox" class="parent-checkbox" value="<?= $parent['id'] ?>"></td> 
-                                     <td> 
-                                         <?php if(!empty($parent['profile_picture']) && file_exists(ROOTPATH . 'public/uploads/parents/' . $parent['profile_picture'])): ?>
-                                             <img src="<?= base_url('uploads/parents/' . $parent['profile_picture']) ?>" class="avatar-photo" style="width: 40px; height: 40px; border-radius: 50%;" alt=""> 
-                                         <?php else: ?>
-                                             <img src="<?= base_url('backend/vendors/images/user.png') ?>" class="avatar-photo" style="width: 40px; height: 40px; border-radius: 50%;" alt=""> 
-                                         <?php endif; ?>
-                                     </td> 
                                      <td class="table-plus"> 
-                                         <strong><?= $parent['name'] ?></strong> 
+                                         <strong><?= $parent['full_name'] ?? ($parent['first_name'] . ' ' . $parent['last_name']) ?></strong>
+                                         <br><small class="text-muted"><?= ucfirst($parent['relationship_type']) ?> of <?= $parent['student_name'] ?? 'Student' ?></small>
                                      </td> 
-                                     <td><?= $parent['email'] ?></td> 
-                                     <td><?= $parent['contact'] ?></td> 
+                                     <td><?= $parent['contact_number'] ?? 'Not provided' ?></td> 
                                      <td><?= date('M d, Y', strtotime($parent['created_at'])) ?></td> 
                                      <td> 
                                          <div class="dropdown"> 
@@ -107,7 +261,7 @@
                                                  <i class="dw dw-more"></i> 
                                              </a> 
                                              <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"> 
-                                                 <a class="dropdown-item" href="<?= route_to('admin.parent.view', $parent['id']) ?>"><i class="dw dw-eye"></i> View</a> 
+                                                 <a class="dropdown-item view-parent" href="#" data-id="<?= $parent['id'] ?>" data-toggle="modal" data-target="#parentViewModal"><i class="dw dw-eye"></i> View</a> 
                                                  <a class="dropdown-item" href="<?= route_to('admin.parent.edit', $parent['id']) ?>"><i class="dw dw-edit2"></i> Edit</a> 
                                                  <a class="dropdown-item delete-parent" href="#" data-id="<?= $parent['id'] ?>"><i class="dw dw-delete-3"></i> Delete</a> 
                                              </div> 
@@ -117,7 +271,7 @@
                              <?php endforeach; ?>
                          <?php else: ?>
                              <tr>
-                                 <td colspan="7" class="text-center">No parents found</td>
+                                 <td colspan="5" class="text-center">No parents found</td>
                              </tr>
                          <?php endif; ?>
                      </tbody>
@@ -162,10 +316,9 @@ function filterTable() {
     // Loop through rows and apply filters
     rows.forEach(row => {
         const name = row.querySelector('td.table-plus strong')?.textContent.toLowerCase() || '';
-        const email = row.querySelector('td:nth-child(4)')?.textContent.toLowerCase() || '';
         
         // Check if row matches search filter
-        const matchesSearch = !searchTerm || name.includes(searchTerm) || email.includes(searchTerm);
+        const matchesSearch = !searchTerm || name.includes(searchTerm);
         
         // Show/hide row based on filter results
         row.style.display = matchesSearch ? '' : 'none';
@@ -209,9 +362,7 @@ function handleCopyClick(button) {
                 // Get text content, handling nested elements
                 let cellText = '';
                 
-                if (index === 1) { // Photo column - skip
-                    cellText = 'Photo';
-                } else if (index === 2) { // Name column
+                if (index === 1) { // Name column (photo column removed)
                     cellText = cell.querySelector('strong')?.textContent.trim() || '';
                 } else {
                     cellText = cell.textContent.trim();
@@ -256,6 +407,103 @@ document.addEventListener('DOMContentLoaded', function() {
                 document.body.appendChild(form);
                 form.submit();
             }
+        });
+    });
+
+    // Add event listeners to view buttons for modal
+    const viewButtons = document.querySelectorAll('.view-parent');
+    viewButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            e.preventDefault();
+            const parentId = this.getAttribute('data-id');
+            
+            // Show loading state
+            document.getElementById('modal-first-name').textContent = 'Loading...';
+            document.getElementById('modal-middle-name').textContent = 'Loading...';
+            document.getElementById('modal-last-name').textContent = 'Loading...';
+            document.getElementById('modal-relationship-type').textContent = 'Loading...';
+            document.getElementById('modal-contact-number').textContent = 'Loading...';
+            document.getElementById('modal-student-name').textContent = 'Loading...';
+            document.getElementById('modal-parent-type').textContent = 'Loading...';
+            document.getElementById('modal-same-address').textContent = 'Loading...';
+            document.getElementById('modal-house-number').textContent = 'Loading...';
+            document.getElementById('modal-street').textContent = 'Loading...';
+            document.getElementById('modal-barangay').textContent = 'Loading...';
+            document.getElementById('modal-municipality').textContent = 'Loading...';
+            document.getElementById('modal-province').textContent = 'Loading...';
+            document.getElementById('modal-zip-code').textContent = 'Loading...';
+            document.getElementById('modal-created-at').textContent = 'Loading...';
+            document.getElementById('modal-updated-at').textContent = 'Loading...';
+            
+            // Fetch parent data from database via AJAX
+            fetch('<?= site_url('admin/parent/data/') ?>' + parentId)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        const parent = data.data;
+                        
+                        // Populate modal fields with database data
+                        document.getElementById('modal-first-name').textContent = parent.first_name || '-';
+                        document.getElementById('modal-middle-name').textContent = parent.middle_name || '-';
+                        document.getElementById('modal-last-name').textContent = parent.last_name || '-';
+                        document.getElementById('modal-relationship-type').textContent = parent.relationship_type || '-';
+                        document.getElementById('modal-contact-number').textContent = parent.contact_number || '-';
+                        document.getElementById('modal-student-name').textContent = parent.student_name || '-';
+                        document.getElementById('modal-parent-type').textContent = parent.parent_type || '-';
+                        document.getElementById('modal-same-address').textContent = parent.is_same_as_student || '-';
+                        document.getElementById('modal-house-number').textContent = parent.house_number || '-';
+                        document.getElementById('modal-street').textContent = parent.street || '-';
+                        document.getElementById('modal-barangay').textContent = parent.barangay || '-';
+                        document.getElementById('modal-municipality').textContent = parent.municipality || '-';
+                        document.getElementById('modal-province').textContent = parent.province || '-';
+                        document.getElementById('modal-zip-code').textContent = parent.zip_code || '-';
+                        document.getElementById('modal-created-at').textContent = parent.created_at || '-';
+                        document.getElementById('modal-updated-at').textContent = parent.updated_at || '-';
+                        
+                        // Set edit link
+                        const editLink = document.getElementById('modal-edit-link');
+                        editLink.href = '<?= site_url('admin/parent/edit/') ?>' + parentId;
+                    } else {
+                        // Handle error
+                        document.getElementById('modal-first-name').textContent = 'Error loading data';
+                        document.getElementById('modal-middle-name').textContent = '-';
+                        document.getElementById('modal-last-name').textContent = '-';
+                        document.getElementById('modal-relationship-type').textContent = '-';
+                        document.getElementById('modal-contact-number').textContent = '-';
+                        document.getElementById('modal-student-name').textContent = '-';
+                        document.getElementById('modal-parent-type').textContent = '-';
+                        document.getElementById('modal-same-address').textContent = '-';
+                        document.getElementById('modal-house-number').textContent = '-';
+                        document.getElementById('modal-street').textContent = '-';
+                        document.getElementById('modal-barangay').textContent = '-';
+                        document.getElementById('modal-municipality').textContent = '-';
+                        document.getElementById('modal-province').textContent = '-';
+                        document.getElementById('modal-zip-code').textContent = '-';
+                        document.getElementById('modal-created-at').textContent = '-';
+                        document.getElementById('modal-updated-at').textContent = '-';
+                        console.error('Error fetching parent data:', data.message);
+                    }
+                })
+                .catch(error => {
+                    // Handle network error
+                    document.getElementById('modal-first-name').textContent = 'Network error';
+                    document.getElementById('modal-middle-name').textContent = '-';
+                    document.getElementById('modal-last-name').textContent = '-';
+                    document.getElementById('modal-relationship-type').textContent = '-';
+                    document.getElementById('modal-contact-number').textContent = '-';
+                    document.getElementById('modal-student-name').textContent = '-';
+                    document.getElementById('modal-parent-type').textContent = '-';
+                    document.getElementById('modal-same-address').textContent = '-';
+                    document.getElementById('modal-house-number').textContent = '-';
+                    document.getElementById('modal-street').textContent = '-';
+                    document.getElementById('modal-barangay').textContent = '-';
+                    document.getElementById('modal-municipality').textContent = '-';
+                    document.getElementById('modal-province').textContent = '-';
+                    document.getElementById('modal-zip-code').textContent = '-';
+                    document.getElementById('modal-created-at').textContent = '-';
+                    document.getElementById('modal-updated-at').textContent = '-';
+                    console.error('Network error:', error);
+                });
         });
     });
 });

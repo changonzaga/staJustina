@@ -10,755 +10,662 @@
             </div>
             <nav aria-label="breadcrumb" role="navigation">
                 <ol class="breadcrumb">
-                    <li class="breadcrumb-item">
-                        <a href="<?= route_to('admin.home') ?>">Home</a>
-                    </li>
-                    <li class="breadcrumb-item">
-                        <a href="<?= site_url('admin/teacher') ?>">Teachers</a>
-                    </li>
-                    <li class="breadcrumb-item active" aria-current="page">
-                        Edit Teacher
-                    </li>
+                    <li class="breadcrumb-item"><a href="<?= route_to('admin.home') ?>">Home</a></li>
+                    <li class="breadcrumb-item"><a href="<?= site_url('/admin/teacher') ?>">Teachers</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Edit Teacher</li>
                 </ol>
             </nav>
         </div>
     </div>
 </div>
 
-<div class="pd-20 card-box mb-30">
-    <div class="clearfix mb-20">
-        <div class="pull-left">
-            <h4 class="text-blue h4">Edit Teacher Information</h4>
-            <p class="mb-30">Update teacher details below</p>
-        </div>
+<!-- Success/Error Messages -->
+<?php if (session()->getFlashdata('success')): ?>
+    <div class="alert alert-success alert-dismissible fade show" role="alert">
+        <?= session()->getFlashdata('success') ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
     </div>
-    <div class="wizard-content">
-        <?php if (session()->has('error')): ?>
-            <div class="alert alert-danger">
-                <?= session('error') ?>
-            </div>
-        <?php endif; ?>
-        
-        <?php if (session()->has('success')): ?>
-            <div class="alert alert-success">
-                <?= session('success') ?>
-            </div>
-        <?php endif; ?>
-        <form action="<?= route_to('admin.teacher.update', $teacher['id']) ?>" method="post" enctype="multipart/form-data" id="updateTeacherForm">
-            <?= csrf_field() ?>
-            
-            <div class="tab">
-                <ul class="nav nav-tabs customtab" role="tablist">
-                    <li class="nav-item">
-                        <a class="nav-link active" data-toggle="tab" href="#teacher_info" role="tab" aria-selected="true">Teacher Information</a>
-                    </li>
-                    <li class="nav-item">   
-                        <a class="nav-link" data-toggle="tab" href="#profile_pic" role="tab" aria-selected="false">Profile Picture</a>
-                    </li>
-                </ul>
-                <div class="tab-content">
-                    <div class="tab-pane fade show active" id="teacher_info" role="tabpanel">
-                        <div class="pd-20">
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Account No.</label>
-                        <input type="text" name="account_no" class="form-control" value="<?= $teacher['account_no'] ?>" required>
-                        <div class="invalid-feedback">Please enter a valid account number</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" name="name" class="form-control" value="<?= $teacher['name'] ?>" required>
-                        <div class="invalid-feedback">Please enter a valid name</div>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select name="gender" class="form-control" required>
-                            <option value="">Select Gender</option>
-                            <option value="Male" <?= $teacher['gender'] == 'Male' ? 'selected' : '' ?>>Male</option>
-                            <option value="Female" <?= $teacher['gender'] == 'Female' ? 'selected' : '' ?>>Female</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Age</label>
-                        <input type="number" name="age" class="form-control" value="<?= $teacher['age'] ?>" required>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Subjects</label>
-                        <input type="text" name="subjects" class="form-control" value="<?= $teacher['subjects'] ?>" required>
-                        <div class="invalid-feedback">Please enter the subjects taught</div>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Student Count</label>
-                        <input type="number" name="student_count" class="form-control" value="<?= $teacher['student_count'] ?>" required>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-6">
-                    <div class="form-group">
-                        <label>Status</label>
-                        <select name="status" class="form-control" required>
-                            <option value="">Select Status</option>
-                            <option value="Active" <?= $teacher['status'] == 'Active' ? 'selected' : '' ?>>Active</option>
-                            <option value="Inactive" <?= $teacher['status'] == 'Inactive' ? 'selected' : '' ?>>Inactive</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <!-- Empty space for future field if needed -->
-                </div>
-            </div>
+<?php endif; ?>
+
+<?php if (session()->getFlashdata('error')): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= session()->getFlashdata('error') ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+<?php endif; ?>
+
+<div class="row">
+    <div class="col-xl-12 col-lg-12 col-md-12 col-sm-12 mb-30">
+        <div class="card-box">
+            <div class="card-header bg-white">
+                <h5 class="card-title text-primary">Edit Teacher Information</h5>
+                <p class="card-text text-secondary">Update teacher's details below. Account number cannot be changed.</p>
+            </div>  
+            <div class="card-body">
+                <form action="<?= site_url('/admin/teacher/update/' . $teacher['id']) ?>" method="POST" enctype="multipart/form-data">
+                    <?= csrf_field() ?>
+                    
+                    <!-- Account Information -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6 class="text-primary mb-3"><i class="icon-copy dw dw-id-card"></i> Account Information</h6>
                         </div>
                     </div>
-                    <div class="tab-pane fade" id="profile_pic" role="tabpanel">
-                        <div class="pd-20">
-                            <div class="form-group text-center">
-                                <?php if (!empty($teacher['profile_picture'])): ?>
-                                    <div class="mb-4">
-                                        <h6 class="text-muted">Current Image:</h6>
-                                        <img src="<?= base_url('Uploads/teachers/' . $teacher['profile_picture']) ?>" 
-                                             alt="Profile" class="mt-2" style="width: 180px; height: 180px; border-radius: 50%; object-fit: cover;">
-                                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="account_no">Account Number</label>
+                                <input type="text" class="form-control" id="account_no" name="account_no" 
+                                       value="<?= esc($teacher['account_no']) ?>" readonly>
+                                <small class="form-text text-muted">Account number cannot be changed</small>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="employee_id">Employee ID <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control <?= isset($validation) && $validation->hasError('employee_id') ? 'is-invalid' : '' ?>" 
+                                       id="employee_id" name="employee_id" value="<?= old('employee_id', $teacher['employee_id']) ?>" required>
+                                <?php if (isset($validation) && $validation->hasError('employee_id')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('employee_id') ?></div>
                                 <?php endif; ?>
-                                
-                                <label>Profile Picture</label>
-                                <div class="text-center mb-3">
-                                    <input type="file" id="profile_picture" name="profile_picture" class="form-control-file mx-auto" style="max-width: 300px;" accept="image/*" onchange="loadImageForCropping(event)">
-                                </div>
-                                
-                                <!-- Image Cropper Container (Hidden by default) -->
-                                <div id="image-cropper-container" class="mt-3" style="display: none;">
-                                    <div class="row">
-                                        <div class="col-md-8">
-                                            <div class="img-container mb-3" style="max-height: 500px;">
-                                                <img id="image-to-crop" src="" alt="Image to crop" style="max-width: 100%;">
-                                            </div>
-                                        </div>
-                                        <div class="col-md-4">
-                                            <div class="card">
-                                                <div class="card-header bg-light">
-                                                    <h6 class="mb-0">Image Controls</h6>
-                                                </div>
-                                                <div class="card-body">
-                                                    <div class="form-group row mb-2">
-                                                        <label class="col-sm-3 col-form-label">X</label>
-                                                        <div class="col-sm-9">
-                                                            <input type="text" class="form-control form-control-sm" id="dataX" placeholder="x" readonly>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row mb-2">
-                                                        <label class="col-sm-3 col-form-label">Y</label>
-                                                        <div class="col-sm-9">
-                                                            <input type="text" class="form-control form-control-sm" id="dataY" placeholder="y" readonly>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row mb-2">
-                                                        <label class="col-sm-3 col-form-label">Width</label>
-                                                        <div class="col-sm-9">
-                                                            <input type="text" class="form-control form-control-sm" id="dataWidth" placeholder="width" readonly>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row mb-2">
-                                                        <label class="col-sm-3 col-form-label">Height</label>
-                                                        <div class="col-sm-9">
-                                                            <input type="text" class="form-control form-control-sm" id="dataHeight" placeholder="height" readonly>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row mb-2">
-                                                        <label class="col-sm-3 col-form-label">Rotate</label>
-                                                        <div class="col-sm-9">
-                                                            <input type="text" class="form-control form-control-sm" id="dataRotate" placeholder="rotate" readonly>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row mb-2">
-                                                        <label class="col-sm-3 col-form-label">Scale</label>
-                                                        <div class="col-sm-9">
-                                                            <input type="text" class="form-control form-control-sm" id="dataScaleX" placeholder="scaleX" readonly>
-                                                        </div>
-                                                    </div>
-                                                    <div class="form-group row mb-3">
-                                                        <label class="col-sm-3 col-form-label">Aspect</label>
-                                                        <div class="col-sm-9">
-                                                            <div class="btn-group btn-group-sm" role="group">
-                                                                <button type="button" class="btn btn-outline-secondary" id="aspectRatio1to1">1:1</button>
-                                                                <button type="button" class="btn btn-outline-secondary" id="aspectRatio4to3">4:3</button>
-                                                                <button type="button" class="btn btn-outline-secondary" id="aspectRatioFree">Free</button>
-                                                            </div>
-                                                        </div>
-                                                    </div>
-                                                    <div class="d-flex justify-content-between">
-                                                        <button type="button" class="btn btn-primary btn-sm" id="crop-image">Crop Image</button>
-                                                        <button type="button" class="btn btn-secondary btn-sm" id="cancel-crop">Cancel</button>
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            
-                                            <!-- Preview of cropped image -->
-                                            <div id="cropped-image-preview" class="mt-3 text-center" style="display: none;">
-                                                <h6 class="text-muted">Preview:</h6>
-                                                <img id="cropped-preview" src="" alt="Cropped preview" style="width: 180px; height: 180px; border-radius: 50%; object-fit: cover;">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    <input type="hidden" id="cropped_image_data" name="cropped_image_data">
-                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="email">Email Address <span class="text-danger">*</span></label>
+                                <input type="email" class="form-control <?= isset($validation) && $validation->hasError('email') ? 'is-invalid' : '' ?>" 
+                                       id="email" name="email" value="<?= old('email', $teacher['email']) ?>" required>
+                                <small class="form-text text-muted">Used for login and notifications</small>
+                                <?php if (isset($validation) && $validation->hasError('email')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('email') ?></div>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
-            
-            <div class="form-group mt-4 text-right">
-                <a href="<?= site_url('admin/teacher') ?>" class="btn btn-outline-secondary mr-2">Cancel</a>
-                <button type="submit" class="btn btn-primary" id="updateTeacherBtn">Update Teacher</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<?= $this->endSection() ?>
-
-<?= $this->section('stylesheets') ?>
-<!-- Cropper.js CSS -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-<style>
-    /* Custom styles for image cropper */
-    .img-container {
-        overflow: hidden;
-        position: relative;
-        background-color: #f8f9fa;
-        border: 1px solid #dee2e6;
-        border-radius: 4px;
-    }
-    
-    /* Style for aspect ratio buttons */
-    .btn-group .btn.active {
-        background-color: #007bff;
-        color: white;
-        border-color: #007bff;
-    }
-    
-    /* Style for data inputs */
-    #dataX, #dataY, #dataWidth, #dataHeight, #dataRotate, #dataScaleX {
-        background-color: #f8f9fa;
-    }
-    
-    /* Make the cropper container more prominent */
-    #image-cropper-container {
-        background-color: #ffffff;
-        padding: 15px;
-        border-radius: 5px;
-        box-shadow: 0 0 10px rgba(0,0,0,0.1);
-    }
-    .cropper-container {
-        max-height: 400px;
-    }
-</style>
-<?= $this->endSection() ?>
-
-<?= $this->section('scripts') ?>
-<!-- Bootstrap Modal Alert HTML -->
-<div class="modal fade" id="alertModal" tabindex="-1" role="dialog" aria-labelledby="alertModalLabel" aria-hidden="true">
-    <div class="modal-dialog modal-dialog-centered" role="document">
-        <div class="modal-content">
-            <div class="modal-header border-0 pb-0 justify-content-end">
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
-            </div>
-            <div class="modal-body text-center py-4">
-                <div class="d-flex align-items-center justify-content-center mb-4 mx-auto rounded-circle text-white" style="width: 70px; height: 70px;">
-                    <i class="fa fa-3x"></i>
-                </div>
-                <h5 class="font-weight-bold mb-3" id="alertModalLabel"></h5>
-                <p class="mb-4 text-muted"></p>
-                <button type="button" class="btn px-4 py-2 font-weight-bold" id="alertModalButton" data-dismiss="modal">OK</button>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="status">Account Status</label>
+                                <select class="form-control" id="status" name="status">
+                                    <option value="Active" <?= old('status', $teacher['status']) == 'Active' ? 'selected' : '' ?>>Active</option>
+                                    <option value="Inactive" <?= old('status', $teacher['status']) == 'Inactive' ? 'selected' : '' ?>>Inactive</option>
+                                    <option value="Suspended" <?= old('status', $teacher['status']) == 'Suspended' ? 'selected' : '' ?>>Suspended</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Personal Information -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h6 class="text-primary mb-3"><i class="icon-copy dw dw-user1"></i> Personal Information</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="first_name">First Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control <?= isset($validation) && $validation->hasError('first_name') ? 'is-invalid' : '' ?>" 
+                                       id="first_name" name="first_name" value="<?= old('first_name', $teacher['first_name']) ?>" required>
+                                <?php if (isset($validation) && $validation->hasError('first_name')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('first_name') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="middle_name">Middle Name</label>
+                                <input type="text" class="form-control" id="middle_name" name="middle_name" 
+                                       value="<?= old('middle_name', $teacher['middle_name']) ?>">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="last_name">Last Name <span class="text-danger">*</span></label>
+                                <input type="text" class="form-control <?= isset($validation) && $validation->hasError('last_name') ? 'is-invalid' : '' ?>" 
+                                       id="last_name" name="last_name" value="<?= old('last_name', $teacher['last_name']) ?>" required>
+                                <?php if (isset($validation) && $validation->hasError('last_name')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('last_name') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="date_of_birth">Date of Birth</label>
+                                <input type="date" class="form-control <?= isset($validation) && $validation->hasError('date_of_birth') ? 'is-invalid' : '' ?>" 
+                                       id="date_of_birth" name="date_of_birth" value="<?= old('date_of_birth', $teacher['date_of_birth']) ?>">
+                                <?php if (isset($validation) && $validation->hasError('date_of_birth')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('date_of_birth') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="age">Age</label>
+                                <input type="number" class="form-control <?= isset($validation) && $validation->hasError('age') ? 'is-invalid' : '' ?>" 
+                                       id="age" name="age" value="<?= old('age', $teacher['age']) ?>" placeholder="Age (10-100)">
+                                <small class="form-text text-muted">Leave empty if unknown (minimum 10 years)</small>
+                                <?php if (isset($validation) && $validation->hasError('age')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('age') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="gender">Gender <span class="text-danger">*</span></label>
+                                <select class="form-control <?= isset($validation) && $validation->hasError('gender') ? 'is-invalid' : '' ?>" 
+                                        id="gender" name="gender" required>
+                                    <option value="">Select Gender</option>
+                                    <option value="Male" <?= old('gender', $teacher['gender']) == 'Male' ? 'selected' : '' ?>>Male</option>
+                                    <option value="Female" <?= old('gender', $teacher['gender']) == 'Female' ? 'selected' : '' ?>>Female</option>
+                                    <option value="Other" <?= old('gender', $teacher['gender']) == 'Other' ? 'selected' : '' ?>>Other</option>
+                                </select>
+                                <?php if (isset($validation) && $validation->hasError('gender')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('gender') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="form-group">
+                                <label for="contact_number">Contact Number</label>
+                                <input type="text" class="form-control <?= isset($validation) && $validation->hasError('contact_number') ? 'is-invalid' : '' ?>" 
+                                       id="contact_number" name="contact_number" value="<?= old('contact_number', $teacher['contact_number']) ?>" 
+                                       placeholder="09XXXXXXXXX">
+                                <?php if (isset($validation) && $validation->hasError('contact_number')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('contact_number') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="civil_status_id">Civil Status</label>
+                                <select class="form-control <?= isset($validation) && $validation->hasError('civil_status_id') ? 'is-invalid' : '' ?>" 
+                                        id="civil_status_id" name="civil_status_id">
+                                    <option value="">Select Civil Status</option>
+                                    <?php if (isset($civil_statuses) && !empty($civil_statuses)): ?>
+                                        <?php foreach ($civil_statuses as $status): ?>
+                                            <option value="<?= $status['id'] ?>" <?= old('civil_status_id', $teacher['civil_status_id']) == $status['id'] ? 'selected' : '' ?>>
+                                                <?= esc($status['status']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <?php if (isset($validation) && $validation->hasError('civil_status_id')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('civil_status_id') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="nationality">Nationality</label>
+                                <input type="text" class="form-control" id="nationality" name="nationality" 
+                                       value="<?= old('nationality', $teacher['nationality']) ?>" placeholder="Filipino">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="profile_picture">Profile Picture</label>
+                                <input type="file" class="form-control-file <?= isset($validation) && $validation->hasError('profile_picture') ? 'is-invalid' : '' ?>" 
+                                       id="profile_picture" name="profile_picture" accept="image/*">
+                                <small class="form-text text-muted">Upload a new profile picture (Max: 2MB, JPG/PNG)</small>
+                                <?php if (isset($validation) && $validation->hasError('profile_picture')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('profile_picture') ?></div>
+                                <?php endif; ?>
+                                <?php if (!empty($teacher['profile_picture'])): ?>
+                                    <div class="mt-2">
+                                        <img src="<?= base_url('uploads/teachers/' . $teacher['profile_picture']) ?>" 
+                                             alt="Current Profile" class="img-thumbnail" style="max-width: 100px; max-height: 100px;">
+                                        <small class="d-block text-muted">Current profile picture</small>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Professional Information -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h6 class="text-primary mb-3"><i class="icon-copy dw dw-briefcase"></i> Professional Information</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="position">Position</label>
+                                <input type="text" class="form-control" id="position" name="position" 
+                                       value="<?= old('position', $teacher['position']) ?>" placeholder="e.g., Senior High School Teacher">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="employment_status_id">Employment Status</label>
+                                <select class="form-control <?= isset($validation) && $validation->hasError('employment_status_id') ? 'is-invalid' : '' ?>" 
+                                        id="employment_status_id" name="employment_status_id">
+                                    <option value="">Select Employment Status</option>
+                                    <?php if (isset($employment_statuses) && !empty($employment_statuses)): ?>
+                                        <?php foreach ($employment_statuses as $status): ?>
+                                            <option value="<?= $status['id'] ?>" <?= old('employment_status_id', $teacher['employment_status_id']) == $status['id'] ? 'selected' : '' ?>>
+                                                <?= esc($status['status']) ?>
+                                            </option>
+                                        <?php endforeach; ?>
+                                    <?php endif; ?>
+                                </select>
+                                <?php if (isset($validation) && $validation->hasError('employment_status_id')): ?>
+                                    <div class="invalid-feedback"><?= $validation->getError('employment_status_id') ?></div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="educational_attainment">Educational Attainment</label>
+                                <input type="text" class="form-control" id="educational_attainment" name="educational_attainment" 
+                                       value="<?= old('educational_attainment', $teacher['educational_attainment']) ?>" 
+                                       placeholder="e.g., Bachelor of Science in Education">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="prc_license_number">PRC License Number</label>
+                                <input type="text" class="form-control" id="prc_license_number" name="prc_license_number" 
+                                       value="<?= old('prc_license_number', $teacher['prc_license_number']) ?>" 
+                                       placeholder="Professional License Number">
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="form-group">
+                                <label for="eligibility_status">Eligibility Status</label>
+                                <input type="text" class="form-control" id="eligibility_status" name="eligibility_status" 
+                                       value="<?= old('eligibility_status', $teacher['eligibility_status']) ?>" 
+                                       placeholder="e.g., LET Passer, Civil Service Eligible">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Address Information Section -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h6 class="text-primary mb-3"><i class="icon-copy dw dw-home"></i> Address Information</h6>
+                        </div>
+                    </div>
+                    
+                    <!-- Residential Address -->
+                    <div class="row">
+                        <div class="col-md-12">
+                            <h6 class="text-secondary mb-3">Residential Address</h6>
+                        </div>
+                        <div class="col-md-12">
+                             <div class="form-group">
+                                 <label for="residential_street_address">Street Address</label>
+                                 <textarea class="form-control" id="residential_street_address" name="residential_street_address" 
+                                          rows="2" placeholder="House/Unit Number, Street Name"><?= old('residential_street_address', $teacher_addresses['residential']['street_address'] ?? '') ?></textarea>
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="residential_barangay">Barangay</label>
+                                 <input type="text" class="form-control" id="residential_barangay" name="residential_barangay" 
+                                        value="<?= old('residential_barangay', $teacher_addresses['residential']['barangay'] ?? '') ?>" placeholder="Barangay">
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="residential_city">City/Municipality</label>
+                                 <input type="text" class="form-control" id="residential_city" name="residential_city" 
+                                        value="<?= old('residential_city', $teacher_addresses['residential']['city'] ?? '') ?>" placeholder="City/Municipality">
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="residential_province">Province</label>
+                                 <input type="text" class="form-control" id="residential_province" name="residential_province" 
+                                        value="<?= old('residential_province', $teacher_addresses['residential']['province'] ?? '') ?>" placeholder="Province">
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="residential_postal_code">Postal Code</label>
+                                 <input type="text" class="form-control" id="residential_postal_code" name="residential_postal_code" 
+                                        value="<?= old('residential_postal_code', $teacher_addresses['residential']['postal_code'] ?? '') ?>" placeholder="Postal Code">
+                             </div>
+                         </div>
+                    </div>
+                    
+                    <!-- Permanent Address -->
+                    <div class="col-12 mb-3">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="same_as_residential" name="same_as_residential" 
+                                   <?= old('same_as_residential') ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="same_as_residential">
+                                Permanent address is the same as residential address
+                            </label>
+                        </div>
+                        
+                        <div id="permanent_address_section" style="<?= old('same_as_residential') ? 'display: none;' : '' ?>">
+                            <h6 class="text-secondary mb-3">Permanent Address</h6>
+                        </div>
+                    </div>
+                    
+                    <div class="row" id="permanent_address_fields" style="<?= old('same_as_residential') ? 'display: none;' : '' ?>">
+                        <div class="col-md-12">
+                             <div class="form-group">
+                                 <label for="permanent_street_address">Street Address</label>
+                                 <textarea class="form-control" id="permanent_street_address" name="permanent_street_address" 
+                                          rows="2" placeholder="House/Unit Number, Street Name"><?= old('permanent_street_address', $teacher_addresses['permanent']['street_address'] ?? '') ?></textarea>
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="permanent_barangay">Barangay</label>
+                                 <input type="text" class="form-control" id="permanent_barangay" name="permanent_barangay" 
+                                        value="<?= old('permanent_barangay', $teacher_addresses['permanent']['barangay'] ?? '') ?>" placeholder="Barangay">
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="permanent_city">City/Municipality</label>
+                                 <input type="text" class="form-control" id="permanent_city" name="permanent_city" 
+                                        value="<?= old('permanent_city', $teacher_addresses['permanent']['city'] ?? '') ?>" placeholder="City/Municipality">
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="permanent_province">Province</label>
+                                 <input type="text" class="form-control" id="permanent_province" name="permanent_province" 
+                                        value="<?= old('permanent_province', $teacher_addresses['permanent']['province'] ?? '') ?>" placeholder="Province">
+                             </div>
+                         </div>
+                         <div class="col-md-3">
+                             <div class="form-group">
+                                 <label for="permanent_postal_code">Postal Code</label>
+                                 <input type="text" class="form-control" id="permanent_postal_code" name="permanent_postal_code" 
+                                        value="<?= old('permanent_postal_code', $teacher_addresses['permanent']['postal_code'] ?? '') ?>" placeholder="Postal Code">
+                             </div>
+                         </div>
+                    </div>
+                    
+                    <!-- Specializations Section -->
+                    <div class="row mt-4">
+                        <div class="col-md-12">
+                            <h6 class="text-primary mb-3"><i class="icon-copy dw dw-book"></i> Subject Specializations</h6>
+                            <p class="text-muted">Add the subjects this teacher specializes in. You can add multiple specializations.</p>
+                        </div>
+                        <div class="col-md-12">
+                             <div id="specializations-container">
+                                 <?php if (!empty($teacher_specializations)): ?>
+                                     <?php foreach ($teacher_specializations as $index => $specialization): ?>
+                                         <div class="specialization-item border rounded p-3 mb-3" data-index="<?= $index ?>">
+                                             <div class="row">
+                                                 <div class="col-md-4">
+                                                     <label class="font-weight-bold">Subject <?= $specialization['is_primary'] ? '<span class="text-secondary ml-1 small">Primary</span>' : '' ?></label>
+                                                     <select class="form-control" name="specializations[<?= $index ?>][subject_id]">
+                                                         <option value="">Select Subject</option>
+                                                         <?php if (isset($subjects) && !empty($subjects)): ?>
+                                                             <?php foreach ($subjects as $subject): ?>
+                                                                 <option value="<?= $subject['id'] ?>" <?= $subject['id'] == $specialization['subject_id'] ? 'selected' : '' ?>>
+                                                                     <?= esc($subject['subject_name']) ?>
+                                                                 </option>
+                                                             <?php endforeach; ?>
+                                                         <?php endif; ?>
+                                                     </select>
+                                                 </div>
+                                                 <div class="col-md-3">
+                                                     <label class="font-weight-bold">Proficiency Level</label>
+                                                     <select class="form-control" name="specializations[<?= $index ?>][proficiency_level]">
+                                                         <option value="">Select Level</option>
+                                                         <option value="Basic" <?= $specialization['proficiency_level'] == 'Basic' ? 'selected' : '' ?>>Basic</option>
+                                                         <option value="Intermediate" <?= $specialization['proficiency_level'] == 'Intermediate' ? 'selected' : '' ?>>Intermediate</option>
+                                                         <option value="Advanced" <?= $specialization['proficiency_level'] == 'Advanced' ? 'selected' : '' ?>>Advanced</option>
+                                                         <option value="Expert" <?= $specialization['proficiency_level'] == 'Expert' ? 'selected' : '' ?>>Expert</option>
+                                                     </select>
+                                                 </div>
+                                                 <div class="col-md-3">
+                                                     <label class="font-weight-bold">Years Experience</label>
+                                                     <input type="number" class="form-control" name="specializations[<?= $index ?>][years_experience]" 
+                                                            min="0" max="50" value="<?= $specialization['years_experience'] ?? 0 ?>" placeholder="0">
+                                                 </div>
+                                                 <div class="col-md-1">
+                                     <label class="font-weight-bold">Remove</label><br>
+                                     <button type="button" class="btn btn-outline-danger btn-sm remove-specialization" 
+                                             style="<?= $index == 0 ? 'display: none;' : '' ?>">
+                                         <i class="fa fa-trash"></i>
+                                     </button>
+                                 </div>
+                                             </div>
+                                         </div>
+                                     <?php endforeach; ?>
+                                 <?php else: ?>
+                                     <div class="specialization-item border rounded p-3 mb-3" data-index="0">
+                                         <div class="row">
+                                             <div class="col-md-4">
+                                                 <label class="font-weight-bold">Subject</label>
+                                                 <select class="form-control" name="specializations[0][subject_id]">
+                                                     <option value="">Select Subject</option>
+                                                     <?php if (isset($subjects) && !empty($subjects)): ?>
+                                                         <?php foreach ($subjects as $subject): ?>
+                                                             <option value="<?= $subject['id'] ?>"><?= esc($subject['subject_name']) ?></option>
+                                                         <?php endforeach; ?>
+                                                     <?php endif; ?>
+                                                 </select>
+                                             </div>
+                                             <div class="col-md-3">
+                                                 <label class="font-weight-bold">Proficiency Level</label>
+                                                 <select class="form-control" name="specializations[0][proficiency_level]">
+                                                     <option value="">Select Level</option>
+                                                     <option value="Basic">Basic</option>
+                                                     <option value="Intermediate">Intermediate</option>
+                                                     <option value="Advanced">Advanced</option>
+                                                     <option value="Expert">Expert</option>
+                                                 </select>
+                                             </div>
+                                             <div class="col-md-3">
+                                                 <label class="font-weight-bold">Years Experience</label>
+                                                 <input type="number" class="form-control" name="specializations[0][years_experience]" 
+                                                        min="0" max="50" placeholder="0">
+                                             </div>
+                                             <div class="col-md-1">
+                                 <label class="font-weight-bold">Remove</label><br>
+                                 <button type="button" class="btn btn-outline-danger btn-sm remove-specialization" 
+                                         style="display: none;">
+                                     <i class="fa fa-trash"></i>
+                                 </button>
+                             </div>
+                                         </div>
+                                     </div>
+                                 <?php endif; ?>
+                             </div>
+                             
+                             <button type="button" class="btn btn-outline-primary btn-sm" id="add-specialization">
+                                 <i class="fa fa-plus mr-2"></i> Add Another Specialization
+                             </button>
+                         </div>
+                    </div>
+                    
+                    <!-- Form Actions -->
+                    <div class="row mt-4">
+                        <div class="col-md-12 text-right">
+                            <div class="form-group mb-0">
+                                <a href="<?= site_url('/admin/teacher') ?>" class="btn btn-secondary mr-2">
+                                    <i class="icon-copy dw dw-arrow-left"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="icon-copy dw dw-check"></i> Update Teacher
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Enhanced Bootstrap Alert implementation -->
 <script>
-function simpleAlert(title, message, type, redirectUrl = null) {
-    console.log('simpleAlert called with:', { title, message, type, redirectUrl });
-    
-    // Get the modal element
-    const modal = $('#alertModal');
-    
-    // Set the title and message
-    modal.find('#alertModalLabel').text(title);
-    
-    // Check if message contains HTML
-    if (message.includes('<') && message.includes('>')) {
-        // For HTML content, use html() and add custom styling for better readability
-        modal.find('.modal-body p').html(message).css({
-            'text-align': 'left',
-            'max-height': '300px',
-            'overflow-y': 'auto'
+// Auto-hide alerts after 5 seconds
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(function() {
+        const alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            alert.style.transition = 'opacity 0.5s ease';
+            alert.style.opacity = '0';
+            setTimeout(function() {
+                alert.style.display = 'none';
+            }, 500);
         });
-    } else {
-        modal.find('.modal-body p').text(message).css({
-            'text-align': 'center',
-            'max-height': 'none',
-            'overflow-y': 'visible'
-        });
-    }
+    }, 5000);
     
-    // Set button class based on type
-    const button = modal.find('#alertModalButton');
-    button.removeClass('btn-primary btn-success btn-danger btn-info btn-warning');
+    // Handle "same as residential" checkbox
+    const sameAsResidentialCheckbox = document.getElementById('same_as_residential');
+    const permanentAddressSection = document.getElementById('permanent_address_section');
+    const permanentAddressFields = document.getElementById('permanent_address_fields');
     
-    // Set icon container background and icon class based on type
-    const iconContainer = modal.find('.modal-body .d-flex');
-    iconContainer.removeClass('bg-primary bg-success bg-danger bg-info bg-warning');
-    const iconElement = iconContainer.find('i.fa');
-    iconElement.removeClass('fa-check fa-times fa-info-circle fa-exclamation-triangle');
-    
-    // Add border-top based on alert type
-    const modalContent = modal.find('.modal-content');
-    modalContent.removeClass('border-top border-success border-danger border-info border-warning');
-    modalContent.addClass('border-top');
-    
-    if (type === 'success') {
-        iconContainer.addClass('bg-success');
-        iconElement.addClass('fa-check');
-        button.addClass('btn-success');
-        modalContent.addClass('border-success');
-    } else if (type === 'error') {
-        iconContainer.addClass('bg-danger');
-        iconElement.addClass('fa-times');
-        button.addClass('btn-danger');
-        modalContent.addClass('border-danger');
-    } else if (type === 'warning') {
-        iconContainer.addClass('bg-warning');
-        iconElement.addClass('fa-exclamation-triangle');
-        button.addClass('btn-warning');
-        modalContent.addClass('border-warning');
-    } else {
-        iconContainer.addClass('bg-info');
-        iconElement.addClass('fa-info-circle');
-        button.addClass('btn-info');
-        modalContent.addClass('border-info');
-    }
-    
-    // Ensure the button has the data-dismiss attribute
-    button.attr('data-dismiss', 'modal');
-    
-    // Unbind previous click events to prevent multiple bindings
-    button.off('click');
-    modal.off('hidden.bs.modal');
-    
-    // Handle modal hidden event
-    modal.on('hidden.bs.modal', function() {
-        console.log('Alert modal hidden');
-        
-        // Only redirect if it's a success message and redirectUrl is provided
-        if (type === 'success' && redirectUrl) {
-            console.log('Redirecting to:', redirectUrl);
-            window.location.href = redirectUrl;
-        }
-        
-        // Clean up event handlers
-        button.off('click');
-        modal.off('hidden.bs.modal');
-    });
-    
-    // Show the modal
-    modal.modal('show');
-}
-</script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
-<script>
-// Global variables for image cropper
-let cropper;
-let imageElement;
-
-// Function to update data inputs
-function updateCropBoxData(e) {
-    const data = e.detail;
-    $('#dataX').val(Math.round(data.x));
-    $('#dataY').val(Math.round(data.y));
-    $('#dataWidth').val(Math.round(data.width));
-    $('#dataHeight').val(Math.round(data.height));
-    $('#dataRotate').val(typeof data.rotate !== 'undefined' ? data.rotate : '');
-    $('#dataScaleX').val(typeof data.scaleX !== 'undefined' ? data.scaleX : '');
-}
-
-// Function to load image for cropping
-function loadImageForCropping(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    
-    // Check if file is an image
-    if (!file.type.match('image.*')) {
-        alert('Please select an image file');
-        return;
-    }
-    
-    // Create a FileReader to read the image
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        // Get the image element
-        imageElement = document.getElementById('image-to-crop');
-        
-        // Set the source of the image
-        imageElement.src = e.target.result;
-        
-        // Show the cropper container
-        document.getElementById('image-cropper-container').style.display = 'block';
-        
-        // Hide the preview if it was shown before
-        document.getElementById('cropped-image-preview').style.display = 'none';
-        
-        // Initialize cropper after image is loaded
-        imageElement.onload = function() {
-            // Destroy previous cropper if exists
-            if (cropper) {
-                cropper.destroy();
-            }
-            
-            // Initialize cropper
-            cropper = new Cropper(imageElement, {
-                aspectRatio: 1, // Square aspect ratio for profile picture
-                viewMode: 1,     // Restrict the crop box to not exceed the size of the canvas
-                guides: true,    // Show the dashed lines for guiding
-                center: true,    // Show the center indicator for guiding
-                dragMode: 'move',// Define the dragging mode of the cropper
-                zoomable: true,  // Enable to zoom the image
-                zoomOnWheel: true,// Enable to zoom the image by wheeling mouse
-                cropBoxMovable: true,// Enable to move the crop box
-                cropBoxResizable: true,// Enable to resize the crop box
-                ready: function() {
-                    // Update data inputs when cropper is ready
-                    const cropBoxData = cropper.getCropBoxData();
-                    const canvasData = cropper.getCanvasData();
-                    $('#dataX').val(Math.round(cropBoxData.left));
-                    $('#dataY').val(Math.round(cropBoxData.top));
-                    $('#dataWidth').val(Math.round(cropBoxData.width));
-                    $('#dataHeight').val(Math.round(cropBoxData.height));
-                    $('#dataRotate').val(0);
-                    $('#dataScaleX').val(1);
-                },
-                crop: updateCropBoxData, // Update data inputs when crop box changes
-                toggleDragModeOnDblclick: true // Toggle drag mode between "crop" and "move" when double click on the cropper
-            });
-        };
-    };
-    
-    // Read the image file as a data URL
-    reader.readAsDataURL(file);
-}
-
-$(document).ready(function() {
-    // Initialize select2 for dropdown fields
-    $('.custom-select2').select2();
-    
-    // Aspect ratio button handlers
-    $('#aspectRatio1to1').on('click', function() {
-        if (!cropper) return;
-        cropper.setAspectRatio(1);
-        $(this).addClass('active').siblings().removeClass('active');
-    }).addClass('active'); // Default active
-    
-    $('#aspectRatio4to3').on('click', function() {
-        if (!cropper) return;
-        cropper.setAspectRatio(4/3);
-        $(this).addClass('active').siblings().removeClass('active');
-    });
-    
-    $('#aspectRatioFree').on('click', function() {
-        if (!cropper) return;
-        cropper.setAspectRatio(NaN); // Free aspect ratio
-        $(this).addClass('active').siblings().removeClass('active');
-    });
-    
-    // Crop button click event
-    $('#crop-image').on('click', function() {
-        if (!cropper) return;
-        
-        // Get the cropped canvas
-        const canvas = cropper.getCroppedCanvas({
-            width: 300,  // Output image width
-            height: 300, // Output image height
-            minWidth: 100,
-            minHeight: 100,
-            maxWidth: 1000,
-            maxHeight: 1000,
-            fillColor: '#fff',
-            imageSmoothingEnabled: true,
-            imageSmoothingQuality: 'high',
-        });
-        
-        // Convert canvas to data URL
-        const croppedImageData = canvas.toDataURL('image/jpeg', 0.8);
-        
-        // Set the value of the hidden input
-        $('#cropped_image_data').val(croppedImageData);
-        
-        // Show the preview
-        $('#cropped-image-preview').show();
-        $('#cropped-preview').attr('src', croppedImageData);
-        
-        // Hide the cropper
-        $('#image-cropper-container').hide();
-    });
-    
-    // Cancel button click event
-    $('#cancel-crop').on('click', function() {
-        // Hide the cropper
-        $('#image-cropper-container').hide();
-        
-        // Clear the file input
-        $('#profile_picture').val('');
-        
-        // Destroy the cropper
-        if (cropper) {
-            cropper.destroy();
-            cropper = null;
-        }
-        
-        // Clear data inputs
-        $('#dataX, #dataY, #dataWidth, #dataHeight, #dataRotate, #dataScaleX').val('');
-        
-        // Hide the preview if it was shown
-        $('#cropped-image-preview').hide();
-    });
-    
-    // Form submission is handled by the AJAX code below
-    
-    // Form submission with SweetAlert
-    $('#updateTeacherForm').submit(function(e) {
-        e.preventDefault();
-        var form = $(this);
-        
-        // Basic client-side validation
-        var isValid = true;
-        
-        // Validate account number is not empty
-        var accountField = form.find('input[name="account_no"]');
-        var accountValue = accountField.val().trim();
-        if (!accountValue) {
-            accountField.addClass('is-invalid');
-            isValid = false;
-        } else {
-            accountField.removeClass('is-invalid');
-        }
-        
-        // Check required fields
-        form.find('[required]').each(function() {
-            if (!$(this).val().trim()) {
-                $(this).addClass('is-invalid');
-                isValid = false;
+    if (sameAsResidentialCheckbox) {
+        sameAsResidentialCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Hide permanent address fields with animation
+                permanentAddressSection.style.transition = 'opacity 0.3s ease';
+                permanentAddressFields.style.transition = 'opacity 0.3s ease';
+                permanentAddressSection.style.opacity = '0';
+                permanentAddressFields.style.opacity = '0';
+                
+                setTimeout(function() {
+                    permanentAddressSection.style.display = 'none';
+                    permanentAddressFields.style.display = 'none';
+                    
+                    // Copy residential address values to permanent address fields
+                    copyResidentialToPermanent();
+                }, 300);
             } else {
-                $(this).removeClass('is-invalid');
+                // Show permanent address fields with animation
+                permanentAddressSection.style.display = 'block';
+                permanentAddressFields.style.display = 'flex';
+                permanentAddressSection.style.opacity = '0';
+                permanentAddressFields.style.opacity = '0';
+                
+                setTimeout(function() {
+                    permanentAddressSection.style.opacity = '1';
+                    permanentAddressFields.style.opacity = '1';
+                }, 10);
             }
         });
+    }
+    
+    // Function to copy residential address to permanent address
+    function copyResidentialToPermanent() {
+        const residentialFields = {
+            'residential_street_address': 'permanent_street_address',
+            'residential_barangay': 'permanent_barangay',
+            'residential_city': 'permanent_city',
+            'residential_province': 'permanent_province',
+            'residential_postal_code': 'permanent_postal_code'
+        };
         
-        if (!isValid) {
-            // Create a formatted message for client-side validation errors
-            let formattedMessage = '<div class="alert alert-danger p-3 mb-0">' +
-                                   '<h6 class="font-weight-bold">Please correct the following errors:</h6>' +
-                                   '<ul class="mb-0">';
+        for (const [residential, permanent] of Object.entries(residentialFields)) {
+            const residentialField = document.getElementById(residential);
+            const permanentField = document.getElementById(permanent);
             
-            // Check for account number validation error
-            if (accountField.hasClass('is-invalid')) {
-                formattedMessage += '<li><strong>Account No.</strong>: This field is required</li>';
+            if (residentialField && permanentField) {
+                permanentField.value = residentialField.value;
             }
-            
-            // Check for empty required fields
-            let emptyFields = [];
-            form.find('[required].is-invalid').each(function() {
-                const fieldName = $(this).attr('name') || $(this).attr('id') || 'Field';
-                emptyFields.push('<li><strong>' + fieldName.charAt(0).toUpperCase() + fieldName.slice(1) + '</strong>: This field is required</li>');
-            });
-            
-            formattedMessage += emptyFields.join('') + '</ul></div>';
-            
-            // Show validation error without redirect
-            simpleAlert('Validation Error', formattedMessage, 'error');
-            
-            // Scroll to the first invalid field
-            const firstInvalidField = $('.is-invalid').first();
-            if (firstInvalidField.length) {
-                $('html, body').animate({
-                    scrollTop: firstInvalidField.offset().top - 100
-                }, 500);
-            }
-            
-            return;
         }
-        
-        // Get CSRF token
-        var csrfName = '<?= csrf_token() ?>';
-        var csrfHash = '<?= csrf_hash() ?>';
-        
-        // Create FormData and append CSRF token
-        var formData = new FormData(this);
-        formData.append(csrfName, csrfHash);
-        
-        // Submit the form
-        console.log('Form submission started');
-        var formAction = form.attr('action');
-        console.log('Form action:', formAction);
-        
-        // Debug: Check if SweetAlert is available
-        console.log('SweetAlert available:', typeof Swal !== 'undefined');
-        
-        $.ajax({
-            url: formAction,
-            type: 'POST',
-            data: formData,
-            processData: false,
-            contentType: false,
-            dataType: 'json', // Explicitly request JSON response
-            success: function(response) {
-                console.log('Response received:', response); // Debug log
-                console.log('Response type:', typeof response);
-                
-                // If response is a string, try to parse it
-                if (typeof response === 'string') {
-                    try {
-                        response = JSON.parse(response);
-                        console.log('Parsed string response:', response);
-                    } catch (e) {
-                        console.error('Failed to parse response string:', e);
-                    }
-                }
-                
-                // Check if response indicates success
-                if (response && response.success) {
-                    console.log('Success response received, showing alert');
-                    // Show success message with redirect URL
-                    const redirectUrl = response.redirect || '<?= site_url("admin/teacher") ?>';
-                    console.log('Will redirect to:', redirectUrl);
-                    simpleAlert('Done Updating', response.message || 'Teacher information has been updated successfully!', 'success', redirectUrl);
-                } else {
-                    // Show error message if response indicates failure
-                    let errorMessage = response.message || 'There was an error updating the teacher information.';
-                    
-                    // Check if there are validation errors in the response
-                    if (response.errors) {
-                        // Format validation errors with HTML
-                        let formattedMessage = '<div class="alert alert-danger p-3 mb-0">' +
-                                              '<h6 class="font-weight-bold">Please correct the following errors:</h6>' +
-                                              '<ul class="mb-0">';
-                        
-                        // Clear any previous validation errors
-                        $('.is-invalid').removeClass('is-invalid');
-                        $('.invalid-feedback').remove();
-                        
-                        // Highlight invalid fields
-                        for (const field in response.errors) {
-                            formattedMessage += '<li><strong>' + field + '</strong>: ' + response.errors[field] + '</li>';
-                            
-                            // Add error class to invalid fields
-                            const fieldElement = $('#' + field);
-                            if (fieldElement.length) {
-                                fieldElement.addClass('is-invalid');
-                                // Add error feedback if not exists
-                                if (fieldElement.next('.invalid-feedback').length === 0) {
-                                    fieldElement.after('<div class="invalid-feedback">' + response.errors[field] + '</div>');
-                                } else {
-                                    fieldElement.next('.invalid-feedback').text(response.errors[field]);
-                                }
-                            }
-                        }
-                        
-                        formattedMessage += '</ul></div>';
-                        errorMessage = formattedMessage;
-                        
-                        // Scroll to the first invalid field
-                        const firstInvalidField = $('.is-invalid').first();
-                        if (firstInvalidField.length) {
-                            $('html, body').animate({
-                                scrollTop: firstInvalidField.offset().top - 100
-                            }, 500);
-                        }
-                    }
-                    
-                    // Show error message without redirect
-                    simpleAlert('Validation Error', errorMessage, 'error');
-                }
-            },
-            error: function(xhr, status, error) {
-                console.log('Error status:', status);
-                console.log('Error details:', error);
-                console.log('XHR response:', xhr.responseText);
-                
-                // Parse response if possible
-                let errorMessage = 'There was an error updating the teacher information.';
-                
-                try {
-                    if (xhr.responseText) {
-                        const response = JSON.parse(xhr.responseText);
-                        
-                        if (response.errors) {
-                            // Format validation errors with HTML
-                            let formattedMessage = '<div class="alert alert-danger p-3 mb-0">' +
-                                               '<h6 class="font-weight-bold">Please correct the following errors:</h6>' +
-                                               '<ul class="mb-0">';
-                            
-                            // Clear any previous validation errors
-                            $('.is-invalid').removeClass('is-invalid');
-                            $('.invalid-feedback').remove();
-                            
-                            // Highlight invalid fields
-                            for (const field in response.errors) {
-                                formattedMessage += '<li><strong>' + field + '</strong>: ' + response.errors[field] + '</li>';
-                                
-                                // Add error class to invalid fields
-                                const fieldElement = $('#' + field);
-                                if (fieldElement.length) {
-                                    fieldElement.addClass('is-invalid');
-                                    // Add error feedback if not exists
-                                    if (fieldElement.next('.invalid-feedback').length === 0) {
-                                        fieldElement.after('<div class="invalid-feedback">' + response.errors[field] + '</div>');
-                                    } else {
-                                        fieldElement.next('.invalid-feedback').text(response.errors[field]);
-                                    }
-                                }
-                            }
-                            
-                            formattedMessage += '</ul></div>';
-                            errorMessage = formattedMessage;
-                            
-                            // Scroll to the first invalid field
-                            const firstInvalidField = $('.is-invalid').first();
-                            if (firstInvalidField.length) {
-                                $('html, body').animate({
-                                    scrollTop: firstInvalidField.offset().top - 100
-                                }, 500);
-                            }
-                        } else if (response.message) {
-                            errorMessage = response.message;
-                        }
-                    }
-                } catch (e) {
-                    console.error('Error parsing response:', e);
-                }
-                
-                // Show error message without redirect URL
-                simpleAlert('Error', errorMessage, 'error');
+    }
+    
+    // Specialization management
+    let specializationIndex = <?= !empty($teacher_specializations) ? count($teacher_specializations) : 1 ?>;
+    
+    // Add specialization functionality
+    const addSpecializationBtn = document.getElementById('add-specialization');
+    if (addSpecializationBtn) {
+        addSpecializationBtn.addEventListener('click', function() {
+            const container = document.getElementById('specializations-container');
+            const newSpecialization = document.createElement('div');
+            newSpecialization.className = 'specialization-item border rounded p-3 mb-3';
+            newSpecialization.setAttribute('data-index', specializationIndex);
+            
+            newSpecialization.innerHTML = `
+                <div class="row">
+                    <div class="col-md-4">
+                        <label class="font-weight-bold">Subject</label>
+                        <select class="form-control" name="specializations[${specializationIndex}][subject_id]">
+                            <option value="">Select Subject</option>
+                            <?php if (isset($subjects) && !empty($subjects)): ?>
+                                <?php foreach ($subjects as $subject): ?>
+                                    <option value="<?= $subject['id'] ?>"><?= esc($subject['subject_name']) ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="font-weight-bold">Proficiency Level</label>
+                        <select class="form-control" name="specializations[${specializationIndex}][proficiency_level]">
+                            <option value="">Select Level</option>
+                            <option value="Basic">Basic</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                            <option value="Expert">Expert</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="font-weight-bold">Years Experience</label>
+                        <input type="number" class="form-control" name="specializations[${specializationIndex}][years_experience]" 
+                               min="0" max="50" placeholder="0">
+                    </div>
+                    <div class="col-md-1">
+                        <label class="font-weight-bold">Remove</label><br>
+                        <button type="button" class="btn btn-outline-danger btn-sm remove-specialization">
+                            <i class="fa fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            
+            container.appendChild(newSpecialization);
+            specializationIndex++;
+            updateRemoveButtons();
+        });
+    }
+    
+    // Remove specialization functionality
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('.remove-specialization')) {
+            const specializationItem = e.target.closest('.specialization-item');
+            if (specializationItem) {
+                specializationItem.remove();
+                updateRemoveButtons();
+            }
+        }
+    });
+    
+    // Update remove buttons visibility
+    function updateRemoveButtons() {
+        const specializationItems = document.querySelectorAll('.specialization-item');
+        specializationItems.forEach((item, index) => {
+            const removeBtn = item.querySelector('.remove-specialization');
+            if (removeBtn) {
+                removeBtn.style.display = index === 0 && specializationItems.length === 1 ? 'none' : 'inline-block';
             }
         });
-    });
+    }
+    
+    // Initialize remove buttons on page load
+    updateRemoveButtons();
 });
 </script>
+
 <?= $this->endSection() ?>

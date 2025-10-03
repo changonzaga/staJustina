@@ -31,6 +31,8 @@
     <div class="pb-20">
         <form id="studentForm" action="<?= site_url('backend/pages/students/store') ?>" method="POST" enctype="multipart/form-data">
             <?= csrf_field() ?>
+            
+            <!-- Basic Student Information -->
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -41,36 +43,12 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>Full Name</label>
-                        <input type="text" name="name" class="form-control" placeholder="Enter full name" required>
-                    </div>
-                </div>
-            </div>
-            <div class="row">
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <select name="gender" class="form-control" required>
-                            <option value="">Select Gender</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                            <option value="Other">Other</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
-                        <label>Age</label>
-                        <input type="number" name="age" class="form-control" placeholder="Enter age" min="1" max="100" required>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="form-group">
                         <label>Grade Level</label>
                         <input type="text" name="grade_level" class="form-control" placeholder="Enter grade level (e.g., 6)" required>
                     </div>
                 </div>
             </div>
+            
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -80,53 +58,140 @@
                 </div>
                 <div class="col-md-6">
                     <div class="form-group">
-                        <label>Address</label>
-                        <textarea name="address" class="form-control" placeholder="Enter address"></textarea>
+                        <label>Enrollment Date</label>
+                        <input type="date" name="enrollment_date" class="form-control" value="<?= date('Y-m-d') ?>">
                     </div>
                 </div>
             </div>
+
+            <!-- Personal Information Section -->
+            <div class="pd-20 mt-4">
+                <h5 class="text-blue">Personal Information</h5>
+            </div>
+            
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
-                        <label>Guardian Name</label>
-                        <input type="text" name="guardian" class="form-control" placeholder="Enter guardian name">
+                        <label>First Name</label>
+                        <input type="text" name="first_name" class="form-control" placeholder="Enter first name" required>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
-                        <label>Contact Number</label>
-                        <input type="text" name="contact" class="form-control" placeholder="Enter contact number">
+                        <label>Middle Name</label>
+                        <input type="text" name="middle_name" class="form-control" placeholder="Enter middle name">
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Last Name</label>
+                        <input type="text" name="last_name" class="form-control" placeholder="Enter last name" required>
                     </div>
                 </div>
             </div>
+            
             <div class="row">
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
-                        <label>Assign Teacher</label>
-                        <select name="teacher_id" class="form-control">
-                            <option value="">Select Teacher (Optional)</option>
-                            <?php if (isset($teachers) && !empty($teachers)): ?>
-                                <?php foreach ($teachers as $teacher): ?>
-                                    <option value="<?= esc($teacher['id']) ?>"><?= esc($teacher['name']) ?></option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
+                        <label>Gender</label>
+                        <select name="gender" class="form-control" required>
+                            <option value="">Select Gender</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
                         </select>
                     </div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <div class="form-group">
-                        <label>Assign Parent</label>
-                        <select name="parent_id" class="form-control">
-                            <option value="">Select Parent (Optional)</option>
-                            <?php if (isset($parents) && !empty($parents)): ?>
-                                <?php foreach ($parents as $parent): ?>
-                                    <option value="<?= esc($parent['id']) ?>"><?= esc($parent['name']) ?></option>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </select>
+                        <label>Date of Birth</label>
+                        <input type="date" name="date_of_birth" class="form-control" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Place of Birth</label>
+                        <input type="text" name="place_of_birth" class="form-control" placeholder="Enter place of birth">
                     </div>
                 </div>
             </div>
+
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Birth Certificate Number</label>
+                        <input type="text" name="birth_certificate_number" class="form-control" placeholder="Enter birth certificate number">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Citizenship</label>
+                        <input type="text" name="citizenship" class="form-control" placeholder="Enter citizenship" value="Filipino">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Address Information Section -->
+            <div class="pd-20 mt-4">
+                <h5 class="text-blue">Address Information</h5>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>House Number</label>
+                        <input type="text" name="house_no" class="form-control" placeholder="Enter house number">
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="form-group">
+                        <label>Street</label>
+                        <input type="text" name="street" class="form-control" placeholder="Enter street">
+                    </div>
+                </div>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Barangay</label>
+                        <input type="text" name="barangay" class="form-control" placeholder="Enter barangay" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Municipality/City</label>
+                        <input type="text" name="municipality" class="form-control" placeholder="Enter municipality/city" required>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Province</label>
+                        <input type="text" name="province" class="form-control" placeholder="Enter province" required>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Family Information Section -->
+            <div class="pd-20 mt-4">
+                <h5 class="text-blue">Guardian/Family Information</h5>
+            </div>
+            
+            <div class="row">
+                <div class="col-md-4">
+                    <div class="form-group">
+                        <label>Relationship Type</label>
+                        <select name="relationship_type" class="form-control" required>
+                            <option value="">Select Relationship</option>
+                            <option value="father">Father</option>
+                            <option value="mother">Mother</option>
+                            <option value="guardian">Guardian</option>
+                        </select>
+                    </div>
+                </div>
+                <!-- Guardian/Emergency Contact information is now managed through parent relationships -->
+                <!-- Use the enrollment process or parent management to set emergency contacts -->
+            </div>
+            
             <div class="row">
                 <div class="col-md-6">
                     <div class="form-group">
@@ -135,6 +200,9 @@
                     </div>
                 </div>
             </div>
+
+
+            
             <div class="form-group">
                 <button type="submit" class="btn btn-primary">Save Student</button>
                 <a href="<?= site_url('backend/pages/students') ?>" class="btn btn-secondary">Cancel</a>
@@ -179,7 +247,7 @@ $(document).ready(function() {
         
         // Basic validation
         let isValid = true;
-        const requiredFields = ['name', 'lrn', 'gender', 'age', 'grade_level', 'section'];
+        const requiredFields = ['lrn', 'grade_level', 'section', 'first_name', 'last_name', 'gender', 'date_of_birth', 'barangay', 'municipality', 'province', 'relationship_type'];
         
         requiredFields.forEach(function(field) {
             const input = $('[name="' + field + '"]');

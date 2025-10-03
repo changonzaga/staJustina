@@ -297,7 +297,7 @@
     // Function to validate parent information step
     function validateParentInfoStep() {
         let isValid = true;
-        const requiredFields = ['name', 'email', 'contact', 'password', 'password_confirm'];
+        const requiredFields = ['first_name', 'last_name', 'relationship_type', 'student_id', 'contact_number'];
         
         requiredFields.forEach(field => {
             const input = document.getElementById(field);
@@ -308,20 +308,6 @@
                 input.classList.remove('is-invalid');
             }
         });
-        
-        // Check if passwords match
-        const password = document.getElementById('password');
-        const passwordConfirm = document.getElementById('password_confirm');
-        if (password.value !== passwordConfirm.value) {
-            passwordConfirm.classList.add('is-invalid');
-            isValid = false;
-        }
-        
-        // Check if password is at least 6 characters
-        if (password.value.length < 6) {
-            password.classList.add('is-invalid');
-            isValid = false;
-        }
         
         if (!isValid) {
             alert('Please fill in all required fields correctly before proceeding.');
@@ -371,12 +357,10 @@
             
             // Get form values
             const nameInput = document.getElementById('name');
-            const emailInput = document.getElementById('email');
             const contactInput = document.getElementById('contact');
             
             // Set review values
             document.getElementById('review-name').textContent = nameInput ? nameInput.value : 'Not provided';
-            document.getElementById('review-email').textContent = emailInput ? emailInput.value : 'Not provided';
             document.getElementById('review-contact').textContent = contactInput ? contactInput.value : 'Not provided';
             
             // Check if profile picture is provided
@@ -632,15 +616,56 @@
                 <!-- Basic Information Section -->
                 <div class="row mb-5">
                     <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Basic Information</h5></div>
-                    <div class="col-md-6 mb-3">
-                        <label for="name" class="font-weight-bold">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" id="name" name="name" value="<?= old('name') ?>" class="form-control mt-2" required>
-                        <div class="invalid-feedback">Please enter a valid name.</div>
+                    <div class="col-md-4 mb-3">
+                        <label for="first_name" class="font-weight-bold">First Name <span class="text-danger">*</span></label>
+                        <input type="text" id="first_name" name="first_name" value="<?= old('first_name') ?>" class="form-control mt-2" required>
+                        <div class="invalid-feedback">Please enter a valid first name.</div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="middle_name" class="font-weight-bold">Middle Name</label>
+                        <input type="text" id="middle_name" name="middle_name" value="<?= old('middle_name') ?>" class="form-control mt-2">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="last_name" class="font-weight-bold">Last Name <span class="text-danger">*</span></label>
+                        <input type="text" id="last_name" name="last_name" value="<?= old('last_name') ?>" class="form-control mt-2" required>
+                        <div class="invalid-feedback">Please enter a valid last name.</div>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="email" class="font-weight-bold">Email Address <span class="text-danger">*</span></label>
-                        <input type="email" id="email" name="email" value="<?= old('email') ?>" class="form-control mt-2" required>
-                        <div class="invalid-feedback">Please enter a valid email address.</div>
+                        <label for="suffix" class="font-weight-bold">Suffix</label>
+                        <input type="text" id="suffix" name="suffix" value="<?= old('suffix') ?>" class="form-control mt-2" placeholder="Jr., Sr., III, etc.">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="relationship_type" class="font-weight-bold">Relationship to Student <span class="text-danger">*</span></label>
+                        <select id="relationship_type" name="relationship_type" class="form-control mt-2" required>
+                            <option value="">Select Relationship</option>
+                            <option value="Mother" <?= old('relationship_type') == 'Mother' ? 'selected' : '' ?>>Mother</option>
+                            <option value="Father" <?= old('relationship_type') == 'Father' ? 'selected' : '' ?>>Father</option>
+                            <option value="Guardian" <?= old('relationship_type') == 'Guardian' ? 'selected' : '' ?>>Guardian</option>
+                            <option value="Grandmother" <?= old('relationship_type') == 'Grandmother' ? 'selected' : '' ?>>Grandmother</option>
+                            <option value="Grandfather" <?= old('relationship_type') == 'Grandfather' ? 'selected' : '' ?>>Grandfather</option>
+                            <option value="Aunt" <?= old('relationship_type') == 'Aunt' ? 'selected' : '' ?>>Aunt</option>
+                            <option value="Uncle" <?= old('relationship_type') == 'Uncle' ? 'selected' : '' ?>>Uncle</option>
+                            <option value="Other" <?= old('relationship_type') == 'Other' ? 'selected' : '' ?>>Other</option>
+                        </select>
+                        <div class="invalid-feedback">Please select a relationship type.</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="student_id" class="font-weight-bold">Student <span class="text-danger">*</span></label>
+                        <select id="student_id" name="student_id" class="form-control mt-2" required>
+                            <option value="">Select Student</option>
+                            <?php if(isset($students) && !empty($students)): ?>
+                                <?php foreach($students as $student): ?>
+                                    <option value="<?= $student['id'] ?>" <?= old('student_id') == $student['id'] ? 'selected' : '' ?>>
+                                        <?= esc($student['first_name'] . ' ' . $student['last_name']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <div class="invalid-feedback">Please select a student.</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="date_of_birth" class="font-weight-bold">Date of Birth</label>
+                        <input type="date" id="date_of_birth" name="date_of_birth" value="<?= old('date_of_birth') ?>" class="form-control mt-2">
                     </div>
                 </div>
 
@@ -648,25 +673,92 @@
                 <div class="row mb-5">
                     <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Contact Information</h5></div>
                     <div class="col-md-6 mb-3">
-                        <label for="contact" class="font-weight-bold">Contact Number <span class="text-danger">*</span></label>
-                        <input type="text" id="contact" name="contact" value="<?= old('contact') ?>" class="form-control mt-2" required>
+                        <label for="contact_number" class="font-weight-bold">Primary Contact Number <span class="text-danger">*</span></label>
+                        <input type="text" id="contact_number" name="contact_number" value="<?= old('contact_number') ?>" class="form-control mt-2" required>
                         <div class="invalid-feedback">Please enter a valid contact number.</div>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="phone_secondary" class="font-weight-bold">Secondary Contact Number</label>
+                        <input type="text" id="phone_secondary" name="phone_secondary" value="<?= old('phone_secondary') ?>" class="form-control mt-2">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="facebook_account" class="font-weight-bold">Facebook Account</label>
+                        <input type="text" id="facebook_account" name="facebook_account" value="<?= old('facebook_account') ?>" class="form-control mt-2" placeholder="Facebook username or URL">
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label for="address" class="font-weight-bold">Home Address</label>
+                        <textarea id="address" name="address" class="form-control mt-2" rows="3" placeholder="Enter complete home address"><?= old('address') ?></textarea>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label for="other_social_media" class="font-weight-bold">Other Social Media</label>
+                        <textarea id="other_social_media" name="other_social_media" class="form-control mt-2" rows="2" placeholder="Instagram, Twitter, etc."><?= old('other_social_media') ?></textarea>
                     </div>
                 </div>
 
-                <!-- Account Information -->
+                <!-- Work & Income Information -->
                 <div class="row mb-5">
-                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Account Information</h5></div>
+                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Work & Income Information</h5></div>
                     <div class="col-md-6 mb-3">
-                        <label for="password" class="font-weight-bold">Password <span class="text-danger">*</span></label>
-                        <input type="password" id="password" name="password" class="form-control mt-2" required>
-                        <div class="invalid-feedback">Please enter a valid password.</div>
-                        <small class="text-muted">Password must be at least 6 characters long.</small>
+                        <label for="occupation" class="font-weight-bold">Occupation</label>
+                        <input type="text" id="occupation" name="occupation" value="<?= old('occupation') ?>" class="form-control mt-2" placeholder="Enter occupation">
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="password_confirm" class="font-weight-bold">Confirm Password <span class="text-danger">*</span></label>
-                        <input type="password" id="password_confirm" name="password_confirm" class="form-control mt-2" required>
-                        <div class="invalid-feedback">Passwords do not match.</div>
+                        <label for="employer" class="font-weight-bold">Employer</label>
+                        <input type="text" id="employer" name="employer" value="<?= old('employer') ?>" class="form-control mt-2" placeholder="Company/Organization name">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="monthly_income" class="font-weight-bold">Monthly Income</label>
+                        <input type="number" id="monthly_income" name="monthly_income" value="<?= old('monthly_income') ?>" class="form-control mt-2" placeholder="0.00" step="0.01">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="educational_attainment" class="font-weight-bold">Educational Attainment</label>
+                        <select id="educational_attainment" name="educational_attainment" class="form-control mt-2">
+                            <option value="">Select Educational Level</option>
+                            <option value="Elementary" <?= old('educational_attainment') == 'Elementary' ? 'selected' : '' ?>>Elementary</option>
+                            <option value="High School" <?= old('educational_attainment') == 'High School' ? 'selected' : '' ?>>High School</option>
+                            <option value="College" <?= old('educational_attainment') == 'College' ? 'selected' : '' ?>>College</option>
+                            <option value="Vocational" <?= old('educational_attainment') == 'Vocational' ? 'selected' : '' ?>>Vocational</option>
+                            <option value="Graduate" <?= old('educational_attainment') == 'Graduate' ? 'selected' : '' ?>>Graduate</option>
+                            <option value="Post Graduate" <?= old('educational_attainment') == 'Post Graduate' ? 'selected' : '' ?>>Post Graduate</option>
+                        </select>
+                    </div>
+                    <div class="col-md-12 mb-3">
+                        <label for="work_address" class="font-weight-bold">Work Address</label>
+                        <textarea id="work_address" name="work_address" class="form-control mt-2" rows="3" placeholder="Enter work address"><?= old('work_address') ?></textarea>
+                    </div>
+                </div>
+
+                <!-- Emergency Contact & Relationship Details -->
+                <div class="row mb-5">
+                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Relationship Details</h5></div>
+                    <!-- Note: Emergency contact fields removed - now handled via parent relationships -->
+                    <div class="col-md-3 mb-3">
+                        <label for="is_primary_contact" class="font-weight-bold">Is Primary Contact?</label>
+                        <select id="is_primary_contact" name="is_primary_contact" class="form-control mt-2">
+                            <option value="0" <?= old('is_primary_contact', '0') == '0' ? 'selected' : '' ?>>No</option>
+                            <option value="1" <?= old('is_primary_contact') == '1' ? 'selected' : '' ?>>Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="living_with_student" class="font-weight-bold">Living with Student?</label>
+                        <select id="living_with_student" name="living_with_student" class="form-control mt-2">
+                            <option value="0" <?= old('living_with_student', '0') == '0' ? 'selected' : '' ?>>No</option>
+                            <option value="1" <?= old('living_with_student') == '1' ? 'selected' : '' ?>>Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="custody_rights" class="font-weight-bold">Has Custody Rights?</label>
+                        <select id="custody_rights" name="custody_rights" class="form-control mt-2">
+                            <option value="0" <?= old('custody_rights', '0') == '0' ? 'selected' : '' ?>>No</option>
+                            <option value="1" <?= old('custody_rights') == '1' ? 'selected' : '' ?>>Yes</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="authorized_pickup" class="font-weight-bold">Authorized for Pickup?</label>
+                        <select id="authorized_pickup" name="authorized_pickup" class="form-control mt-2">
+                            <option value="0" <?= old('authorized_pickup', '0') == '0' ? 'selected' : '' ?>>No</option>
+                            <option value="1" <?= old('authorized_pickup') == '1' ? 'selected' : '' ?>>Yes</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -814,11 +906,6 @@
                                 <div class="row mb-3">
                                     <div class="col-md-4 font-weight-medium">Name:</div>
                                     <div class="col-md-8" id="review-name"></div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Email:</div>
-                                    <div class="col-md-8" id="review-email"></div>
                                 </div>
                                 
                                 <div class="row mb-3">

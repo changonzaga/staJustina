@@ -2409,21 +2409,34 @@ body.IE .register-page-wrap .container{
 }
 
 .nav-tabs.customtab .nav-link.active, .nav-tabs.customtab .nav-item.show .nav-link{
-	color: #1b00ff;
-	border: 0;
-	border-bottom: 2px solid #1b00ff;
+    color: #1b00ff;
+    border: 0;
+    border-bottom: 2px solid #1b00ff;
+}
+.nav.nav-tabs.customtab,
+.nav-tabs.customtab{
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: 100%;
 }
 .nav-tabs.customtab .nav-item{
-	margin-bottom: 0;
+    margin-bottom: 0;
+    flex: 0 0 25%;
+    max-width: 25%;
+    text-align: center;
 }
 .nav-tabs.customtab .nav-link{
-	color: #181f48;
-	border: 0;
-	border-bottom: 2px solid transparent;
-	-webkit-transition: all 0.3s ease-in-out;
-	-moz-transition: all 0.3s ease-in-out;
-	-o-transition: all 0.3s ease-in-out;
-	transition: all 0.3s ease-in-out;
+    color: #181f48;
+    border: 0;
+    border-bottom: 2px solid transparent;
+    display: block;
+    width: 100%;
+    white-space: nowrap;
+    padding: 12px 8px;
+    -webkit-transition: all 0.3s ease-in-out;
+    -moz-transition: all 0.3s ease-in-out;
+    -o-transition: all 0.3s ease-in-out;
+    transition: all 0.3s ease-in-out;
 }
 .nav-tabs.customtab .nav-link:hover, .nav-tabs.customtab .nav-link:focus{
 	color: #1b00ff;
@@ -3157,12 +3170,22 @@ body.IE .register-page-wrap .container{
 	padding: 15px;
 }
 .profile-tab .nav-tabs.customtab{
-	background: #ffffff;
+    background: #ffffff;
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    width: 100%;
 }
 .profile-tab .nav-tabs.customtab .nav-link{
-	padding: 18px 30px;
-	background: transparent;
-	font-weight: 500;
+    padding: 8px 10px !important;
+    font-size: 14px;
+    background: transparent;
+    font-weight: 500;
+}
+/* Force four equal-width tab items (no wrapping) */
+.profile-tab .nav-tabs.customtab .nav-item{
+    flex: 0 0 25%;
+    max-width: 25%;
+    text-align: center;
 }
 .profile-setting{
 	height: 100%;

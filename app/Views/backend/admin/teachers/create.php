@@ -2,38 +2,24 @@
 <?= $this->section('stylesheets') ?>
 <!-- Cropper.js CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-<!-- SweetAlert2 CSS -->
-<link rel="stylesheet" href="/backend/src/plugins/sweetalert2/sweetalert2.css">
 <style>
     /* Custom styles for image cropper */
     .img-container {
         overflow: hidden;
         position: relative;
-        height: 500px;
+        height: 400px;
         background-color: #f8f9fa;
         border: 1px solid #ddd;
         border-radius: 4px;
     }
     .cropper-container {
-        max-height: 500px;
+        max-height: 400px;
     }
     .cropper-control-panel {
         background-color: #f8f9fa;
         border: 1px solid #ddd;
         border-radius: 4px;
         padding: 15px;
-    }
-    .cropper-data-group {
-        margin-bottom: 15px;
-    }
-    .cropper-data-group label {
-        font-size: 0.8rem;
-        color: #666;
-        margin-bottom: 2px;
-    }
-    .cropper-data-input {
-        width: 100%;
-        margin-bottom: 8px;
     }
     .aspect-ratio-buttons {
         display: flex;
@@ -43,7 +29,6 @@
     .aspect-ratio-buttons .btn {
         flex: 1;
     }
-    
     /* Form Wizard Styles */
     .form-wizard-steps {
         display: flex;
@@ -144,43 +129,18 @@
     .font-weight-medium {
         font-weight: 500;
     }
-    
-    #review-profile-picture-container {
-        text-align: center;
-    }
-    
-    #review-profile-picture {
-        border: 1px solid #dee2e6;
-        padding: 3px;
-        background-color: #fff;
-    }
 </style>
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <!-- Cropper.js Library -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
-
 <script>
     // Global variables
     let cropper;
     let imageElement;
     let currentStep = 1;
     const totalSteps = 3;
-    
-    // Function to update crop box data inputs
-    function updateCropBoxData() {
-        if (!cropper) return;
-        
-        const data = cropper.getData();
-        document.getElementById('data-x').value = Math.round(data.x);
-        document.getElementById('data-y').value = Math.round(data.y);
-        document.getElementById('data-width').value = Math.round(data.width);
-        document.getElementById('data-height').value = Math.round(data.height);
-        document.getElementById('data-rotate').value = Math.round(data.rotate);
-        document.getElementById('data-scale-x').value = data.scaleX.toFixed(2);
-        document.getElementById('data-scale-y').value = data.scaleY.toFixed(2);
-    }
     
     // Function to load image for cropping
     function loadImageForCropping(event) {
@@ -205,9 +165,6 @@
             // Show the cropper container
             document.getElementById('image-cropper-container').style.display = 'block';
             
-            // Hide the preview if it was shown before
-            document.getElementById('cropped-image-preview').style.display = 'none';
-            
             // Initialize cropper after image is loaded
             imageElement.onload = function() {
                 // Destroy previous cropper if exists
@@ -218,17 +175,15 @@
                 // Initialize cropper
                 cropper = new Cropper(imageElement, {
                     aspectRatio: 1, // Square aspect ratio for profile picture
-                    viewMode: 1,     // Restrict the crop box to not exceed the size of the canvas
-                    guides: true,    // Show the dashed lines for guiding
-                    center: true,    // Show the center indicator for guiding
-                    dragMode: 'move',// Define the dragging mode of the cropper
-                    zoomable: true,  // Enable to zoom the image
-                    zoomOnWheel: true,// Enable to zoom the image by wheeling mouse
-                    cropBoxMovable: true,// Enable to move the crop box
-                    cropBoxResizable: true,// Enable to resize the crop box
-                    toggleDragModeOnDblclick: true,// Toggle drag mode between "crop" and "move" when double click on the cropper
-                    ready: updateCropBoxData,
-                    crop: updateCropBoxData
+                    viewMode: 1,
+                    guides: true,
+                    center: true,
+                    dragMode: 'move',
+                    zoomable: true,
+                    zoomOnWheel: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: true
                 });
             };
         };
@@ -237,99 +192,93 @@
         reader.readAsDataURL(file);
     }
     
+    // Function to crop and preview image
+    function cropImage() {
+        if (!cropper) return;
+        
+        const canvas = cropper.getCroppedCanvas({
+            width: 300,
+            height: 300
+        });
+        
+        const croppedImageData = canvas.toDataURL('image/jpeg');
+        
+        // Set the cropped image data to a hidden input
+        document.getElementById('cropped_image_data').value = croppedImageData;
+        
+        // Show preview
+        const previewImg = document.getElementById('cropped-image-preview');
+        previewImg.src = croppedImageData;
+        document.getElementById('cropped-preview-container').style.display = 'block';
+        
+        // Hide the cropper
+        document.getElementById('image-cropper-container').style.display = 'none';
+    }
+    
+    // Function to cancel cropping
+    function cancelCrop() {
+        // Hide the cropper
+        document.getElementById('image-cropper-container').style.display = 'none';
+        
+        // Clear the file input
+        document.getElementById('profile_picture').value = '';
+        
+        // Destroy the cropper
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        
+        // Hide the preview
+        document.getElementById('cropped-preview-container').style.display = 'none';
+    }
+    
     // Function to navigate to a specific step
     function goToStep(stepNumber) {
-        // Force step number to be an integer
         stepNumber = parseInt(stepNumber, 10);
         
-        // Validate step number
         if (stepNumber < 1 || stepNumber > totalSteps) {
             return;
         }
         
-        // Validate form fields if moving forward
-        if (stepNumber > currentStep) {
-            if (stepNumber === 2 && !validateTeacherInfoStep()) {
-                return;
-            }
-            
-            if (stepNumber === 3 && !validateProfilePictureStep()) {
-                return;
-            }
-        }
-        
-        // Hide all steps
-        document.querySelectorAll('.form-wizard-content').forEach(step => {
-            step.classList.remove('active');
-        });
-        
-        // Show the target step
-        document.getElementById(`step-${stepNumber}`).classList.add('active');
-        
-        // Update step indicators
-        document.querySelectorAll('.wizard-step').forEach(step => {
-            step.classList.remove('active', 'completed');
-        });
-        
-        // Mark completed steps
-        for (let i = 1; i < stepNumber; i++) {
-            document.querySelector(`.wizard-step[data-step="${i}"]`).classList.add('completed');
-        }
-        
-        // Mark current step as active
-        document.querySelector(`.wizard-step[data-step="${stepNumber}"]`).classList.add('active');
-        
         // Update current step
         currentStep = stepNumber;
         
-        // If navigating to review step, populate review data
-        if (stepNumber === 3) {
-            // Use setTimeout to ensure the DOM is updated before populating review data
-            setTimeout(() => {
-                populateReviewData();
-            }, 50);
-        }
-        
-        // Show/hide navigation buttons based on current step
-        updateNavigationButtons();
-    }
-    
-    // Function to validate teacher information step
-    function validateTeacherInfoStep() {
-        let isValid = true;
-        const requiredFields = ['account_no', 'name', 'subjects', 'gender', 'age', 'status'];
-        
-        requiredFields.forEach(field => {
-            const input = document.getElementById(field);
-            if (!input.value.trim()) {
-                input.classList.add('is-invalid');
-                isValid = false;
-            } else {
-                input.classList.remove('is-invalid');
+        // Update step indicators
+        document.querySelectorAll('.wizard-step').forEach((step, index) => {
+            const stepNum = index + 1;
+            step.classList.remove('active', 'completed');
+            
+            if (stepNum === currentStep) {
+                step.classList.add('active');
+            } else if (stepNum < currentStep) {
+                step.classList.add('completed');
             }
         });
         
-        if (!isValid) {
-            alert('Please fill in all required fields correctly before proceeding.');
-        }
+        // Update content visibility
+        document.querySelectorAll('.form-wizard-content').forEach((content, index) => {
+            content.classList.remove('active');
+            if (index + 1 === currentStep) {
+                content.classList.add('active');
+            }
+        });
         
-        return isValid;
-    }
-    
-    // Function to validate profile picture step
-    function validateProfilePictureStep() {
-        // Profile picture is optional, so always return true
-        return true;
+        // Update navigation buttons
+        updateNavigationButtons();
+        
+        // Populate review data when navigating to step 3
+        if (stepNumber === 3) {
+            populateReviewData();
+        }
     }
     
     // Function to update navigation buttons
     function updateNavigationButtons() {
-        // Hide all navigation buttons first
         document.querySelectorAll('.wizard-btn-prev, .wizard-btn-next, .wizard-btn-submit').forEach(btn => {
             btn.style.display = 'none';
         });
         
-        // Show appropriate buttons based on current step
         if (currentStep > 1) {
             document.querySelectorAll('.wizard-btn-prev').forEach(btn => {
                 btn.style.display = 'inline-block';
@@ -351,210 +300,293 @@
     
     // Function to populate review data
     function populateReviewData() {
-        try {
-            // Force focus on a form field to ensure all values are committed
-            document.body.focus();
+        // Basic Information
+        document.getElementById('review-first-name').textContent = document.getElementById('first_name').value || 'Not provided';
+        document.getElementById('review-middle-name').textContent = document.getElementById('middle_name').value || 'Not provided';
+        document.getElementById('review-last-name').textContent = document.getElementById('last_name').value || 'Not provided';
+        document.getElementById('review-email').textContent = document.getElementById('email').value || 'Not provided';
+        document.getElementById('review-employee-id').textContent = document.getElementById('employee_id').value || 'Not provided';
+        
+        // Personal Information
+         document.getElementById('review-date-of-birth').textContent = document.getElementById('date_of_birth').value || 'Not provided';
+         document.getElementById('review-age').textContent = document.getElementById('age').value || 'Not provided';
+         document.getElementById('review-gender').textContent = document.getElementById('gender').value || 'Not provided';
+         document.getElementById('review-contact-number').textContent = document.getElementById('contact_number').value || 'Not provided';
+         document.getElementById('review-nationality').textContent = document.getElementById('nationality').value || 'Filipino';
+        
+        // Professional Information
+        document.getElementById('review-position').textContent = document.getElementById('position').value || 'Not provided';
+        document.getElementById('review-educational-attainment').textContent = document.getElementById('educational_attainment').value || 'Not provided';
+        document.getElementById('review-prc-license').textContent = document.getElementById('prc_license_number').value || 'Not provided';
+        document.getElementById('review-eligibility-status').textContent = document.getElementById('eligibility_status').value || 'Not provided';
+        
+        // Dropdown values
+        const civilStatusSelect = document.getElementById('civil_status_id');
+        const civilStatusText = civilStatusSelect.options[civilStatusSelect.selectedIndex]?.text || 'Not selected';
+        document.getElementById('review-civil-status').textContent = civilStatusText;
+        
+        const employmentStatusSelect = document.getElementById('employment_status_id');
+        const employmentStatusText = employmentStatusSelect.options[employmentStatusSelect.selectedIndex]?.text || 'Not selected';
+        document.getElementById('review-employment-status').textContent = employmentStatusText;
+        
+         // Account status is automatically set to Active
+         document.getElementById('review-account-status').textContent = 'Active';
+         
+         // Display profile picture if available
+         const croppedImageData = document.getElementById('cropped_image_data').value;
+         const reviewProfilePicture = document.getElementById('review-profile-picture');
+         
+         if (croppedImageData && croppedImageData.trim() !== '') {
+             reviewProfilePicture.src = croppedImageData;
+             reviewProfilePicture.style.display = 'block';
+         } else {
+             reviewProfilePicture.style.display = 'none';
+         }
+     }
+    
+    // Address checkbox functionality with animation
+    function togglePermanentAddress() {
+        const checkbox = document.getElementById('same_as_residential');
+        const permanentSection = document.getElementById('permanent_address_section');
+        
+        if (checkbox.checked) {
+            // Hide permanent address fields with animation
+            permanentSection.style.transition = 'opacity 0.3s ease';
+            permanentSection.style.opacity = '0';
             
-            // Get form values
-            const accountNoInput = document.getElementById('account_no');
-            const nameInput = document.getElementById('name');
-            const subjectsInput = document.getElementById('subjects');
-            const genderInput = document.getElementById('gender');
-            const ageInput = document.getElementById('age');
-            const studentCountInput = document.getElementById('student_count');
-            const statusInput = document.getElementById('status');
+            setTimeout(function() {
+                permanentSection.style.display = 'none';
+                
+                // Copy residential address to permanent address fields
+                copyResidentialToPermanent();
+            }, 300);
+        } else {
+            // Show permanent address fields with animation
+            permanentSection.style.display = 'block';
+            permanentSection.style.opacity = '0';
             
-            // Set review values
-            document.getElementById('review-account-no').textContent = accountNoInput ? accountNoInput.value : 'Not provided';
-            document.getElementById('review-name').textContent = nameInput ? nameInput.value : 'Not provided';
-            document.getElementById('review-subjects').textContent = subjectsInput ? subjectsInput.value : 'Not provided';
-            document.getElementById('review-gender').textContent = genderInput ? genderInput.options[genderInput.selectedIndex].text : 'Not provided';
-            document.getElementById('review-age').textContent = ageInput ? ageInput.value : 'Not provided';
-            document.getElementById('review-student-count').textContent = studentCountInput ? studentCountInput.value : '0';
-            document.getElementById('review-status').textContent = statusInput ? statusInput.options[statusInput.selectedIndex].text : 'Not provided';
-            
-            // Check if profile picture is provided
-            const croppedImageData = document.getElementById('cropped_image_data').value;
-            if (croppedImageData) {
-                document.getElementById('review-profile-picture').src = croppedImageData;
-                document.getElementById('review-profile-picture').style.display = 'block';
-                document.querySelector('#review-profile-picture-container p.text-muted').style.display = 'none';
-            } else {
-                document.getElementById('review-profile-picture').style.display = 'none';
-                document.querySelector('#review-profile-picture-container p.text-muted').style.display = 'block';
-            }
-        } catch (error) {
-            console.error('Error populating review data:', error);
+            setTimeout(function() {
+                permanentSection.style.opacity = '1';
+            }, 10);
         }
     }
     
-    // Document ready function
+    // Function to copy residential address to permanent address
+    function copyResidentialToPermanent() {
+        const residentialFields = {
+            'residential_street_address': 'permanent_street_address',
+            'residential_barangay': 'permanent_barangay',
+            'residential_city': 'permanent_city',
+            'residential_province': 'permanent_province',
+            'residential_postal_code': 'permanent_postal_code'
+        };
+        
+        for (const [residential, permanent] of Object.entries(residentialFields)) {
+            const residentialField = document.getElementById(residential);
+            const permanentField = document.getElementById(permanent);
+            
+            if (residentialField && permanentField) {
+                permanentField.value = residentialField.value;
+            }
+        }
+    }
+    
+    // Specialization management
+    let specializationIndex = 1;
+    
+    function addSpecialization() {
+        const container = document.getElementById('specializations-container');
+        const newSpecialization = document.createElement('div');
+        newSpecialization.className = 'specialization-item border rounded p-3 mb-3';
+        newSpecialization.setAttribute('data-index', specializationIndex);
+        
+        newSpecialization.innerHTML = `
+            <div class="row">
+                <div class="col-md-4 mb-3">
+                    <label class="font-weight-bold">Subject <span class="text-danger">*</span></label>
+                    <select class="form-control" name="specializations[${specializationIndex}][subject_id]" required>
+                        <option value="">Select Subject</option>
+                        <?php if (isset($subjects) && !empty($subjects)): ?>
+                            <?php foreach ($subjects as $subject): ?>
+                                <option value="<?= $subject['id'] ?>"><?= esc($subject['subject_name']) ?></option>
+                            <?php endforeach; ?>
+                        <?php endif; ?>
+                    </select>
+                </div>
+                <div class="col-md-3 mb-3">
+                    <label class="font-weight-bold">Proficiency Level <span class="text-danger">*</span></label>
+                    <select class="form-control" name="specializations[${specializationIndex}][proficiency_level]" required>
+                        <option value="">Select Level</option>
+                        <option value="Basic">Basic</option>
+                        <option value="Intermediate" selected>Intermediate</option>
+                        <option value="Advanced">Advanced</option>
+                        <option value="Expert">Expert</option>
+                    </select>
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="font-weight-bold">Years Experience</label>
+                    <input type="number" class="form-control" name="specializations[${specializationIndex}][years_experience]" 
+                           min="0" max="50" placeholder="0">
+                </div>
+                <div class="col-md-2 mb-3">
+                    <label class="font-weight-bold">Primary</label>
+                    <div class="form-check mt-2">
+                        <input class="form-check-input primary-specialization" type="radio" 
+                               name="primary_specialization" value="${specializationIndex}" id="primary_${specializationIndex}">
+                        <label class="form-check-label" for="primary_${specializationIndex}">
+                            Primary
+                        </label>
+                    </div>
+                </div>
+                <div class="col-md-1 mb-3 d-flex align-items-end">
+                    <button type="button" class="btn btn-outline-danger btn-sm remove-specialization">
+                        <i class="fa fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        container.appendChild(newSpecialization);
+        specializationIndex++;
+        updateRemoveButtons();
+    }
+    
+    function removeSpecialization(button) {
+        const specializationItem = button.closest('.specialization-item');
+        specializationItem.remove();
+        updateRemoveButtons();
+    }
+    
+    function updateRemoveButtons() {
+        const items = document.querySelectorAll('.specialization-item');
+        const removeButtons = document.querySelectorAll('.remove-specialization');
+        
+        removeButtons.forEach((button, index) => {
+            if (items.length > 1) {
+                button.style.display = 'block';
+            } else {
+                button.style.display = 'none';
+            }
+        });
+    }
+    
+    // When document is ready
     document.addEventListener('DOMContentLoaded', function() {
-        // Initialize the form wizard
+        // Initialize wizard
         goToStep(1);
         
-        // Add event listeners for navigation buttons
+        // Next button click handler
         document.querySelectorAll('.wizard-btn-next').forEach(btn => {
             btn.addEventListener('click', function() {
                 goToStep(currentStep + 1);
             });
         });
         
+        // Previous button click handler
         document.querySelectorAll('.wizard-btn-prev').forEach(btn => {
             btn.addEventListener('click', function() {
                 goToStep(currentStep - 1);
             });
         });
         
-        // Add event listener for profile picture input
-        document.getElementById('profile_picture').addEventListener('change', loadImageForCropping);
-        
-        // Add event listeners for cropper control buttons
-        document.getElementById('zoom-in').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.zoom(0.1);
-        });
-        
-        document.getElementById('zoom-out').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.zoom(-0.1);
-        });
-        
-        document.getElementById('rotate-left').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.rotate(-45);
-        });
-        
-        document.getElementById('rotate-right').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.rotate(45);
-        });
-        
-        document.getElementById('flip-horizontal').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.scaleX(-cropper.getData().scaleX || -1);
-        });
-        
-        document.getElementById('flip-vertical').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.scaleY(-cropper.getData().scaleY || -1);
-        });
-        
-        document.getElementById('reset-crop').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.reset();
-        });
-        
-        document.getElementById('aspect-1-1').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.setAspectRatio(1);
-        });
-        
-        document.getElementById('aspect-4-3').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.setAspectRatio(4/3);
-        });
-        
-        document.getElementById('aspect-16-9').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.setAspectRatio(16/9);
-        });
-        
-        document.getElementById('aspect-free').addEventListener('click', function() {
-            if (!cropper) return;
-            cropper.setAspectRatio(NaN);
-        });
-        
-        // Crop button click event
-        document.getElementById('crop-image').addEventListener('click', function() {
-            if (!cropper) {
-                return;
-            }
-            
-            // Get the cropped canvas
-            const canvas = cropper.getCroppedCanvas({
-                width: 300,  // Output image width
-                height: 300, // Output image height
-                minWidth: 100,
-                minHeight: 100,
-                maxWidth: 1000,
-                maxHeight: 1000,
-                fillColor: '#fff',
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
+        // Step indicator click handler
+        document.querySelectorAll('.wizard-step').forEach(step => {
+            step.addEventListener('click', function() {
+                const stepNumber = parseInt(this.getAttribute('data-step'));
+                goToStep(stepNumber);
             });
-            
-            if (!canvas) {
-                return;
+        });
+        
+        // Address checkbox event listener
+        const sameAsResidentialCheckbox = document.getElementById('same_as_residential');
+        if (sameAsResidentialCheckbox) {
+            sameAsResidentialCheckbox.addEventListener('change', togglePermanentAddress);
+        }
+        
+        // Specialization management event listeners
+        const addSpecializationBtn = document.getElementById('add-specialization');
+        if (addSpecializationBtn) {
+            addSpecializationBtn.addEventListener('click', addSpecialization);
+        }
+        
+        // Remove specialization event delegation
+        document.addEventListener('click', function(e) {
+            if (e.target.closest('.remove-specialization')) {
+                removeSpecialization(e.target.closest('.remove-specialization'));
             }
-            
-            // Convert canvas to data URL
-            const croppedImageData = canvas.toDataURL('image/jpeg', 0.8);
-            
-            // Set the value of the hidden input
-            document.getElementById('cropped_image_data').value = croppedImageData;
-            
-            // Show the preview
-            document.getElementById('cropped-image-preview').style.display = 'block';
-            document.getElementById('cropped-preview').src = croppedImageData;
-            
-            // Also update the review picture if we're already on step 3
-            if (currentStep === 3) {
-                const reviewPicture = document.getElementById('review-profile-picture');
-                if (reviewPicture) {
-                    reviewPicture.src = croppedImageData;
-                    reviewPicture.style.display = 'block';
-                    
-                    const noImageText = document.querySelector('#review-profile-picture-container p.text-muted');
-                    if (noImageText) {
-                        noImageText.style.display = 'none';
-                    }
+        });
+        
+        // Initialize remove buttons visibility
+        updateRemoveButtons();
+        
+        // Add form submit validation with detailed debugging
+        const form = document.querySelector('form');
+        if (form) {
+            form.addEventListener('submit', function(e) {
+                console.log('=== FORM SUBMISSION DEBUG ===');
+                console.log('Form submit event triggered');
+                console.log('Current step:', currentStep);
+                console.log('Total steps:', totalSteps);
+                console.log('Form action:', form.action);
+                console.log('Form method:', form.method);
+                
+                // Check if we're on the final step
+                if (currentStep !== totalSteps) {
+                    console.log('ERROR: Not on final step, preventing submission');
+                    console.log('Expected step:', totalSteps, 'Current step:', currentStep);
+                    e.preventDefault();
+                    return false;
                 }
-            }
-            
-            // Hide the cropper
-            document.getElementById('image-cropper-container').style.display = 'none';
-        });
+                
+                // Check for required fields and HTML5 validation
+                const requiredFields = form.querySelectorAll('[required]');
+                let emptyFields = [];
+                let invalidFields = [];
+                
+                requiredFields.forEach(field => {
+                    if (!field.value.trim()) {
+                        emptyFields.push(field.name || field.id);
+                    } else if (!field.checkValidity()) {
+                        invalidFields.push(field.name || field.id + ' (invalid format)');
+                    }
+                });
+                
+                if (emptyFields.length > 0) {
+                    console.log('ERROR: Empty required fields:', emptyFields);
+                    alert('Please fill in all required fields: ' + emptyFields.join(', '));
+                    // Focus on first empty field
+                    const firstEmptyField = form.querySelector('[name="' + emptyFields[0] + '"]');
+                    if (firstEmptyField) firstEmptyField.focus();
+                    e.preventDefault();
+                    return false;
+                }
+                
+                if (invalidFields.length > 0) {
+                    console.log('ERROR: Invalid field formats:', invalidFields);
+                    alert('Please check the format of these fields: ' + invalidFields.join(', '));
+                    e.preventDefault();
+                    return false;
+                }
+                
+                console.log('SUCCESS: Form validation passed, submitting...');
+                console.log('=== END DEBUG ===');
+            });
+        }
         
-        // Cancel button click event
-        document.getElementById('cancel-crop').addEventListener('click', function() {
-            // Hide the cropper
-            document.getElementById('image-cropper-container').style.display = 'none';
-            
-            // Clear the file input
-            document.getElementById('profile_picture').value = '';
-            
-            // Destroy the cropper
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
-            
-            // Hide the preview if it was shown
-            document.getElementById('cropped-image-preview').style.display = 'none';
-            
-            // Clear data inputs
-            document.getElementById('data-x').value = '';
-            document.getElementById('data-y').value = '';
-            document.getElementById('data-width').value = '';
-            document.getElementById('data-height').value = '';
-            document.getElementById('data-rotate').value = '';
-            document.getElementById('data-scale-x').value = '';
-            document.getElementById('data-scale-y').value = '';
-        });
-        
-        // Form validation on submit
-        document.querySelector('form').addEventListener('submit', function(e) {
-            // Final validation before submission
-            if (!validateTeacherInfoStep()) {
-                e.preventDefault();
-                goToStep(1);
-            }
-        });
+        // Add click handler to submit button for additional debugging
+        const submitButton = document.querySelector('.wizard-btn-submit');
+        if (submitButton) {
+            submitButton.addEventListener('click', function(e) {
+                console.log('=== SUBMIT BUTTON CLICKED ===');
+                console.log('Button type:', this.type);
+                console.log('Current step when clicked:', currentStep);
+                console.log('Button visible:', this.style.display !== 'none');
+            });
+        }
     });
-
 </script>
 <?= $this->endSection() ?>
+
 <?= $this->section('content') ?>
 
 <div class="page-header">
@@ -566,23 +598,34 @@
             <nav aria-label="breadcrumb" role="navigation">
                 <ol class="breadcrumb">
                     <li class="breadcrumb-item"><a href="<?= route_to('admin.home') ?>">Home</a></li>
-                    <li class="breadcrumb-item"><a href="<?= site_url('admin/teacher') ?>">Teachers</a></li>
-                    <li class="breadcrumb-item active" aria-current="page">Add Teacher</li>
+                    <li class="breadcrumb-item"><a href="<?= site_url('/admin/teacher') ?>">Teachers</a></li>
+                    <li class="breadcrumb-item active" aria-current="page">Add New</li>
                 </ol>
             </nav>
         </div>
     </div>
 </div>
 
+<!-- Error Messages -->
+<?php if (session()->getFlashdata('error')): ?>
+    <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <?= session()->getFlashdata('error') ?>
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+        </button>
+    </div>
+<?php endif; ?>
+
 <div class="card-box mb-30">
     <div class="pd-20">
         <h4 class="text-blue h4">Add New Teacher</h4>
+        <p class="mb-0">Fill in the teacher's details using the step-by-step wizard below.</p>
     </div>
     <div class="p-4">
-        <?php if (session()->getFlashdata('errors')): ?>
+        <?php if (isset($validation) && $validation->getErrors()): ?>
             <div class="alert alert-danger">
                 <ul class="mb-0">
-                    <?php foreach (session()->getFlashdata('errors') as $error): ?>
+                    <?php foreach ($validation->getErrors() as $error): ?>
                         <li><?= esc($error) ?></li>
                     <?php endforeach; ?>
                 </ul>
@@ -605,265 +648,503 @@
             </div>
         </div>
 
-        <form action="<?= site_url('admin/teacher/store') ?>" method="POST" enctype="multipart/form-data">
+        <form action="<?= base_url('/admin/teacher/store') ?>" method="POST" enctype="multipart/form-data" novalidate>
             <?= csrf_field() ?>
 
             <!-- Step 1: Teacher Information -->
             <div id="step-1" class="form-wizard-content active">
-                <!-- Basic Information Section -->
+                <!-- Personal Information Section -->
                 <div class="row mb-5">
-                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Basic Information</h5></div>
-                    <div class="col-md-6 mb-3">
-                        <label for="account_no" class="font-weight-bold">Account No. <span class="text-danger">*</span></label>
-                        <input type="text" id="account_no" name="account_no" value="<?= old('account_no') ?>" class="form-control mt-2" required>
-                        <div class="invalid-feedback">Please enter a valid account number.</div>
+                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Personal Information</h5></div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="first_name" class="font-weight-bold">First Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control <?= isset($validation) && $validation->hasError('first_name') ? 'is-invalid' : '' ?>" 
+                               id="first_name" name="first_name" value="<?= old('first_name') ?>" required>
+                        <?php if (isset($validation) && $validation->hasError('first_name')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('first_name') ?></div>
+                        <?php endif; ?>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="name" class="font-weight-bold">Full Name <span class="text-danger">*</span></label>
-                        <input type="text" id="name" name="name" value="<?= old('name') ?>" class="form-control mt-2" required>
-                        <div class="invalid-feedback">Please enter a valid name.</div>
+                    <div class="col-md-4 mb-3">
+                        <label for="middle_name" class="font-weight-bold">Middle Name</label>
+                        <input type="text" class="form-control" id="middle_name" name="middle_name" value="<?= old('middle_name') ?>">
                     </div>
-                </div>
-
-                <!-- Personal Details -->
-                <div class="row mb-5">
-                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Personal Details</h5></div>
-                    <div class="col-md-6 mb-3">
+                    <div class="col-md-4 mb-3">
+                        <label for="last_name" class="font-weight-bold">Last Name <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control <?= isset($validation) && $validation->hasError('last_name') ? 'is-invalid' : '' ?>" 
+                               id="last_name" name="last_name" value="<?= old('last_name') ?>" required>
+                        <?php if (isset($validation) && $validation->hasError('last_name')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('last_name') ?></div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="email" class="font-weight-bold">Email Address <span class="text-danger">*</span></label>
+                        <input type="email" class="form-control <?= isset($validation) && $validation->hasError('email') ? 'is-invalid' : '' ?>" 
+                               id="email" name="email" value="<?= old('email') ?>" required>
+                        <small class="form-text text-muted">This will be used for login</small>
+                        <?php if (isset($validation) && $validation->hasError('email')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('email') ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="employee_id" class="font-weight-bold">Employee ID <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control <?= isset($validation) && $validation->hasError('employee_id') ? 'is-invalid' : '' ?>" 
+                               id="employee_id" name="employee_id" value="<?= old('employee_id') ?>" required placeholder="DepEd Employee ID">
+                        <small class="form-text text-muted">Enter the DepEd-provided Employee ID</small>
+                        <?php if (isset($validation) && $validation->hasError('employee_id')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('employee_id') ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="contact_number" class="font-weight-bold">Contact Number</label>
+                        <input type="text" class="form-control <?= isset($validation) && $validation->hasError('contact_number') ? 'is-invalid' : '' ?>" 
+                               id="contact_number" name="contact_number" value="<?= old('contact_number') ?>" placeholder="09XXXXXXXXX">
+                        <?php if (isset($validation) && $validation->hasError('contact_number')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('contact_number') ?></div>
+                        <?php endif; ?>
+                    </div>
+                    
+                    <div class="col-md-3 mb-3">
+                        <label for="date_of_birth" class="font-weight-bold">Date of Birth</label>
+                        <input type="date" class="form-control <?= isset($validation) && $validation->hasError('date_of_birth') ? 'is-invalid' : '' ?>" 
+                               id="date_of_birth" name="date_of_birth" value="<?= old('date_of_birth') ?>">
+                        <?php if (isset($validation) && $validation->hasError('date_of_birth')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('date_of_birth') ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <label for="age" class="font-weight-bold">Age</label>
+                        <input type="number" class="form-control <?= isset($validation) && $validation->hasError('age') ? 'is-invalid' : '' ?>" 
+                               id="age" name="age" value="<?= old('age') ?>" placeholder="Age (10-100)">
+                        <small class="form-text text-muted">Leave empty if unknown (minimum 10 years)</small>
+                        <?php if (isset($validation) && $validation->hasError('age')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('age') ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-3 mb-3">
                         <label for="gender" class="font-weight-bold">Gender <span class="text-danger">*</span></label>
-                        <select id="gender" name="gender" class="form-control mt-2" required>
+                        <select class="form-control <?= isset($validation) && $validation->hasError('gender') ? 'is-invalid' : '' ?>" 
+                                id="gender" name="gender" required>
                             <option value="">Select Gender</option>
                             <option value="Male" <?= old('gender') == 'Male' ? 'selected' : '' ?>>Male</option>
                             <option value="Female" <?= old('gender') == 'Female' ? 'selected' : '' ?>>Female</option>
+                            <option value="Other" <?= old('gender') == 'Other' ? 'selected' : '' ?>>Other</option>
                         </select>
+                        <?php if (isset($validation) && $validation->hasError('gender')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('gender') ?></div>
+                        <?php endif; ?>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="age" class="font-weight-bold">Age <span class="text-danger">*</span></label>
-                        <input type="number" id="age" name="age" value="<?= old('age') ?>" class="form-control mt-2" min="18" max="100" required>
+                    <div class="col-md-3 mb-3">
+                        <label for="civil_status_id" class="font-weight-bold">Civil Status</label>
+                        <select class="form-control <?= isset($validation) && $validation->hasError('civil_status_id') ? 'is-invalid' : '' ?>" 
+                                id="civil_status_id" name="civil_status_id">
+                            <option value="">Select Civil Status</option>
+                            <?php if (isset($civil_statuses) && !empty($civil_statuses)): ?>
+                                <?php foreach ($civil_statuses as $status): ?>
+                                    <option value="<?= $status['id'] ?>" <?= old('civil_status_id') == $status['id'] ? 'selected' : '' ?>>
+                                        <?= esc($status['status']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <?php if (isset($validation) && $validation->hasError('civil_status_id')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('civil_status_id') ?></div>
+                        <?php endif; ?>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="nationality" class="font-weight-bold">Nationality</label>
+                        <input type="text" class="form-control" id="nationality" name="nationality" 
+                               value="<?= old('nationality', 'Filipino') ?>" placeholder="Filipino">
                     </div>
                 </div>
-
-                <!-- Teaching Information -->
+                
+                <!-- Professional Information Section -->
                 <div class="row mb-5">
-                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Teaching Information</h5></div>
-                    <div class="col-md-6 mb-3">
-                        <label for="subjects" class="font-weight-bold">Subjects <span class="text-danger">*</span></label>
-                        <input type="text" id="subjects" name="subjects" value="<?= old('subjects') ?>" class="form-control mt-2" placeholder="e.g. Math, Science, English" required>
+                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Professional Information</h5></div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="position" class="font-weight-bold">Position</label>
+                        <input type="text" class="form-control" id="position" name="position" 
+                               value="<?= old('position') ?>" placeholder="e.g., Senior High School Teacher">
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="student_count" class="font-weight-bold">Student Count</label>
-                        <input type="number" id="student_count" name="student_count" value="<?= old('student_count', 0) ?>" class="form-control mt-2" min="0">
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="status" class="font-weight-bold">Status <span class="text-danger">*</span></label>
-                        <select id="status" name="status" class="form-control mt-2" required>
-                            <option value="">Select Status</option>
-                            <option value="Active" <?= old('status') == 'Active' ? 'selected' : '' ?>>Active</option>
-                            <option value="Inactive" <?= old('status') == 'Inactive' ? 'selected' : '' ?>>Inactive</option>
-                            <option value="On Leave" <?= old('status') == 'On Leave' ? 'selected' : '' ?>>On Leave</option>
+                    <div class="col-md-4 mb-3">
+                        <label for="employment_status_id" class="font-weight-bold">Employment Status</label>
+                        <select class="form-control <?= isset($validation) && $validation->hasError('employment_status_id') ? 'is-invalid' : '' ?>" 
+                                id="employment_status_id" name="employment_status_id">
+                            <option value="">Select Employment Status</option>
+                            <?php if (isset($employment_statuses) && !empty($employment_statuses)): ?>
+                                <?php foreach ($employment_statuses as $status): ?>
+                                    <option value="<?= $status['id'] ?>" <?= old('employment_status_id') == $status['id'] ? 'selected' : '' ?>>
+                                        <?= esc($status['status']) ?>
+                                    </option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
+                        <?php if (isset($validation) && $validation->hasError('employment_status_id')): ?>
+                            <div class="invalid-feedback"><?= $validation->getError('employment_status_id') ?></div>
+                        <?php endif; ?>
                     </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="educational_attainment" class="font-weight-bold">Educational Attainment</label>
+                        <input type="text" class="form-control" id="educational_attainment" name="educational_attainment" 
+                               value="<?= old('educational_attainment') ?>" placeholder="e.g., Bachelor of Science in Education">
+                    </div>
+                    
+                    <div class="col-md-4 mb-3">
+                        <label for="prc_license_number" class="font-weight-bold">PRC License Number</label>
+                        <input type="text" class="form-control" id="prc_license_number" name="prc_license_number" 
+                               value="<?= old('prc_license_number') ?>" placeholder="Professional License Number">
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <label for="eligibility_status" class="font-weight-bold">Eligibility Status</label>
+                        <input type="text" class="form-control" id="eligibility_status" name="eligibility_status" 
+                               value="<?= old('eligibility_status') ?>" placeholder="e.g., LET Passer, Civil Service Eligible">
+                    </div>
+
+                </div>
+                
+                <!-- Address Information Section -->
+                <div class="row mb-5">
+                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Address Information</h5></div>
+                    
+                    <!-- Residential Address -->
+                    <div class="col-12 mb-4">
+                        <h6 class="text-secondary mb-3">Residential Address</h6>
+                        <div class="row">
+                            <div class="col-md-12 mb-3">
+                                <label for="residential_street_address" class="font-weight-bold">Street Address <span class="text-danger">*</span></label>
+                                <textarea class="form-control" id="residential_street_address" name="residential_street_address" 
+                                         rows="2" placeholder="House/Unit Number, Street Name" required><?= old('residential_street_address') ?></textarea>
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="residential_barangay" class="font-weight-bold">Barangay</label>
+                                <input type="text" class="form-control" id="residential_barangay" name="residential_barangay" 
+                                       value="<?= old('residential_barangay') ?>" placeholder="Barangay">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="residential_city" class="font-weight-bold">City/Municipality</label>
+                                <input type="text" class="form-control" id="residential_city" name="residential_city" 
+                                       value="<?= old('residential_city') ?>" placeholder="City/Municipality">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="residential_province" class="font-weight-bold">Province</label>
+                                <input type="text" class="form-control" id="residential_province" name="residential_province" 
+                                       value="<?= old('residential_province') ?>" placeholder="Province">
+                            </div>
+                            <div class="col-md-3 mb-3">
+                                <label for="residential_postal_code" class="font-weight-bold">Postal Code</label>
+                                <input type="text" class="form-control" id="residential_postal_code" name="residential_postal_code" 
+                                       value="<?= old('residential_postal_code') ?>" placeholder="Postal Code">
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Permanent Address -->
+                    <div class="col-12 mb-3">
+                        <div class="form-check mb-3">
+                            <input class="form-check-input" type="checkbox" id="same_as_residential" name="same_as_residential" 
+                                   <?= old('same_as_residential') ? 'checked' : '' ?>>
+                            <label class="form-check-label" for="same_as_residential">
+                                Permanent address is the same as residential address
+                            </label>
+                        </div>
+                        
+                        <div id="permanent_address_section" style="<?= old('same_as_residential') ? 'display: none;' : '' ?>">
+                            <h6 class="text-secondary mb-3">Permanent Address</h6>
+                            <div class="row">
+                                <div class="col-md-12 mb-3">
+                                    <label for="permanent_street_address" class="font-weight-bold">Street Address</label>
+                                    <textarea class="form-control" id="permanent_street_address" name="permanent_street_address" 
+                                             rows="2" placeholder="House/Unit Number, Street Name"><?= old('permanent_street_address') ?></textarea>
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="permanent_barangay" class="font-weight-bold">Barangay</label>
+                                    <input type="text" class="form-control" id="permanent_barangay" name="permanent_barangay" 
+                                           value="<?= old('permanent_barangay') ?>" placeholder="Barangay">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="permanent_city" class="font-weight-bold">City/Municipality</label>
+                                    <input type="text" class="form-control" id="permanent_city" name="permanent_city" 
+                                           value="<?= old('permanent_city') ?>" placeholder="City/Municipality">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="permanent_province" class="font-weight-bold">Province</label>
+                                    <input type="text" class="form-control" id="permanent_province" name="permanent_province" 
+                                           value="<?= old('permanent_province') ?>" placeholder="Province">
+                                </div>
+                                <div class="col-md-3 mb-3">
+                                    <label for="permanent_postal_code" class="font-weight-bold">Postal Code</label>
+                                    <input type="text" class="form-control" id="permanent_postal_code" name="permanent_postal_code" 
+                                           value="<?= old('permanent_postal_code') ?>" placeholder="Postal Code">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Specialization Information Section -->
+                <div class="row mb-5">
+                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Subject Specializations</h5></div>
+                    
+                    <div class="col-12 mb-3">
+                        <p class="text-muted">Add the subjects this teacher specializes in. You can add multiple specializations.</p>
+                        
+                        <div id="specializations-container">
+                            <div class="specialization-item border rounded p-3 mb-3" data-index="0">
+                                <div class="row">
+                                    <div class="col-md-4 mb-3">
+                                        <label class="font-weight-bold">Subject <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="specializations[0][subject_id]" required>
+                                            <option value="">Select Subject</option>
+                                            <?php if (isset($subjects) && !empty($subjects)): ?>
+                                                <?php foreach ($subjects as $subject): ?>
+                                                    <option value="<?= $subject['id'] ?>"><?= esc($subject['subject_name']) ?></option>
+                                                <?php endforeach; ?>
+                                            <?php endif; ?>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-3 mb-3">
+                                        <label class="font-weight-bold">Proficiency Level <span class="text-danger">*</span></label>
+                                        <select class="form-control" name="specializations[0][proficiency_level]" required>
+                                            <option value="">Select Level</option>
+                                            <option value="Basic">Basic</option>
+                                            <option value="Intermediate" selected>Intermediate</option>
+                                            <option value="Advanced">Advanced</option>
+                                            <option value="Expert">Expert</option>
+                                        </select>
+                                    </div>
+                                    <div class="col-md-2 mb-3">
+                                        <label class="font-weight-bold">Years Experience</label>
+                                        <input type="number" class="form-control" name="specializations[0][years_experience]" 
+                                               min="0" max="50" placeholder="0">
+                                    </div>
+                                    <div class="col-md-2 mb-3">
+                                        <label class="font-weight-bold">Primary</label>
+                                        <div class="form-check mt-2">
+                                            <input class="form-check-input primary-specialization" type="radio" 
+                                                   name="primary_specialization" value="0" id="primary_0">
+                                            <label class="form-check-label" for="primary_0">
+                                                Primary
+                                            </label>
+                                        </div>
+                                    </div>
+
+                                    <div class="col-md-1 mb-3 d-flex align-items-end">
+                                        <button type="button" class="btn btn-outline-danger btn-sm remove-specialization" 
+                                                style="display: none;">
+                                            <i class="fa fa-trash"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <button type="button" class="btn btn-outline-primary btn-sm" id="add-specialization">
+                            <i class="fa fa-plus mr-2"></i> Add Another Specialization
+                        </button>
+
+                    </div>
+                </div>
+                
+                <!-- Step 1 Navigation -->
+                <div class="wizard-buttons mt-4 d-flex justify-content-end">
+                    <a href="<?= site_url('/admin/teacher') ?>" class="btn btn-outline-secondary px-4 mr-2">
+                        <i class="fa fa-arrow-left mr-2"></i> Cancel
+                    </a>
+                    <button type="button" class="btn btn-primary wizard-btn-next px-4">
+                        Next <i class="fa fa-arrow-right ml-2"></i>
+                    </button>
                 </div>
             </div>
 
             <!-- Step 2: Profile Picture -->
-            <div id="step-2" class="form-wizard-content">
-                <div class="row">
-                    <div class="col-12 mb-4">
-                        <h5 class="text-primary border-bottom pb-2 mb-4">Profile Picture</h5>
-                        <p class="text-muted">Upload a profile picture for the teacher. This is optional but recommended.</p>
-                    </div>
-                    
-                    <div class="col-md-6">
-                        <div class="form-group">
-                            <label for="profile_picture" class="font-weight-bold">Select Image</label>
-                            <input type="file" id="profile_picture" name="profile_picture" class="form-control-file mt-2" accept="image/*">
-                            <small class="form-text text-muted">Recommended size: 300x300 pixels. Max file size: 2MB.</small>
-                        </div>
-                        
-                        <!-- Cropped Image Preview -->
-                        <div id="cropped-image-preview" style="display: none; margin-top: 20px;">
-                            <h6 class="mb-3">Preview:</h6>
-                            <img id="cropped-preview" src="" alt="Cropped Preview" style="max-width: 100%; max-height: 300px; border: 1px solid #ddd; border-radius: 4px;">
-                        </div>
-                    </div>
-                    
-                    <!-- Image Cropper Container -->
-                    <div id="image-cropper-container" class="col-12" style="display: none; margin-top: 30px;">
-                        <div class="row">
-                            <div class="col-md-8">
-                                <div class="img-container">
-                                    <img id="image-to-crop" src="" alt="Image to crop">
-                                </div>
-                            </div>
-                            <div class="col-md-4">
-                                <div class="cropper-control-panel">
-                                    <h6 class="mb-3">Cropper Controls</h6>
-                                    
-                                    <!-- Zoom Controls -->
-                                    <div class="mb-3">
-                                        <label class="d-block mb-2">Zoom:</label>
-                                        <div class="btn-group w-100">
-                                            <button type="button" id="zoom-in" class="btn btn-sm btn-outline-primary"><i class="icon-copy fa fa-search-plus" aria-hidden="true"></i></button>
-                                            <button type="button" id="zoom-out" class="btn btn-sm btn-outline-primary"><i class="icon-copy fa fa-search-minus" aria-hidden="true"></i></button>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Rotation Controls -->
-                                    <div class="mb-3">
-                                        <label class="d-block mb-2">Rotate:</label>
-                                        <div class="btn-group w-100">
-                                            <button type="button" id="rotate-left" class="btn btn-sm btn-outline-primary"><i class="icon-copy fa fa-rotate-left" aria-hidden="true"></i></button>
-                                            <button type="button" id="rotate-right" class="btn btn-sm btn-outline-primary"><i class="icon-copy fa fa-rotate-right" aria-hidden="true"></i></button>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Flip Controls -->
-                                    <div class="mb-3">
-                                        <label class="d-block mb-2">Flip:</label>
-                                        <div class="btn-group w-100">
-                                            <button type="button" id="flip-horizontal" class="btn btn-sm btn-outline-primary"><i class="icon-copy fa fa-arrows-h" aria-hidden="true"></i></button>
-                                            <button type="button" id="flip-vertical" class="btn btn-sm btn-outline-primary"><i class="icon-copy fa fa-arrows-v" aria-hidden="true"></i></button>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Reset Button -->
-                                    <div class="mb-3">
-                                        <button type="button" id="reset-crop" class="btn btn-sm btn-outline-secondary w-100">Reset</button>
-                                    </div>
-                                    
-                                    <!-- Aspect Ratio Buttons -->
-                                    <div class="mb-3">
-                                        <label class="d-block mb-2">Aspect Ratio:</label>
-                                        <div class="aspect-ratio-buttons">
-                                            <button type="button" id="aspect-1-1" class="btn btn-sm btn-outline-primary">1:1</button>
-                                            <button type="button" id="aspect-4-3" class="btn btn-sm btn-outline-primary">4:3</button>
-                                            <button type="button" id="aspect-16-9" class="btn btn-sm btn-outline-primary">16:9</button>
-                                            <button type="button" id="aspect-free" class="btn btn-sm btn-outline-primary">Free</button>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Crop Data -->
-                                    <div class="cropper-data-group">
-                                        <label class="d-block mb-2">Crop Data:</label>
-                                        <div class="row">
-                                            <div class="col-6">
-                                                <label for="data-x">X</label>
-                                                <input type="text" class="form-control form-control-sm cropper-data-input" id="data-x" placeholder="x">
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="data-y">Y</label>
-                                                <input type="text" class="form-control form-control-sm cropper-data-input" id="data-y" placeholder="y">
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="data-width">Width</label>
-                                                <input type="text" class="form-control form-control-sm cropper-data-input" id="data-width" placeholder="width">
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="data-height">Height</label>
-                                                <input type="text" class="form-control form-control-sm cropper-data-input" id="data-height" placeholder="height">
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="data-rotate">Rotate</label>
-                                                <input type="text" class="form-control form-control-sm cropper-data-input" id="data-rotate" placeholder="rotate">
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="data-scale-x">ScaleX</label>
-                                                <input type="text" class="form-control form-control-sm cropper-data-input" id="data-scale-x" placeholder="scaleX">
-                                            </div>
-                                            <div class="col-6">
-                                                <label for="data-scale-y">ScaleY</label>
-                                                <input type="text" class="form-control form-control-sm cropper-data-input" id="data-scale-y" placeholder="scaleY">
-                                            </div>
-                                        </div>
-                                    </div>
-                                    
-                                    <!-- Action Buttons -->
-                                    <div class="mt-4">
-                                        <button type="button" id="crop-image" class="btn btn-primary w-100 mb-2">Crop</button>
-                                        <button type="button" id="cancel-crop" class="btn btn-outline-secondary w-100">Cancel</button>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <!-- Hidden input for cropped image data -->
-                    <input type="hidden" id="cropped_image_data" name="cropped_image_data">
-                </div>
-            </div>
+             <div id="step-2" class="form-wizard-content">
+                 <div class="row">
+                     <div class="col-12 mb-4">
+                         <h5 class="text-primary border-bottom pb-2 mb-4">Profile Picture</h5>
+                         <p class="text-muted">Upload a profile picture for the teacher (optional). You can crop and adjust the image as needed.</p>
+                     </div>
+                     <div class="col-md-12 mb-3">
+                         <label for="profile_picture" class="font-weight-bold">Select Image</label>
+                         <input type="file" id="profile_picture" name="profile_picture" class="form-control-file mt-2" accept="image/*" onchange="loadImageForCropping(event)">
+                         <small class="form-text text-muted mt-1">Recommended size: 300x300 pixels, maximum file size: 2MB</small>
+                         <?php if (isset($validation) && $validation->hasError('profile_picture')): ?>
+                             <div class="invalid-feedback"><?= $validation->getError('profile_picture') ?></div>
+                         <?php endif; ?>
+                     </div>
+                 </div>
+                 
+                 <!-- Image Cropper Container (Hidden by default) -->
+                 <div id="image-cropper-container" class="mt-3" style="display: none;">
+                     <div class="row">
+                         <div class="col-md-8">
+                             <div class="img-container mb-3">
+                                 <img id="image-to-crop" src="" alt="Image to crop" style="max-width: 100%;">
+                             </div>
+                         </div>
+                         <div class="col-md-4">
+                             <div class="cropper-control-panel">
+                                 <h6 class="mb-3">Cropper Controls</h6>
+                                 
+                                 <!-- Aspect Ratio Buttons -->
+                                 <div class="aspect-ratio-buttons">
+                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="cropper && cropper.setAspectRatio(1)">1:1</button>
+                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="cropper && cropper.setAspectRatio(4/3)">4:3</button>
+                                     <button type="button" class="btn btn-sm btn-outline-primary" onclick="cropper && cropper.setAspectRatio(NaN)">Free</button>
+                                 </div>
+                                 
+                                 <!-- Action Buttons -->
+                                 <div class="mb-3">
+                                     <button type="button" class="btn btn-success btn-block" onclick="cropImage()">Crop & Preview</button>
+                                     <button type="button" class="btn btn-secondary btn-block" onclick="cancelCrop()">Cancel</button>
+                                 </div>
+                                 
+                                 <!-- Zoom Controls -->
+                                 <div class="mb-2">
+                                     <label class="small">Zoom:</label>
+                                     <div class="btn-group btn-group-sm d-flex" role="group">
+                                         <button type="button" class="btn btn-outline-secondary" onclick="cropper && cropper.zoom(-0.1)">-</button>
+                                         <button type="button" class="btn btn-outline-secondary" onclick="cropper && cropper.zoom(0.1)">+</button>
+                                     </div>
+                                 </div>
+                                 
+                                 <!-- Rotate Controls -->
+                                 <div class="mb-2">
+                                     <label class="small">Rotate:</label>
+                                     <div class="btn-group btn-group-sm d-flex" role="group">
+                                         <button type="button" class="btn btn-outline-secondary" onclick="cropper && cropper.rotate(-90)">↺</button>
+                                         <button type="button" class="btn btn-outline-secondary" onclick="cropper && cropper.rotate(90)">↻</button>
+                                     </div>
+                                 </div>
+                             </div>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <!-- Cropped Image Preview -->
+                 <div id="cropped-preview-container" class="mt-3" style="display: none;">
+                     <div class="row">
+                         <div class="col-12">
+                             <h6>Preview:</h6>
+                             <div class="text-center">
+                                 <img id="cropped-image-preview" src="" alt="Cropped preview" class="img-thumbnail" style="max-width: 200px; max-height: 200px;">
+                             </div>
+                             <button type="button" class="btn btn-sm btn-outline-primary mt-2" onclick="document.getElementById('image-cropper-container').style.display = 'block'; document.getElementById('cropped-preview-container').style.display = 'none';">Edit Again</button>
+                         </div>
+                     </div>
+                 </div>
+                 
+                 <!-- Hidden input for cropped image data -->
+                 <input type="hidden" id="cropped_image_data" name="cropped_image_data" value="">
+                 
+                 <!-- Step 2 Navigation -->
+                 <div class="wizard-buttons mt-4 d-flex justify-content-end">
+                     <button type="button" class="btn btn-outline-secondary wizard-btn-prev px-4 mr-2">
+                         <i class="fa fa-arrow-left mr-2"></i> Previous
+                     </button>
+                     <button type="button" class="btn btn-primary wizard-btn-next px-4">
+                         Next <i class="fa fa-arrow-right ml-2"></i>
+                     </button>
+                 </div>
+             </div>
 
             <!-- Step 3: Review -->
             <div id="step-3" class="form-wizard-content">
-                <div class="row">
-                    <div class="col-12 mb-4">
-                        <h5 class="text-primary border-bottom pb-2 mb-4">Review Information</h5>
-                        <p class="text-muted">Please review the information below before submitting.</p>
-                    </div>
-                    
-                    <div class="col-md-8">
-                        <div class="card">
+                <div class="row mb-5">
+                    <div class="col-12"><h5 class="text-primary border-bottom pb-2 mb-4">Review Information</h5></div>
+                    <div class="col-12">
+                        <p class="text-muted mb-4">Please review all the information below before submitting.</p>
+                        
+                        <!-- Profile Picture Review -->
+                        <div class="row mb-4">
+                            <div class="col-12 d-flex justify-content-center">
+                                <div id="review-profile-picture-container">
+                                    <img id="review-profile-picture" src="" alt="Profile Picture" 
+                                         style="width: 150px; height: 150px; border-radius: 50%; object-fit: cover; border: 3px solid #dee2e6; display: none;">
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Basic Information Review -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Personal Information</h6>
+                            </div>
                             <div class="card-body">
-                                <h5 class="card-title mb-4">Teacher Details</h5>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Account No.:</div>
-                                    <div class="col-md-8" id="review-account-no"></div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Name:</div>
-                                    <div class="col-md-8" id="review-name"></div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Subjects:</div>
-                                    <div class="col-md-8" id="review-subjects"></div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Gender:</div>
-                                    <div class="col-md-8" id="review-gender"></div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Age:</div>
-                                    <div class="col-md-8" id="review-age"></div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Student Count:</div>
-                                    <div class="col-md-8" id="review-student-count"></div>
-                                </div>
-                                
-                                <div class="row mb-3">
-                                    <div class="col-md-4 font-weight-medium">Status:</div>
-                                    <div class="col-md-8" id="review-status"></div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>First Name:</strong> <span id="review-first-name">-</span></p>
+                                        <p><strong>Middle Name:</strong> <span id="review-middle-name">-</span></p>
+                                        <p><strong>Last Name:</strong> <span id="review-last-name">-</span></p>
+                                        <p><strong>Email:</strong> <span id="review-email">-</span></p>
+                                        <p><strong>Employee ID:</strong> <span id="review-employee-id">-</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>Date of Birth:</strong> <span id="review-date-of-birth">-</span></p>
+                                        <p><strong>Age:</strong> <span id="review-age">-</span></p>
+                                        <p><strong>Gender:</strong> <span id="review-gender">-</span></p>
+                                        <p><strong>Contact Number:</strong> <span id="review-contact-number">-</span></p>
+                                        <p><strong>Civil Status:</strong> <span id="review-civil-status">-</span></p>
+                                        <p><strong>Nationality:</strong> <span id="review-nationality">-</span></p>
+                                    </div>
                                 </div>
                             </div>
                         </div>
-                    </div>
-                    
-                    <div class="col-md-4">
-                        <div class="card">
-                            <div class="card-body" id="review-profile-picture-container">
-                                <h5 class="card-title mb-4">Profile Picture</h5>
-                                <img id="review-profile-picture" src="" alt="Profile Picture" class="img-fluid rounded-circle mx-auto d-block" style="max-width: 200px; max-height: 200px; display: none;">
-                                <p class="text-muted text-center mt-3">No profile picture provided</p>
+                        
+                        <!-- Professional Information Review -->
+                        <div class="card mb-4">
+                            <div class="card-header bg-light">
+                                <h6 class="mb-0">Professional Information</h6>
                             </div>
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Position:</strong> <span id="review-position">-</span></p>
+                                        <p><strong>Employment Status:</strong> <span id="review-employment-status">-</span></p>
+                                        <p><strong>Educational Attainment:</strong> <span id="review-educational-attainment">-</span></p>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <p><strong>PRC License Number:</strong> <span id="review-prc-license">-</span></p>
+                                        <p><strong>Eligibility Status:</strong> <span id="review-eligibility-status">-</span></p>
+                                        <p><strong>Account Status:</strong> <span id="review-account-status">-</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Auto-generated Information Notice -->
+                        <div class="alert alert-info">
+                            <h6><i class="icon-copy dw dw-info"></i> Auto-generated Information</h6>
+                            <ul class="mb-0">
+    <li><strong>Account Number:</strong> Will be automatically generated in format TCHYYYY0001</li>
+                                <li><strong>Password:</strong> A secure password will be generated and displayed after creation</li>
+                                <li><strong>User Account:</strong> Login credentials will be automatically created for the teacher</li>
+                            </ul>
+                        </div>
+                        
+                        <!-- Email Notification Notice -->
+                        <div class="alert alert-success">
+                            <h6><i class="icon-copy dw dw-email"></i> Automatic Email Notification</h6>
+                            <ul class="mb-0">
+                                <li><strong>Welcome Email:</strong> Login credentials will be automatically sent to the teacher's email address</li>
+                                <li><strong>Email Contents:</strong> Account number, password, and login instructions</li>
+                                <li><strong>Security:</strong> Teacher will be advised to change password after first login</li>
+                                <li><strong>Backup:</strong> Credentials will also be displayed to you for manual sharing if email fails</li>
+                            </ul>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <!-- Navigation Buttons -->
-            <div class="wizard-buttons">
-                <div>
-                    <button type="button" class="btn btn-outline-secondary wizard-btn-prev">Previous</button>
-                </div>
-                <div>
-                    <button type="button" class="btn btn-primary wizard-btn-next">Next</button>
-                    <button type="submit" class="btn btn-success wizard-btn-submit">Submit</button>
-                </div>
+                
+                <!-- Step 3 Navigation -->
+                    <div class="wizard-buttons mt-4 d-flex justify-content-end">
+                        <button type="button" class="btn btn-outline-secondary wizard-btn-prev px-4 mr-2">
+                            <i class="fa fa-arrow-left mr-2"></i> Previous
+                        </button>
+                        <button type="submit" class="btn btn-success wizard-btn-submit px-4">
+                            <i class="icon-copy dw dw-check mr-2"></i> Create Teacher
+                        </button>
+                    </div>
             </div>
         </form>
     </div>

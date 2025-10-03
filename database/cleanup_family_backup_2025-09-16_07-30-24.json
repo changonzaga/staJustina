@@ -1,0 +1,42 @@
+{
+    "timestamp": "2025-09-16 07:30:24",
+    "table": "student_family_info",
+    "columns_removed": [
+        "employer",
+        "work_address",
+        "monthly_income",
+        "educational_attainment",
+        "facebook_account",
+        "other_social_media"
+    ],
+    "total_records": 3,
+    "data_stats": {
+        "employer": {
+            "non_null_count": 0,
+            "unique_count": 0
+        },
+        "work_address": {
+            "non_null_count": 0,
+            "unique_count": 0
+        },
+        "monthly_income": {
+            "non_null_count": 0,
+            "unique_count": 0
+        },
+        "educational_attainment": {
+            "non_null_count": 0,
+            "unique_count": 0
+        },
+        "facebook_account": {
+            "non_null_count": 0,
+            "unique_count": 0
+        },
+        "other_social_media": {
+            "non_null_count": 0,
+            "unique_count": 0
+        }
+    },
+    "warnings": [
+        "\u26a0\ufe0f  Similar columns found in other tables: teachers.educational_attainment"
+    ]
+}

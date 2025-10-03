@@ -35,8 +35,13 @@ class Students extends BaseController
     public function store()
     {
         $data = $this->request->getPost([
-            'lrn', 'name', 'gender', 'age', 'grade_level', 'section',
-            'address', 'guardian', 'contact', 'teacher_id', 'parent_id'
+            'lrn', 'name', 'date_of_birth', 'gender', 'age', 'grade_level', 'section',
+            'citizenship', 'religion', 'enrollment_status', 'school_assigned', 'school_id',
+            'date_of_enrollment', 'address', 'residential_address', 'guardian', 'contact',
+            'parent_guardian_name', 'parent_guardian_contact', 'parent_guardian_email',
+            'emergency_contact_name', 'emergency_contact_number', 'special_education_needs',
+            'health_conditions', 'previous_school_attended', 'previous_school_address',
+            'birth_certificate_number', 'student_status', 'remarks', 'teacher_id', 'parent_id'
         ]);
         $file = $this->request->getFile('profile_picture');
 
@@ -47,17 +52,17 @@ class Students extends BaseController
         }
 
         // Validate data (e.g., unique LRN)
-        if ($this->db->table('student')->where('lrn', $data['lrn'])->countAllResults() > 0) {
+        if ($this->db->table('students')->where('lrn', $data['lrn'])->countAllResults() > 0) {
             return redirect()->back()->withInput()->with('error', 'LRN already exists.');
         }
 
-        $this->db->table('student')->insert($data);
+        $this->db->table('students')->insert($data);
         return redirect()->to('backend/admin/students')->with('success', 'Student added successfully.');
     }
 
     public function edit($id)
     {
-        $student = $this->db->table('student')->where('id', $id)->get()->getRowArray();
+        $student = $this->db->table('students')->where('id', $id)->get()->getRowArray();
         $teachers = $this->db->table('teacher')->select('id, name')->get()->getResultArray();
         $parents = $this->db->table('parent')->select('id, name')->get()->getResultArray();
         
@@ -75,8 +80,13 @@ class Students extends BaseController
     public function update($id)
     {
         $data = $this->request->getPost([
-            'lrn', 'name', 'gender', 'age', 'grade_level', 'section',
-            'address', 'guardian', 'contact', 'teacher_id', 'parent_id'
+            'lrn', 'name', 'date_of_birth', 'gender', 'age', 'grade_level', 'section',
+            'citizenship', 'religion', 'enrollment_status', 'school_assigned', 'school_id',
+            'date_of_enrollment', 'address', 'residential_address', 'guardian', 'contact',
+            'parent_guardian_name', 'parent_guardian_contact', 'parent_guardian_email',
+            'emergency_contact_name', 'emergency_contact_number', 'special_education_needs',
+            'health_conditions', 'previous_school_attended', 'previous_school_address',
+            'birth_certificate_number', 'student_status', 'remarks', 'teacher_id', 'parent_id'
         ]);
         $file = $this->request->getFile('profile_picture');
 
@@ -87,35 +97,45 @@ class Students extends BaseController
         }
 
         // Validate LRN uniqueness (excluding current student)
-        $existing = $this->db->table('student')->where('lrn', $data['lrn'])->where('id !=', $id)->countAllResults();
+        $existing = $this->db->table('students')->where('lrn', $data['lrn'])->where('id !=', $id)->countAllResults();
         if ($existing > 0) {
             return redirect()->back()->withInput()->with('error', 'LRN already exists.');
         }
 
-        $this->db->table('student')->where('id', $id)->update($data);
+        $this->db->table('students')->where('id', $id)->update($data);
         return redirect()->to('backend/admin/students')->with('success', 'Student updated successfully.');
     }
 
     public function profile($id)
     {
-        $student = $this->db->table('student s')
-            ->select('s.*, t.name as teacher_name, p.name as parent_name')
-            ->join('teacher t', 's.teacher_id = t.id', 'left')
-            ->join('parent p', 's.parent_id = p.id', 'left')
-            ->where('s.id', $id)
-            ->get()->getRowArray();
+        // Use StudentModel to fetch normalized complete profile
+        $model = new \App\Models\StudentModel();
+        $student = $model->getStudentCompleteProfile($id);
 
         if (!$student) {
             return redirect()->to('backend/admin/students')->with('error', 'Student not found.');
         }
 
-        return view('backend/admin/students/view', ['student' => $student]);
+        // Get recent attendance records (last 5)
+        $db = \Config\Database::connect();
+        $attendance = $db->table('attendance')
+            ->where('student_id', $id)
+            ->orderBy('date', 'DESC')
+            ->limit(5)
+            ->get()->getResultArray();
+
+        $data = [
+            'student' => $student,
+            'attendance' => $attendance
+        ];
+
+        return view('backend/admin/students/student_profile', $data);
     }
     
     public function delete($id)
     {
         // Check if student exists
-        $student = $this->db->table('student')->where('id', $id)->get()->getRowArray();
+        $student = $this->db->table('students')->where('id', $id)->get()->getRowArray();
         
         if (!$student) {
             return $this->response->setJSON([
@@ -133,7 +153,7 @@ class Students extends BaseController
         }
         
         // Delete student record
-        $this->db->table('student')->where('id', $id)->delete();
+        $this->db->table('students')->where('id', $id)->delete();
         
         return $this->response->setJSON([
             'success' => true,

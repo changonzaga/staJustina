@@ -1,19 +1,245 @@
 <?= $this->extend('backend/teacher/layout/pages-layout') ?>
 
+<?= $this->section('content') ?>
+
+<!-- Profile Completion Alert -->
+<?php if (isset($isProfileComplete) && !$isProfileComplete): ?>
+<div class="alert alert-warning alert-dismissible fade show mb-4" role="alert">
+    <div class="d-flex align-items-center">
+        <!-- Teacher Profile Image -->
+        <div class="alert-profile-image mr-3">
+            <?php if (isset($teacher['profile_picture']) && !empty($teacher['profile_picture'])): ?>
+                <img src="<?= base_url('uploads/teachers/' . $teacher['profile_picture']) ?>" 
+                     alt="<?= esc($teacher['first_name'] . ' ' . $teacher['last_name']) ?>" 
+                     class="rounded-circle" 
+                     style="width: 50px; height: 50px; object-fit: cover; border: 2px solid #ffc107;">
+            <?php else: ?>
+                <div class="rounded-circle d-flex align-items-center justify-content-center" 
+                     style="width: 50px; height: 50px; background-color: #ffc107; color: white; font-weight: bold; font-size: 18px;">
+                    <?= strtoupper(substr($teacher['first_name'] ?? 'T', 0, 1) . substr($teacher['last_name'] ?? 'U', 0, 1)) ?>
+                </div>
+            <?php endif; ?>
+        </div>
+        <div class="flex-grow-1">
+            <h5 class="alert-heading mb-1">Complete Your Profile</h5>
+            <p class="mb-2">Hello <?= esc($teacher['first_name'] ?? 'Teacher') ?>! Your teacher profile is incomplete. Please complete your profile to access all features and ensure proper system functionality.</p>
+            <div class="d-flex gap-2">
+                <a href="<?= site_url('teacher/profile/complete') ?>" class="btn btn-warning btn-sm">
+                    <i class="icon-copy dw dw-user1 mr-1"></i> Complete Profile Now
+                </a>
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-dismiss="alert" aria-label="Close">
+                    <i class="icon-copy dw dw-eye-off mr-1"></i> Dismiss
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+<?php endif; ?>
+
+<?= $this->endSection() ?>
+
 <?= $this->section('stylesheets') ?>
 <link rel="stylesheet" type="text/css" href="/backend/src/plugins/fullcalendar/fullcalendar.css">
+<link rel="stylesheet" type="text/css" href="/backend/src/plugins/datatables/css/dataTables.bootstrap4.min.css">
+<link rel="stylesheet" type="text/css" href="/backend/src/plugins/datatables/css/responsive.bootstrap4.min.css">
 <?= $this->endSection() ?>
 
 <?= $this->section('scripts') ?>
 <script src="/backend/src/plugins/apexcharts/apexcharts.min.js"></script>
 <script src="/backend/src/plugins/fullcalendar/fullcalendar.min.js"></script>
+<script src="/backend/src/plugins/datatables/js/jquery.dataTables.min.js"></script>
+<script src="/backend/src/plugins/datatables/js/dataTables.bootstrap4.min.js"></script>
+<script src="/backend/src/plugins/datatables/js/dataTables.responsive.min.js"></script>
+<script>
+// Custom Calendar functionality - moved to scripts section
+class Calendar {
+    constructor() {
+        console.log('=== Calendar Constructor Debug ===');
+        this.currentDate = new Date();
+        this.events = {
+            // Sample events - replace with actual data
+            '2025-01-05': 2, // 2 events on Jan 5th
+            '2025-01-12': 1, // 1 event on Jan 12th
+            '2025-01-18': 3, // 3 events on Jan 18th
+            '2025-01-25': 1, // 1 event on Jan 25th
+            '2025-01-30': 2, // 2 events on Jan 30th
+            '2025-05-05': 1, // 1 event on May 5th
+            '2025-05-12': 2, // 2 events on May 12th
+            '2025-05-18': 1, // 1 event on May 18th
+            '2025-05-25': 3  // 3 events on May 25th
+        };
+        // Set to current month (May 2025) to match the page header
+        this.currentMonth = 4; // May is month 4 (0-indexed)
+        this.currentYear = 2025;
+        console.log('Calendar initialized with month:', this.currentMonth, 'year:', this.currentYear);
+        this.init();
+    }
+
+    init() {
+        this.generateCalendar();
+        this.bindEvents();
+    }
+
+    bindEvents() {
+        const prevBtn = document.getElementById('prevMonth');
+        const nextBtn = document.getElementById('nextMonth');
+        
+        if (prevBtn) {
+            prevBtn.addEventListener('click', () => {
+                this.currentMonth--;
+                if (this.currentMonth < 0) {
+                    this.currentMonth = 11;
+                    this.currentYear--;
+                }
+                this.generateCalendar();
+            });
+        }
+
+        if (nextBtn) {
+            nextBtn.addEventListener('click', () => {
+                this.currentMonth++;
+                if (this.currentMonth > 11) {
+                    this.currentMonth = 0;
+                    this.currentYear++;
+                }
+                this.generateCalendar();
+            });
+        }
+    }
+
+    generateCalendar() {
+        console.log('=== generateCalendar Debug ===');
+        console.log('Generating calendar for month:', this.currentMonth, 'year:', this.currentYear);
+        
+        const monthNames = [
+            'January', 'February', 'March', 'April', 'May', 'June',
+            'July', 'August', 'September', 'October', 'November', 'December'
+        ];
+
+        // Update month header
+        const monthHeader = document.getElementById('currentMonth');
+        if (monthHeader) {
+            monthHeader.textContent = `${monthNames[this.currentMonth]} ${this.currentYear}`;
+            console.log('Month header updated to:', monthHeader.textContent);
+        } else {
+            console.error('Month header element not found!');
+        }
+
+        // Get first day of month and number of days
+        const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+        const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+        const daysInPrevMonth = new Date(this.currentYear, this.currentMonth, 0).getDate();
+
+        let html = '';
+        let date = 1;
+        let nextMonthDate = 1;
+
+        // Generate 6 weeks (42 days)
+        for (let week = 0; week < 6; week++) {
+            html += '<tr>';
+            
+            for (let day = 0; day < 7; day++) {
+                const cellIndex = week * 7 + day;
+                
+                if (cellIndex < firstDay) {
+                    // Previous month dates
+                    const prevDate = daysInPrevMonth - firstDay + cellIndex + 1;
+                    html += `<td class="text-muted py-2">
+                        <div class="d-flex flex-column align-items-center">
+                            <span style="font-size: 13px;">${prevDate}</span>
+                        </div>
+                    </td>`;
+                } else if (date <= daysInMonth) {
+                    // Current month dates
+                    const dateStr = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+                    const eventCount = this.events[dateStr] || 0;
+                    const isToday = this.isToday(date);
+                    
+                    html += `<td class="py-2">
+                        <div class="d-flex flex-column align-items-center position-relative">
+                            <span class="${isToday ? 'bg-primary text-white rounded-circle px-2 py-1 fw-bold' : ''}" style="font-size: 14px; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">${date}</span>
+                            ${this.generateEventDots(eventCount)}
+                        </div>
+                    </td>`;
+                    date++;
+                } else {
+                    // Next month dates
+                    html += `<td class="text-muted py-2">
+                        <div class="d-flex flex-column align-items-center">
+                            <span style="font-size: 13px;">${nextMonthDate}</span>
+                        </div>
+                    </td>`;
+                    nextMonthDate++;
+                }
+            }
+            
+            html += '</tr>';
+            
+            // Break if we've filled all days of current month and some next month days
+            if (date > daysInMonth && nextMonthDate > 7) break;
+        }
+
+        const calendarBody = document.getElementById('calendarBody');
+        console.log('Generated HTML length:', html.length);
+        console.log('Generated HTML preview:', html.substring(0, 200) + '...');
+        
+        if (calendarBody) {
+            calendarBody.innerHTML = html;
+            console.log('Calendar HTML successfully inserted into DOM');
+            console.log('Calendar body now contains:', calendarBody.children.length, 'rows');
+            
+            // Add visible debug confirmation
+            if (calendarBody.children.length === 0) {
+                calendarBody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px; color: orange; font-weight: bold;">DEBUG: Calendar HTML generated but no rows created</td></tr>';
+            }
+        } else {
+            console.error('Calendar body element not found! Cannot insert HTML.');
+            // Add visible error message
+            const debugElement = document.createElement('div');
+            debugElement.innerHTML = 'ERROR: Calendar body element not found!';
+            debugElement.style.cssText = 'color: red; font-weight: bold; text-align: center; padding: 20px;';
+            document.body.appendChild(debugElement);
+        }
+    }
+
+    generateEventDots(count) {
+        if (count === 0) return '';
+        
+        let dots = '<div class="d-flex justify-content-center mt-1">';
+        
+        // Limit to maximum 3 dots for visual clarity
+        const displayCount = Math.min(count, 3);
+        
+        for (let i = 0; i < displayCount; i++) {
+            const colors = ['bg-primary', 'bg-success', 'bg-warning'];
+            const color = colors[i % colors.length];
+            dots += `<span class="${color} rounded-circle me-1" style="width: 6px; height: 6px; display: inline-block;"></span>`;
+        }
+        
+        // If more than 3 events, show a "+" indicator
+        if (count > 3) {
+            dots += '<span class="text-muted small ms-1">+</span>';
+        }
+        
+        dots += '</div>';
+        return dots;
+    }
+
+    isToday(date) {
+        const today = new Date();
+        return date === today.getDate() && 
+               this.currentMonth === today.getMonth() && 
+               this.currentYear === today.getFullYear();
+    }
+}
+</script>
 <?= $this->endSection() ?>
 
 <?= $this->section('content') ?>
 
 <div class="page-header bg-white rounded-3 p-4 mb-4">
 	<div class="row align-items-center">
-		<div class="col-md-8 col-sm-12">
+		<div class="col-md-6 col-sm-12">
 			<div class="d-flex align-items-center">
 				<div class="me-3">
 					<h4 class="text-primary fw-bold mb-1">Dashboard</h4>
@@ -23,118 +249,219 @@
 								<a href="<?= site_url('teacher/dashboard') ?>" class="text-decoration-none">Home</a>
 							</li>
 							<li class="breadcrumb-item active" aria-current="page">
-								Attendance Record
+								Teacher Dashboard
 							</li>
 						</ol>
 					</nav>
 				</div>
 			</div>
 		</div>
-		<div class="col-md-4 text-end">
-			<button class="btn btn-primary rounded-pill px-4" style="background-color: #6c5ce7;">
-				May 2025
+		<div class="col-md-6 col-sm-12 d-flex justify-content-end align-items-center">
+			<button class="btn btn-primary rounded-pill px-4 ms-auto">
+				January 2018
 			</button>
 		</div>
 	</div>
 </div>
 
 <div class="welcome-section bg-white rounded-3 p-4 mb-4">
-	<div class="row align-items-center">
-		<div class="col-md-9">
-			<h2 class="text-dark fw-bold mb-2">Welcome back! Mrs. Loida Gastilo</h2>
-			<p class="text-muted mb-0">Welcome back! We're here to support you as you guide and inspire your students. Step into your classes with confidence and continue shaping the future, one lesson at a time.</p>
+    <div class="row align-items-center">
+        <?php 
+            $userInfo = session()->get('userdata') ?? [];
+            $displayName = trim(($userInfo['name'] ?? '') ?: (($teacher['first_name'] ?? '') . ' ' . ($teacher['last_name'] ?? '')));
+            $rawPicture = session()->get('profile_picture') ?: ($userInfo['picture'] ?? null);
+            $resolvePictureUrl = function($raw) use ($teacher) {
+                if (!$raw) {
+                    if (!empty($teacher['profile_picture'])) {
+                        $raw = $teacher['profile_picture'];
+                    } else {
+                        return null;
+                    }
+                }
+                if (preg_match('#^https?://#', $raw)) { return $raw; }
+                if (strpos($raw, 'uploads/') !== false) { return '/' . ltrim($raw, '/'); }
+                return '/uploads/teachers/' . ltrim($raw, '/');
+            };
+            $pictureUrl = $resolvePictureUrl($rawPicture);
+        ?>
+        <div class="col-md-8">
+            <h2 class="text-dark fw-bold mb-2">Welcome back! <?= esc($displayName ?: 'Teacher') ?></h2>
+            <p class="text-muted mb-0">Welcome back! We're here to support you as you guide and inspire your students. Step into your classes with confidence and continue shaping the future, one lesson at a time.</p>
+        </div>
+        <div class="col-md-4 text-end d-flex justify-content-end">
+            <?php if (!empty($pictureUrl)): ?>
+                <img src="<?= esc($pictureUrl) ?>" alt="Teacher Profile" class="rounded-circle border border-3 border-light" style="width: 100px; height: 100px; border-radius: 50% !important; object-fit: cover; object-position: center; aspect-ratio: 1 / 1; display: block;">
+            <?php else: ?>
+                <div class="rounded-circle border border-3 border-light d-flex align-items-center justify-content-center" style="width: 100px; height: 100px; border-radius: 50% !important; background: #f8f9fa; font-size: 36px; font-weight: bold; color: #6c757d; overflow: hidden; aspect-ratio: 1 / 1;">
+                    <?= strtoupper(substr($teacher['first_name'] ?? 'T', 0, 1) . substr($teacher['last_name'] ?? 'U', 0, 1)) ?>
+                </div>
+            <?php endif; ?>
+        </div>
+    </div>
+</div>
+
+<div class="row mb-4 g-4">
+	<div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+		<div class="card rounded-4 border-0 h-100 bg-white shadow-sm position-relative overflow-hidden dashboard-card" data-toggle="tooltip" data-placement="top" title="View detailed student statistics">
+			<div class="card-body p-4 d-flex flex-column align-items-start text-start">
+				<!-- Icon Container -->
+				<div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 56px; height: 56px; background-color: #e8f5e8;">
+					<i class="dw dw-school text-success fs-4"></i>
+				</div>
+				<!-- Category Label -->
+				<h6 class="text-muted mb-1 fw-normal">Total Students</h6>
+				<!-- Main Value -->
+				<h5 class="mb-1 fw-bold text-dark count-up" data-count="405">405</h5>
+				<small class="text-muted">Active Students</small>
+				<div class="mt-auto">
+					<div class="d-flex justify-content-between align-items-center mb-2">
+						<span class="text-muted small">This Semester</span>
+						<span class="badge bg-success-subtle text-success rounded-pill px-2 py-1 small">85%</span>
+					</div>
+					<div class="progress rounded-pill" style="height: 6px;">
+						<div class="progress-bar bg-success bg-gradient rounded-pill" role="progressbar" style="width: 85%;" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
+					</div>
+				</div>
+
+			</div>
 		</div>
-		<div class="col-md-3 text-end">
-			<img src="<?= base_url('public/backend/vendors/images/teacher-profile.jpg') ?>" alt="Teacher Profile" class="rounded-circle border border-3 border-light" width="100" height="100" style="object-fit: cover;">
+	</div>
+	<div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+		<div class="card rounded-4 border-0 h-100 bg-white shadow-sm position-relative overflow-hidden dashboard-card" data-toggle="tooltip" data-placement="top" title="View attendance history">
+			<div class="card-body p-4 d-flex flex-column align-items-start text-start">
+				<!-- Icon Container -->
+				<div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 56px; height: 56px; background-color: #e3f2fd;">
+					<i class="dw dw-wall-clock text-primary fs-4"></i>
+				</div>
+				<!-- Category Label -->
+				<h6 class="text-muted mb-1 fw-normal">Last Attendance</h6>
+				<!-- Main Value -->
+				<h5 class="mb-1 fw-bold text-dark">Yesterday, 9:00 AM</h5>
+				<div class="mt-auto">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+						<span class="text-muted small">Monthly Rate</span>
+						<span class="fw-semibold text-success fs-6">89%</span>
+					</div>
+					<div class="d-flex align-items-center flex-wrap gap-2">
+						<span class="badge bg-success px-2 py-1 rounded-pill small">
+							<i class="fa fa-check me-1 small"></i>Present
+						</span>
+						<small class="text-muted small">On time</small>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+	<div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+		<div class="card rounded-4 border-0 h-100 bg-white shadow-sm position-relative overflow-hidden dashboard-card" data-toggle="tooltip" data-placement="top" title="View exam schedule">
+			<div class="card-body p-4 d-flex flex-column align-items-start text-start">
+				<!-- Icon Container -->
+				<div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 56px; height: 56px; background-color: #f5f5f5;">
+					<i class="dw dw-calendar-1 text-secondary fs-4"></i>
+				</div>
+				<!-- Category Label -->
+				<h6 class="text-muted mb-1 fw-normal">Next Exam</h6>
+				<!-- Main Value -->
+				<h5 class="mb-1 fw-bold text-dark">Grade 11 - Jupiter</h5>
+				<div class="mt-auto">
+					<div class="d-flex justify-content-between align-items-center mb-3">
+						<span class="text-muted small">May 22, 2025</span>
+					</div>
+					<div class="d-flex align-items-center flex-wrap gap-1">
+						<span class="badge bg-warning text-dark px-2 py-1 rounded-pill small">
+							<i class="fa fa-clock me-1 small"></i>3 Days Left
+						</span>
+					</div>
+				</div>
+
+			</div>
+		</div>
+	</div>
+	<div class="col-xl-3 col-lg-6 col-md-6 col-sm-12">
+		<div class="card rounded-4 border-0 h-100 bg-white shadow-sm position-relative overflow-hidden dashboard-card" data-toggle="modal" data-target="#announcementModal" role="button">
+			<div class="card-body p-4 d-flex flex-column align-items-start text-start">
+				<!-- Icon Container -->
+				<div class="d-flex align-items-center justify-content-center rounded-3 mb-3" style="width: 56px; height: 56px; background-color: #ffebee;">
+					<i class="dw dw-megaphone text-danger fs-4"></i>
+				</div>
+				<!-- Category Label -->
+				<h6 class="text-muted mb-1 fw-normal">Latest Announcement</h6>
+				<!-- Main Value -->
+				<h5 class="mb-1 fw-bold text-dark">End of The Year Concert</h5>
+				<div class="mt-auto">
+					<p class="text-muted mb-3 small lh-sm">Please join us for the end of the year concert on June 2nd at 6:00 pm in...</p>
+					<div class="d-flex align-items-center justify-content-between">
+						<span class="text-muted small">May 16, 2025</span>
+						<div class="d-flex align-items-center gap-2">
+							<span class="badge px-2 py-1 text-primary small">
+								Read More <i class="fa fa-arrow-right text-primary small"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+
+			</div>
 		</div>
 	</div>
 </div>
 
-<div class="row mb-4">
-	<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
-		<div class="card rounded-3 border-0 h-100 bg-white">
-			<div class="card-body p-4">
-				<div class="d-flex align-items-center mb-3">
-					<div class="me-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; background-color: #00b894;">
-						<i class="icon-copy dw dw-graduation-cap text-white" style="font-size: 24px;"></i>
-					</div>
+<!-- Announcement Modal -->
+<div class="modal fade" id="announcementModal" tabindex="-1" aria-labelledby="announcementModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-lg modal-dialog-centered">
+		<div class="modal-content rounded-4 border-0 shadow">
+			<div class="modal-header border-0 pb-0">
+				<div class="d-flex align-items-center">
 					<div>
-						<h3 class="fw-bold mb-0 text-dark">405</h3>
-						<span class="text-muted">Total Students</span>
+						<h5 class="modal-title fw-bold" id="announcementModalLabel">End of The Year Concert</h5>
+						<small class="text-muted">Latest Announcement • May 16, 2025</small>
 					</div>
 				</div>
-				<div>
-					<span class="d-block text-muted mb-2">This Semester</span>
-					<div class="progress" style="height: 6px;">
-						<div class="progress-bar" role="progressbar" style="width: 85%; background-color: #00b894;" aria-valuenow="85" aria-valuemin="0" aria-valuemax="100"></div>
-					</div>
-				</div>
+				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
-		</div>
-	</div>
-	<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
-		<div class="card rounded-3 border-0 h-100 bg-white">
-			<div class="card-body p-4">
-				<div class="d-flex align-items-center mb-3">
-					<div class="me-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; background-color: #6c5ce7;">
-						<i class="icon-copy dw dw-time-1 text-white" style="font-size: 24px;"></i>
-					</div>
-					<div>
-						<h6 class="fw-bold mb-0 text-dark">Yesterday, 9:00 AM</h6>
-						<span class="text-muted">Last Attendance</span>
-					</div>
-				</div>
-				<div>
-					<span class="d-block text-muted mb-2">Monthly Attendance Rate 89%</span>
-					<span class="badge bg-success px-3 py-2 rounded-pill">Present</span>
-				</div>
-			</div>
-		</div>
-	</div>
-	<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
-		<div class="card rounded-3 border-0 h-100 bg-white">
-			<div class="card-body p-4">
-				<div class="d-flex align-items-center mb-3">
-					<div class="me-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; background-color: #a55eea;">
-						<i class="icon-copy dw dw-calendar-1 text-white" style="font-size: 24px;"></i>
-					</div>
-					<div>
-						<h6 class="fw-bold mb-0 text-dark">Grade 11 - Jupiter</h6>
-						<span class="text-muted">Next Exam</span>
-					</div>
-				</div>
-				<div>
-					<span class="d-block text-muted mb-2">May 22, 2025</span>
+			<div class="modal-body pt-2">
+				<div class="alert alert-primary border-0 rounded-3 mb-4" role="alert">
 					<div class="d-flex align-items-center">
-						<span class="badge bg-warning text-dark px-3 py-2 rounded-pill me-2">3 Days Left</span>
-						<span class="badge bg-primary px-3 py-2 rounded-pill">Upcoming</span>
+						<i class="fa fa-info-circle me-2"></i>
+						<span class="fw-semibold">Important Event Notification</span>
 					</div>
 				</div>
-			</div>
-		</div>
-	</div>
-	<div class="col-lg-3 col-md-6 col-sm-12 mb-3">
-		<div class="card rounded-3 border-0 h-100 bg-white">
-			<div class="card-body p-4">
-				<div class="d-flex align-items-center mb-3">
-					<div class="me-3 d-flex align-items-center justify-content-center rounded-circle" style="width: 50px; height: 50px; background-color: #ff6b6b;">
-						<i class="icon-copy dw dw-megaphone text-white" style="font-size: 24px;"></i>
+				<p class="mb-4">Please join us for the end of the year concert on June 2nd at 6:00 pm in the school auditorium. This special event will showcase the incredible talents of our students across all grade levels.</p>
+				<div class="row g-3 mb-4">
+					<div class="col-md-6">
+						<div class="d-flex align-items-center">
+							<i class="fa fa-calendar text-primary me-2"></i>
+							<div>
+								<small class="text-muted d-block">Date</small>
+								<span class="fw-semibold">June 2nd, 2025</span>
+							</div>
+						</div>
 					</div>
-					<div>
-						<h6 class="fw-bold mb-0 text-dark">End of The Year Concert</h6>
-						<span class="text-muted">Latest Announcement</span>
+					<div class="col-md-6">
+						<div class="d-flex align-items-center">
+							<i class="fa fa-clock text-primary me-2"></i>
+							<div>
+								<small class="text-muted d-block">Time</small>
+								<span class="fw-semibold">6:00 PM</span>
+							</div>
+						</div>
 					</div>
-				</div>
-				<div>
-					<p class="text-muted mb-2 small">Please join us for the end of the year concert on June 2nd at 6:00 pm in...</p>
-					<div class="d-flex align-items-center justify-content-between">
-						<span class="text-muted small">May 16, 2025</span>
-						<div>
-							<span class="badge bg-primary me-2">New</span>
-							<a href="#" class="btn btn-sm btn-outline-primary rounded-pill">Read More</a>
+					<div class="col-md-12">
+						<div class="d-flex align-items-center">
+							<i class="fa fa-map-marker-alt text-primary me-2"></i>
+							<div>
+								<small class="text-muted d-block">Location</small>
+								<span class="fw-semibold">School Auditorium</span>
+							</div>
 						</div>
 					</div>
 				</div>
+			</div>
+			<div class="modal-footer border-0 pt-0">
+				<button type="button" class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Close</button>
+				<button type="button" class="btn btn-primary rounded-pill px-4">
+					<i class="fa fa-bookmark me-2"></i>Save Event
+				</button>
 			</div>
 		</div>
 	</div>
@@ -143,11 +470,11 @@
 <!-- Attendance Overview Card -->
 <div class="row mb-4">
 	<div class="col-12">
-		<div class="card rounded-3 border-0 bg-white">
+		<div class="card rounded-4 border-0 bg-white shadow-sm">
 			<div class="card-body p-4">
-				<div class="d-flex justify-content-between align-items-center mb-3">
-					<h4 class="h4 mb-0">Attendance Overview</h4>
-					<button type="button" class="btn btn-primary btn-sm">View All</button>
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h4 class="h5 mb-0 fw-bold text-dark">Attendance Overview</h4>
+					<button type="button" class="btn btn-primary btn-sm rounded-pill px-3" style="font-size: 0.8rem;">View All</button>
 				</div>
 				<div class="row">
 					<div class="col-md-5">
@@ -175,18 +502,12 @@
 <!-- Calendar Card -->
 <div class="row mb-4">
 	<div class="col-lg-6 col-md-12 col-sm-12 mb-3">
-		<div class="card rounded-3 border-0 h-100 bg-white">
+		<div class="card rounded-4 border-0 h-100 bg-white shadow-sm">
 			<div class="card-body p-4">
-				<div class="d-flex justify-content-between align-items-center mb-3">
-					<h4 class="h4 mb-0" id="currentMonth">May 2025</h4>
-					<div>
-						<button type="button" class="btn btn-outline-secondary btn-sm me-1" id="prevMonth">
-							<i class="fa fa-chevron-left"></i>
-						</button>
-						<button type="button" class="btn btn-outline-secondary btn-sm me-2" id="nextMonth">
-							<i class="fa fa-chevron-right"></i>
-						</button>
-						<button type="button" class="btn btn-primary btn-sm">View All</button>
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h4 class="h5 mb-0 fw-bold text-dark" id="currentMonth">May 2025</h4>
+					<div class="d-flex align-items-center">
+						<button type="button" class="btn btn-primary btn-sm rounded-pill px-3" style="font-size: 0.8rem;">View All</button>
 					</div>
 				</div>
 				<div class="table-responsive">
@@ -204,56 +525,218 @@
 						</thead>
 						<tbody id="calendarBody">
 							<!-- Calendar dates will be generated by JavaScript -->
+							<tr><td colspan="7" style="text-align: center; padding: 20px; color: red; font-weight: bold;">DEBUG: Calendar not initialized yet</td></tr>
 						</tbody>
 					</table>
+				</div>
+				<div class="d-flex justify-content-end mt-3">
+					<div class="btn-group" role="group">
+						<button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center" id="prevMonth" style="width: 32px; height: 32px; border-top-right-radius: 0; border-bottom-right-radius: 0;"> 
+ 							<i class="fa fa-chevron-left" style="font-size: 0.75rem;"></i> 
+ 						</button>
+						<button type="button" class="btn btn-outline-primary btn-sm d-flex align-items-center justify-content-center" id="nextMonth" style="width: 32px; height: 32px; border-top-left-radius: 0; border-bottom-left-radius: 0;"> 
+ 							<i class="fa fa-chevron-right" style="font-size: 0.75rem;"></i> 
+ 						</button>
+					</div>
 				</div>
 			</div>
 		</div>
 	</div>
+	
+	<!-- Calendar Initialization - Moved to Content Section for Proper Timing -->
+	<script>
+	console.log('=== INLINE CALENDAR INITIALIZATION ===');
+	
+	// Calendar class definition (copied from scripts section)
+	class InlineCalendar {
+		constructor() {
+			console.log('InlineCalendar constructor called');
+			this.currentDate = new Date();
+			this.events = {
+				'2025-05-05': 1, '2025-05-12': 2, '2025-05-18': 1, '2025-05-25': 3
+			};
+			this.currentMonth = 4; // May
+			this.currentYear = 2025;
+			console.log('Calendar initialized with month:', this.currentMonth, 'year:', this.currentYear);
+			this.init();
+		}
+		
+		init() {
+			this.generateCalendar();
+			this.bindEvents();
+		}
+		
+		bindEvents() {
+			const prevBtn = document.getElementById('prevMonth');
+			const nextBtn = document.getElementById('nextMonth');
+			
+			if (prevBtn) {
+				prevBtn.addEventListener('click', () => {
+					this.currentMonth--;
+					if (this.currentMonth < 0) {
+						this.currentMonth = 11;
+						this.currentYear--;
+					}
+					this.generateCalendar();
+				});
+			}
+			
+			if (nextBtn) {
+				nextBtn.addEventListener('click', () => {
+					this.currentMonth++;
+					if (this.currentMonth > 11) {
+						this.currentMonth = 0;
+						this.currentYear++;
+					}
+					this.generateCalendar();
+				});
+			}
+		}
+		
+		generateCalendar() {
+			console.log('generateCalendar called for month:', this.currentMonth, 'year:', this.currentYear);
+			
+			const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
+			
+			// Update month header
+			const monthHeader = document.getElementById('currentMonth');
+			if (monthHeader) {
+				monthHeader.textContent = `${monthNames[this.currentMonth]} ${this.currentYear}`;
+				console.log('Month header updated to:', monthHeader.textContent);
+			}
+			
+			// Get first day of month and number of days
+			const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
+			const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
+			const daysInPrevMonth = new Date(this.currentYear, this.currentMonth, 0).getDate();
+			
+			let html = '';
+			let date = 1;
+			let nextMonthDate = 1;
+			
+			// Generate 6 weeks (42 days)
+			for (let week = 0; week < 6; week++) {
+				html += '<tr>';
+				
+				for (let day = 0; day < 7; day++) {
+					const cellIndex = week * 7 + day;
+					
+					if (cellIndex < firstDay) {
+						// Previous month dates
+						const prevDate = daysInPrevMonth - firstDay + cellIndex + 1;
+						html += `<td class="text-muted py-2"><div class="d-flex flex-column align-items-center"><span style="font-size: 13px;">${prevDate}</span></div></td>`;
+					} else if (date <= daysInMonth) {
+						// Current month dates
+						const dateStr = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
+						const eventCount = this.events[dateStr] || 0;
+						const isToday = this.isToday(date);
+						
+						html += `<td class="py-2"><div class="d-flex flex-column align-items-center position-relative"><span class="${isToday ? 'bg-primary text-white rounded-circle px-2 py-1 fw-bold' : ''}" style="font-size: 14px; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">${date}</span>${this.generateEventDots(eventCount)}</div></td>`;
+						date++;
+					} else {
+						// Next month dates
+						html += `<td class="text-muted py-2"><div class="d-flex flex-column align-items-center"><span style="font-size: 13px;">${nextMonthDate}</span></div></td>`;
+						nextMonthDate++;
+					}
+				}
+				
+				html += '</tr>';
+				
+				// Break if we've filled all days of current month and some next month days
+				if (date > daysInMonth && nextMonthDate > 7) break;
+			}
+			
+			const calendarBody = document.getElementById('calendarBody');
+			console.log('Generated HTML length:', html.length);
+			
+			if (calendarBody) {
+				calendarBody.innerHTML = html;
+				console.log('Calendar HTML successfully inserted into DOM');
+				console.log('Calendar body now contains:', calendarBody.children.length, 'rows');
+			} else {
+				console.error('Calendar body element not found!');
+			}
+		}
+		
+		generateEventDots(count) {
+			if (count === 0) return '';
+			
+			let dots = '<div class="d-flex justify-content-center mt-1">';
+			const displayCount = Math.min(count, 3);
+			
+			for (let i = 0; i < displayCount; i++) {
+				const colors = ['bg-primary', 'bg-success', 'bg-warning'];
+				const color = colors[i % colors.length];
+				dots += `<span class="${color} rounded-circle me-1" style="width: 6px; height: 6px; display: inline-block;"></span>`;
+			}
+			
+			if (count > 3) {
+				dots += '<span class="text-muted small ms-1">+</span>';
+			}
+			
+			dots += '</div>';
+			return dots;
+		}
+		
+		isToday(date) {
+			const today = new Date();
+			return date === today.getDate() && this.currentMonth === today.getMonth() && this.currentYear === today.getFullYear();
+		}
+	}
+	
+	// Initialize calendar immediately since DOM elements are available
+	if (document.getElementById('calendarBody')) {
+		console.log('Calendar elements found, initializing inline calendar...');
+		const calendar = new InlineCalendar();
+		console.log('Inline calendar created successfully');
+	} else {
+		console.error('Calendar elements not found in inline script');
+	}
+	</script>
 
 	<!-- Daily Schedule Card -->
 	<div class="col-lg-6 col-md-12 col-sm-12 mb-3">
-		<div class="card rounded-3 border-0 h-100 bg-white">
+		<div class="card rounded-4 border-0 h-100 bg-white shadow-sm">
 			<div class="card-body p-4">
-				<div class="d-flex justify-content-between align-items-center mb-3">
-					<h4 class="h4 mb-0">Daily Schedule</h4>
-					<button type="button" class="btn btn-primary btn-sm">View All</button>
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h4 class="h5 mb-0 fw-bold text-dark">Daily Schedule</h4>
+					<button type="button" class="btn btn-primary btn-sm rounded-pill px-3" style="font-size: 0.8rem;">View All</button>
 				</div>
 				<div class="schedule-list">
-					<div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-						<div>
-							<div class="fw-semibold">8:00 AM - 9:30 AM</div>
-							<small class="text-muted">Grade 7 - Sampaguita</small>
+					<div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+						<div class="flex-grow-1">
+							<div class="fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.3;">8:00 AM - 9:30 AM</div>
+							<small class="text-muted" style="font-size: 0.8rem;">Grade 7 - Sampaguita</small>
 						</div>
-						<span class="text-primary fw-semibold">Mathematics</span>
+						<span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2" style="font-size: 0.75rem;">Mathematics</span>
 					</div>
-					<div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-						<div>
-							<div class="fw-semibold">9:45 AM - 11:15 AM</div>
-							<small class="text-muted">Grade 11 - Jupiter</small>
+					<div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+						<div class="flex-grow-1">
+							<div class="fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.3;">9:45 AM - 11:15 AM</div>
+							<small class="text-muted" style="font-size: 0.8rem;">Grade 11 - Jupiter</small>
 						</div>
-						<span class="text-primary fw-semibold">Physics</span>
+						<span class="badge bg-success-subtle text-success rounded-pill px-3 py-2" style="font-size: 0.75rem;">Physics</span>
 					</div>
-					<div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-						<div>
-							<div class="fw-semibold">11:30 AM - 1:00 PM</div>
-							<small class="text-muted">Grade 7 - Rose</small>
+					<div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+						<div class="flex-grow-1">
+							<div class="fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.3;">11:30 AM - 1:00 PM</div>
+							<small class="text-muted" style="font-size: 0.8rem;">Grade 7 - Rose</small>
 						</div>
-						<span class="text-primary fw-semibold">Chemistry</span>
+						<span class="badge bg-warning-subtle text-warning rounded-pill px-3 py-2" style="font-size: 0.75rem;">Chemistry</span>
 					</div>
-					<div class="d-flex justify-content-between align-items-center py-2 border-bottom">
-						<div>
-							<div class="fw-semibold">1:00 PM - 2:00 PM</div>
-							<small class="text-muted">Lunch Break</small>
+					<div class="d-flex justify-content-between align-items-center py-3 border-bottom">
+						<div class="flex-grow-1">
+							<div class="fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.3;">1:00 PM - 2:00 PM</div>
+							<small class="text-muted" style="font-size: 0.8rem;">Lunch Break</small>
 						</div>
-						<span class="text-muted fw-semibold">Break</span>
+						<span class="badge bg-secondary-subtle text-secondary rounded-pill px-3 py-2" style="font-size: 0.75rem;">Break</span>
 					</div>
-					<div class="d-flex justify-content-between align-items-center py-2">
-						<div>
-							<div class="fw-semibold">2:00 PM - 3:30 PM</div>
-							<small class="text-muted">Free Period</small>
+					<div class="d-flex justify-content-between align-items-center py-3">
+						<div class="flex-grow-1">
+							<div class="fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.3;">2:00 PM - 3:30 PM</div>
+							<small class="text-muted" style="font-size: 0.8rem;">Free Period</small>
 						</div>
-						<span class="text-muted fw-semibold">Vacant</span>
+						<span class="badge bg-light text-muted rounded-pill px-3 py-2" style="font-size: 0.75rem;">Vacant</span>
 					</div>
 				</div>
 			</div>
@@ -264,40 +747,46 @@
 <!-- Notice Board Card -->
 <div class="row mb-4">
 	<div class="col-lg-6 col-md-12 col-sm-12 mb-3">
-		<div class="card rounded-3 border-0 h-100 bg-white">
+		<div class="card rounded-4 border-0 h-100 bg-white shadow-sm">
 			<div class="card-body p-4">
-				<div class="d-flex justify-content-between align-items-center mb-3">
-					<h4 class="h4 mb-0">Notice Board</h4>
-					<button type="button" class="btn btn-primary btn-sm">View All</button>
+				<div class="d-flex justify-content-between align-items-center mb-4">
+					<h4 class="h5 mb-0 fw-bold text-dark">Notice Board</h4>
+					<button type="button" class="btn btn-primary btn-sm rounded-pill px-3" style="font-size: 0.8rem;">View All</button>
 				</div>
 				<div class="notice-list">
 					<div class="py-3 border-bottom">
-						<div class="d-flex align-items-start mb-2">
-							<i class="fa fa-bullhorn text-primary me-4 mt-1" style="font-size: 14px;"></i>
-							<div class="flex-grow-1">
-								<h6 class="mb-1 fw-semibold text-primary">Urgent Meeting</h6>
-								<p class="mb-1 text-dark">Department meeting scheduled at 3 PM in the conference room.</p>
-								<small class="text-muted">3 days ago</small>
+ 						<div class="d-flex align-items-start">
+							<div class="me-5 d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 bg-light" style="width: 40px; height: 40px; position: relative; margin-right: 25px !important;">
+								<i class="fa fa-bullhorn text-primary" style="font-size: 14px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
+							</div>
+							<div class="flex-grow-1 min-w-0">
+								<h6 class="mb-2 fw-semibold text-primary" style="font-size: 0.9rem; line-height: 1.3;">Urgent Meeting</h6>
+								<p class="mb-2 text-dark" style="font-size: 0.85rem; line-height: 1.4;">Department meeting scheduled at 3 PM in the conference room.</p>
+								<small class="text-muted" style="font-size: 0.75rem;">3 days ago</small>
 							</div>
 						</div>
 					</div>
 					<div class="py-3 border-bottom">
-						<div class="d-flex align-items-start mb-2">
-							<i class="fa fa-calendar text-primary me-4 mt-1" style="font-size: 14px;"></i>
-							<div class="flex-grow-1">
-								<h6 class="mb-1 fw-semibold">Upcoming Event</h6>
-								<p class="mb-1 text-dark">Annual sports festival starts next week. Don't miss it!</p>
-								<small class="text-muted">5 days ago</small>
+						<div class="d-flex align-items-start">
+							<div class="me-5 d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 bg-light" style="width: 40px; height: 40px; position: relative; margin-right: 25px !important;">
+								<i class="fa fa-calendar text-primary" style="font-size: 14px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
+							</div>
+							<div class="flex-grow-1 min-w-0">
+								<h6 class="mb-2 fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.3;">Upcoming Event</h6>
+								<p class="mb-2 text-dark" style="font-size: 0.85rem; line-height: 1.4;">Annual sports festival starts next week. Don't miss it!</p>
+								<small class="text-muted" style="font-size: 0.75rem;">5 days ago</small>
 							</div>
 						</div>
 					</div>
 					<div class="py-3">
-						<div class="d-flex align-items-start mb-2">
-							<i class="fa fa-exclamation-triangle text-warning me-4 mt-1" style="font-size: 14px;"></i>
-							<div class="flex-grow-1">
-								<h6 class="mb-1 fw-semibold">System Maintenance</h6>
-								<p class="mb-1 text-dark">The portal will be down for maintenance this Saturday from 1 AM to 3 AM.</p>
-								<small class="text-muted">1 week ago</small>
+						<div class="d-flex align-items-start">
+							<div class="me-5 d-flex align-items-center justify-content-center rounded-circle flex-shrink-0 bg-light" style="width: 40px; height: 40px; position: relative; margin-right: 25px !important;">
+								<i class="fa fa-exclamation-triangle text-warning" style="font-size: 14px; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);"></i>
+							</div>
+							<div class="flex-grow-1 min-w-0">
+								<h6 class="mb-2 fw-semibold text-dark" style="font-size: 0.9rem; line-height: 1.3;">System Maintenance</h6>
+								<p class="mb-2 text-dark" style="font-size: 0.85rem; line-height: 1.4;">The portal will be down for maintenance this Saturday from 1 AM to 3 AM.</p>
+								<small class="text-muted" style="font-size: 0.75rem;">1 week ago</small>
 							</div>
 						</div>
 					</div>
@@ -311,7 +800,7 @@
 		<div class="card rounded-3 border-0 h-100 bg-white">
 			<div class="card-body p-4">
 				<div class="d-flex justify-content-between align-items-center mb-3">
-					<h4 class="h4 mb-0">Section Rank Count Statistics</h4>
+					<h4 class="h4 mb-0">Section Student Count</h4>
 					<button type="button" class="btn btn-primary btn-sm">View All</button>
 				</div>
 				<div>
@@ -361,6 +850,112 @@
 						</div>
 					</div>
 				</div>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Task Table Section -->
+<div class="row mb-4">
+	<div class="col-12">
+		<div class="card rounded-4 border-0 bg-white shadow-sm">
+			<div class="card-header bg-transparent border-0 pt-4 pb-0 px-4">
+				<h5 class="text-dark fw-bold mb-0">Task Management</h5>
+			</div>
+			<div class="card-body p-4">
+				<div class="pb-3">
+					<div class="row">
+						<div class="col-md-6">
+							<div class="form-group mb-0">
+								<input type="text" class="form-control search-input" placeholder="Search...">
+							</div>
+						</div>
+						<div class="col-md-6 text-right">
+							<div class="dropdown">
+								<a class="btn btn-primary dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+									Filter
+								</a>
+								<div class="dropdown-menu dropdown-menu-right">
+									<a class="dropdown-item" href="#">All</a>
+									<a class="dropdown-item" href="#">Completed</a>
+									<a class="dropdown-item" href="#">Pending</a>
+									<a class="dropdown-item" href="#">Overdue</a>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<table class="data-table table stripe hover nowrap">
+					<thead>
+						<tr role="row">
+							<th class="table-plus">Task</th>
+							<th>Priority</th>
+							<th>Section</th>
+							<th>Due Date</th>
+							<th class="datatable-nosort">Status</th>
+							<th class="datatable-nosort">Actions</th>
+						</tr>
+					</thead>
+					<tbody>
+						<tr role="row" class="odd">
+							<td class="table-plus sorting_1" tabindex="0">Create Login Page</td>
+							<td>High</td>
+							<td>Frontend</td>
+							<td>2025-08-15</td>
+							<td><span class="badge badge-success">Completed</span></td>
+							<td>
+								<div class="dropdown">
+									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+										<i class="dw dw-more"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+										<a class="dropdown-item" href="#"><i class="dw dw-eye"></i> View</a>
+										<a class="dropdown-item" href="#"><i class="dw dw-edit2"></i> Edit</a>
+										<a class="dropdown-item" href="#"><i class="dw dw-delete-3"></i> Delete</a>
+									</div>
+								</div>
+							</td>
+						</tr>
+						<tr role="row" class="even">
+							<td class="table-plus sorting_1" tabindex="0">Database Schema Design</td>
+							<td>Medium</td>
+							<td>Backend</td>
+							<td>2025-08-20</td>
+							<td><span class="badge badge-warning">Pending</span></td>
+							<td>
+								<div class="dropdown">
+									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+										<i class="dw dw-more"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+										<a class="dropdown-item" href="#"><i class="dw dw-eye"></i> View</a>
+										<a class="dropdown-item" href="#"><i class="dw dw-edit2"></i> Edit</a>
+										<a class="dropdown-item" href="#"><i class="dw dw-delete-3"></i> Delete</a>
+									</div>
+								</div>
+							</td>
+						</tr>
+						<tr role="row" class="odd">
+							<td class="table-plus sorting_1" tabindex="0">Integrate Payment Gateway</td>
+							<td>High</td>
+							<td>Backend</td>
+							<td>2025-08-25</td>
+							<td><span class="badge badge-danger">Overdue</span></td>
+							<td>
+								<div class="dropdown">
+									<a class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" href="#" role="button" data-toggle="dropdown">
+										<i class="dw dw-more"></i>
+									</a>
+									<div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+										<a class="dropdown-item" href="#"><i class="dw dw-eye"></i> View</a>
+										<a class="dropdown-item" href="#"><i class="dw dw-edit2"></i> Edit</a>
+										<a class="dropdown-item" href="#"><i class="dw dw-delete-3"></i> Delete</a>
+									</div>
+								</div>
+							</td>
+						</tr>
+					</tbody>
+				</table>
 			</div>
 		</div>
 	</div>
@@ -512,8 +1107,9 @@ document.addEventListener('DOMContentLoaded', function() {
 
 	chart2.render();
 
-	// Initialize calendar with improved styling
-	$('#calendar').fullCalendar({
+	// Initialize calendar with improved styling - TEMPORARILY DISABLED
+    /*
+    $('#calendar').fullCalendar({
 		header: {
 			left: '',
 			center: 'title',
@@ -569,8 +1165,10 @@ document.addEventListener('DOMContentLoaded', function() {
 			}
 		}
 	});
+    */
 
-	// Add custom styling to calendar
+	// Add custom styling to calendar - DISABLED
+	/*
 	$('.fc-toolbar h2').css({
 		'font-size': '1.2rem',
 		'font-weight': '700',
@@ -583,6 +1181,7 @@ document.addEventListener('DOMContentLoaded', function() {
 		'padding': '10px 0',
 		'text-transform': 'uppercase'
 	});
+	*/
 	
 	// Add hover effect to notice board items using JavaScript
 	const noticeItems = document.querySelectorAll('.notice-list > div');
@@ -623,150 +1222,228 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-// Calendar functionality
-class Calendar {
-    constructor() {
-        this.currentDate = new Date();
-        this.currentMonth = this.currentDate.getMonth();
-        this.currentYear = this.currentDate.getFullYear();
-        this.events = {
-            // Sample events - replace with actual data
-            '2025-05-05': 2, // 2 events on May 5th
-            '2025-05-12': 1, // 1 event on May 12th
-            '2025-05-18': 3, // 3 events on May 18th
-            '2025-05-25': 1, // 1 event on May 25th
-            '2025-05-30': 2  // 2 events on May 30th
-        };
-        this.init();
-    }
+// Initialize tooltips (Bootstrap 4 syntax)
+document.addEventListener('DOMContentLoaded', function() {
+	if (typeof $ !== 'undefined') {
+		$('[data-toggle="tooltip"]').tooltip();
+	}
+});
 
-    init() {
-        this.generateCalendar();
-        this.bindEvents();
-    }
-
-    bindEvents() {
-        document.getElementById('prevMonth').addEventListener('click', () => {
-            this.currentMonth--;
-            if (this.currentMonth < 0) {
-                this.currentMonth = 11;
-                this.currentYear--;
-            }
-            this.generateCalendar();
-        });
-
-        document.getElementById('nextMonth').addEventListener('click', () => {
-            this.currentMonth++;
-            if (this.currentMonth > 11) {
-                this.currentMonth = 0;
-                this.currentYear++;
-            }
-            this.generateCalendar();
-        });
-    }
-
-    generateCalendar() {
-        const monthNames = [
-            'January', 'February', 'March', 'April', 'May', 'June',
-            'July', 'August', 'September', 'October', 'November', 'December'
-        ];
-
-        // Update month header
-        document.getElementById('currentMonth').textContent = 
-            `${monthNames[this.currentMonth]} ${this.currentYear}`;
-
-        // Get first day of month and number of days
-        const firstDay = new Date(this.currentYear, this.currentMonth, 1).getDay();
-        const daysInMonth = new Date(this.currentYear, this.currentMonth + 1, 0).getDate();
-        const daysInPrevMonth = new Date(this.currentYear, this.currentMonth, 0).getDate();
-
-        let html = '';
-        let date = 1;
-        let nextMonthDate = 1;
-
-        // Generate 6 weeks (42 days)
-        for (let week = 0; week < 6; week++) {
-            html += '<tr>';
-            
-            for (let day = 0; day < 7; day++) {
-                const cellIndex = week * 7 + day;
-                
-                if (cellIndex < firstDay) {
-                    // Previous month dates
-                    const prevDate = daysInPrevMonth - firstDay + cellIndex + 1;
-                    html += `<td class="text-muted py-2">
-                        <div class="d-flex flex-column align-items-center">
-                            <span style="font-size: 13px;">${prevDate}</span>
-                        </div>
-                    </td>`;
-                } else if (date <= daysInMonth) {
-                    // Current month dates
-                    const dateStr = `${this.currentYear}-${String(this.currentMonth + 1).padStart(2, '0')}-${String(date).padStart(2, '0')}`;
-                    const eventCount = this.events[dateStr] || 0;
-                    const isToday = this.isToday(date);
-                    
-                    html += `<td class="py-2">
-                        <div class="d-flex flex-column align-items-center position-relative">
-                            <span class="${isToday ? 'bg-primary text-white rounded-circle px-2 py-1 fw-bold' : ''}" style="font-size: 14px; min-width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;">${date}</span>
-                            ${this.generateEventDots(eventCount)}
-                        </div>
-                    </td>`;
-                    date++;
-                } else {
-                    // Next month dates
-                    html += `<td class="text-muted py-2">
-                        <div class="d-flex flex-column align-items-center">
-                            <span style="font-size: 13px;">${nextMonthDate}</span>
-                        </div>
-                    </td>`;
-                    nextMonthDate++;
-                }
-            }
-            
-            html += '</tr>';
-            
-            // Break if we've filled all days of current month and some next month days
-            if (date > daysInMonth && nextMonthDate > 7) break;
-        }
-
-        document.getElementById('calendarBody').innerHTML = html;
-    }
-
-    generateEventDots(count) {
-        if (count === 0) return '';
-        
-        let dots = '<div class="d-flex justify-content-center mt-1">';
-        
-        // Limit to maximum 3 dots for visual clarity
-        const displayCount = Math.min(count, 3);
-        
-        for (let i = 0; i < displayCount; i++) {
-            const colors = ['bg-primary', 'bg-success', 'bg-warning'];
-            const color = colors[i % colors.length];
-            dots += `<span class="${color} rounded-circle me-1" style="width: 6px; height: 6px; display: inline-block;"></span>`;
-        }
-        
-        // If more than 3 events, show a "+" indicator
-        if (count > 3) {
-            dots += '<span class="text-muted small ms-1">+</span>';
-        }
-        
-        dots += '</div>';
-        return dots;
-    }
-
-    isToday(date) {
-        const today = new Date();
-        return date === today.getDate() && 
-               this.currentMonth === today.getMonth() && 
-               this.currentYear === today.getFullYear();
-    }
+// Count-up animation for numeric values
+function animateCountUp(element, target) {
+	let current = 0;
+	const increment = target / 50;
+	const timer = setInterval(() => {
+		current += increment;
+		if (current >= target) {
+			current = target;
+			clearInterval(timer);
+		}
+		element.textContent = Math.floor(current);
+	}, 30);
 }
 
 // Initialize calendar when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
-    new Calendar();
+    document.addEventListener('DOMContentLoaded', function() {
+        // Function to check if calendar elements exist
+        function initializeCalendarWhenReady() {
+            console.log('=== Calendar Initialization Debug ===');
+            const calendarBody = document.getElementById('calendarBody');
+            const monthHeader = document.getElementById('currentMonth');
+            const prevBtn = document.getElementById('prevMonth');
+            const nextBtn = document.getElementById('nextMonth');
+            
+            console.log('Calendar body element:', calendarBody);
+            console.log('Month header element:', monthHeader);
+            console.log('Previous button:', prevBtn);
+            console.log('Next button:', nextBtn);
+            
+            if (calendarBody && monthHeader && prevBtn && nextBtn) {
+                console.log('All required elements found, initializing calendar...');
+                const calendar = new Calendar();
+                console.log('Calendar instance created:', calendar);
+                return true;
+            } else {
+                console.error('Calendar elements not found! Retrying...');
+                return false;
+            }
+        }
+        
+        // Try multiple times with increasing delays
+        let attempts = 0;
+        const maxAttempts = 10;
+        
+        function tryInitialize() {
+            attempts++;
+            console.log(`Calendar initialization attempt ${attempts}/${maxAttempts}`);
+            
+            if (initializeCalendarWhenReady()) {
+                console.log('Calendar successfully initialized!');
+                return;
+            }
+            
+            if (attempts < maxAttempts) {
+                setTimeout(tryInitialize, 200 * attempts); // Increasing delay
+            } else {
+                console.error('Failed to initialize calendar after', maxAttempts, 'attempts');
+                // Show error message on page
+                const errorDiv = document.createElement('div');
+                errorDiv.innerHTML = 'ERROR: Calendar failed to initialize - DOM elements not found';
+                errorDiv.style.cssText = 'position: fixed; top: 10px; right: 10px; background: red; color: white; padding: 10px; z-index: 9999;';
+                document.body.appendChild(errorDiv);
+            }
+        }
+        
+        // Start trying to initialize
+        tryInitialize();
+    
+        // Initialize count-up animations
+        const countUpElements = document.querySelectorAll('.count-up');
+        countUpElements.forEach(element => {
+            const target = parseInt(element.getAttribute('data-count'));
+            if (target) {
+                animateCountUp(element, target);
+            }
+        });
+
+        // Add hover elevation effect to dashboard cards
+        const dashboardCards = document.querySelectorAll('.dashboard-card');
+        dashboardCards.forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.classList.add('shadow-lg');
+                this.style.transform = 'translateY(-5px)';
+                this.style.transition = 'all 0.3s ease';
+            });
+            card.addEventListener('mouseleave', function() {
+                this.classList.remove('shadow-lg');
+                this.style.transform = 'translateY(0)';
+            });
+        });
+    
+        // Add hover effect to notice board items using JavaScript
+        const noticeItems = document.querySelectorAll('.notice-list > div');
+    
+    noticeItems.forEach(function(item) {
+        item.addEventListener('mouseenter', function() {
+            this.classList.add('shadow-sm', 'bg-light', 'rounded');
+        });
+        
+        item.addEventListener('mouseleave', function() {
+            this.classList.remove('shadow-sm', 'bg-light', 'rounded');
+        });
+        
+        // Add transition effect using JavaScript
+        item.style.transition = 'all 0.3s ease';
+    });
+    
+    // Ensure proper icon centering
+    const icons = document.querySelectorAll('.notice-list .rounded-circle i');
+    icons.forEach(function(icon) {
+        // Remove any margin that might affect centering
+        icon.style.margin = '0';
+    });
+    
+    // Add click animation to clickable cards
+    const clickableCards = document.querySelectorAll('[data-toggle="modal"]');
+    clickableCards.forEach(function(card) {
+        card.addEventListener('click', function() {
+            this.style.transform = 'scale(0.98)';
+            setTimeout(() => {
+                this.style.transform = 'translateY(-5px)';
+            }, 150);
+        });
+    });
+    
+    // Animate progress bars on page load
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(function(bar) {
+        const width = bar.style.width;
+        bar.style.width = '0%';
+        setTimeout(() => {
+            bar.style.transition = 'width 1.5s ease-in-out';
+            bar.style.width = width;
+        }, 500);
+    });
+    
+    // Add pulse animation to badges
+    const newBadges = document.querySelectorAll('.badge');
+    newBadges.forEach(function(badge) {
+        if (badge.textContent.includes('New') || badge.textContent.includes('Present')) {
+            badge.style.animation = 'pulse 2s infinite';
+        }
+    });
+    
+    // Add CSS animations via JavaScript
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+        
+        .card:hover .position-absolute i {
+            transform: scale(1.1);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.fade .modal-dialog {
+            transform: scale(0.8);
+            transition: transform 0.3s ease;
+        }
+        
+        .modal.show .modal-dialog {
+            transform: scale(1);
+        }
+    `;
+    document.head.appendChild(style);
 });
+
+    // Initialize DataTable for task management
+    document.addEventListener('DOMContentLoaded', function() {
+        // Check if jQuery is available
+        if (typeof jQuery !== 'undefined') {
+            // Initialize DataTable
+            var dataTable = jQuery('.data-table').DataTable({
+                scrollCollapse: true,
+                autoWidth: false,
+                responsive: true,
+                columnDefs: [{
+                    targets: "datatable-nosort",
+                    orderable: false,
+                }],
+                "lengthMenu": [[10, 25, 50, -1], [10, 25, 50, "All"]],
+                "language": {
+                    "info": "_START_-_END_ of _TOTAL_ entries",
+                    searchPlaceholder: "Search",
+                    paginate: {
+                        next: '<i class="ion-chevron-right"></i>',
+                        previous: '<i class="ion-chevron-left"></i>'
+                    },
+                },
+                "dom": '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>t<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>'
+            });
+
+            // Custom search functionality
+            jQuery('.search-input').on('keyup', function() {
+                dataTable.search(jQuery(this).val()).draw();
+            });
+
+            // Filter dropdown functionality
+            jQuery('.dropdown-menu .dropdown-item').on('click', function(e) {
+                e.preventDefault();
+                var filterValue = jQuery(this).text().trim();
+                
+                if (filterValue === 'All') {
+                    dataTable.column(4).search('').draw();
+                } else {
+                    dataTable.column(4).search(filterValue).draw();
+                }
+            });
+        } else {
+            console.log('jQuery is not loaded. Please include jQuery library.');
+        }
+    });
 </script>
 
 <?= $this->endSection() ?>
