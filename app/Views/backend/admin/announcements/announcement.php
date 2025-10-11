@@ -32,65 +32,32 @@
     <div class="pd-20 pt-2">
         <!-- Recent Approved Announcements -->
         <div class="list-group" id="announcementList">
-            <!-- Announcement 1 -->
-             <div class="list-group-item flex-column align-items-start mb-2 rounded shadow-sm">
-                 <div class="d-flex w-100 justify-content-between">
-                     <h5 class="mb-1 text-dark">School Sports Day 2024</h5>
-                     <small class="text-muted"><i class="dw dw-time"></i> January 15, 2024</small>
-                 </div>
-                 <p class="mb-1 text-secondary">We are excited to announce our annual School Sports Day scheduled for March 15, 2024. All students, teachers, and parents are invited to participate in this fun-filled event featuring various sports competitions, games, and activities...</p>
-                 <div class="d-flex justify-content-between align-items-center">
-                     <div class="d-flex align-items-center">
-                         <small class="text-info mr-3"><i class="dw dw-user1"></i> All Users</small>
-                         <span class="badge badge-success">Published</span>
-                     </div>
-                     <button class="btn btn-primary btn-sm" onclick="viewAnnouncement(1, 'School Sports Day 2024', 'We are excited to announce our annual School Sports Day scheduled for March 15, 2024. All students, teachers, and parents are invited to participate in this fun-filled event featuring various sports competitions, games, and activities. The event will include track and field events, team sports like basketball and volleyball, fun games for younger students, and special performances. Prizes will be awarded to winners in each category. Please bring your own water bottles and wear appropriate sports attire. Registration forms are available at the main office.', 'All Users', 'January 15, 2024')">
-                         <i class="dw dw-eye"></i> View Details
-                     </button>
-                 </div>
-             </div>
-            
-            <!-- Announcement 2 -->
-             <div class="list-group-item flex-column align-items-start mb-2 rounded shadow-sm">
-                 <div class="d-flex w-100 justify-content-between">
-                     <h5 class="mb-1 text-dark">Midterm Examination Schedule</h5>
-                     <small class="text-muted"><i class="dw dw-time"></i> January 12, 2024</small>
-                 </div>
-                 <p class="mb-1 text-secondary">Dear students, please be informed that the midterm examinations will commence on February 20, 2024. Please review the examination schedule posted on the bulletin board and prepare accordingly. Good luck with your studies!</p>
-                 <div class="d-flex justify-content-between align-items-center">
-                     <div class="d-flex align-items-center">
-                         <small class="text-info mr-3"><i class="dw dw-user1"></i> Students</small>
-                         <span class="badge badge-success">Published</span>
-                     </div>
-                     <button class="btn btn-primary btn-sm" onclick="viewAnnouncement(2, 'Midterm Examination Schedule', 'Dear students, please be informed that the midterm examinations will commence on February 20, 2024. Please review the examination schedule posted on the bulletin board and prepare accordingly. The examination will cover all topics discussed from the beginning of the semester until January 31, 2024. Make sure to bring your school ID, pencils, erasers, and calculators (for Math and Science subjects only). Cheating in any form will result in automatic failure. Students who are absent during the examination period must present a medical certificate or valid excuse letter. Good luck with your studies!', 'Students', 'January 12, 2024')">
-                         <i class="dw dw-eye"></i> View Details
-                     </button>
-                 </div>
-             </div>
-            
-            <!-- Announcement 3 -->
-             <div class="list-group-item flex-column align-items-start mb-2 rounded shadow-sm">
-                 <div class="d-flex w-100 justify-content-between">
-                     <h5 class="mb-1 text-dark">New Library Hours and Resources</h5>
-                     <small class="text-muted"><i class="dw dw-time"></i> January 8, 2024</small>
-                 </div>
-                 <p class="mb-1 text-secondary">The school library will now be open from 7:00 AM to 6:00 PM, Monday through Friday. We have also added new digital resources and study materials. Students are encouraged to make use of these extended hours for research and study...</p>
-                 <div class="d-flex justify-content-between align-items-center">
-                     <div class="d-flex align-items-center">
-                         <small class="text-info mr-3"><i class="dw dw-user1"></i> Students</small>
-                         <span class="badge badge-success">Published</span>
-                     </div>
-                     <button class="btn btn-primary btn-sm" onclick="viewAnnouncement(3, 'New Library Hours and Resources', 'The school library will now be open from 7:00 AM to 6:00 PM, Monday through Friday. We have also added new digital resources and study materials. Students are encouraged to make use of these extended hours for research and study. New additions include: access to online databases, e-books collection, computer workstations with internet access, group study rooms that can be reserved, printing and scanning services, and a quiet study area. Library cards are required for borrowing books. Please maintain silence in designated quiet zones and return books on time to avoid penalties.', 'Students', 'January 8, 2024')">
-                         <i class="dw dw-eye"></i> View Details
-                     </button>
-                 </div>
-             </div>
-            
-            <!-- If no announcements, show a message (hidden when there are announcements) -->
-            <div class="text-center text-muted py-4" style="display: none;" id="noAnnouncements">
-                <i class="dw dw-megaphone font-48"></i>
-                <div class="mt-2">No announcements yet.</div>
-            </div>
+            <?php if (!empty($announcements)): ?>
+                <?php foreach (array_slice($announcements, 0, 3) as $a): ?>
+                    <div class="list-group-item flex-column align-items-start mb-2 rounded shadow-sm">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1 text-dark"><?= esc($a['title']) ?></h5>
+                            <small class="text-muted"><i class="dw dw-time"></i> <?= esc(date('M d, Y', strtotime($a['publish_date'] ?? $a['created_at']))) ?></small>
+                        </div>
+                        <p class="mb-1 text-secondary"><?= esc(mb_strimwidth($a['content'], 0, 150, '...')) ?></p>
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div class="d-flex align-items-center">
+                                <small class="text-info mr-3"><i class="dw dw-user1"></i> <?= esc(ucfirst($a['audience_type'])) ?></small>
+                                <?php $p = strtolower($a['priority'] ?? 'normal'); $badge = $p==='urgent'?'danger':($p==='high'?'warning':'success'); ?>
+                                <span class="badge badge-<?= $badge ?>"><?= esc(ucfirst($p)) ?></span>
+                            </div>
+                            <button class="btn btn-primary btn-sm" onclick="viewAnnouncement(<?= (int)$a['id'] ?>, '<?= esc($a['title']) ?>', '<?= esc($a['content']) ?>', '<?= esc($a['audience_type']) ?>', '<?= esc(date('M d, Y h:i A', strtotime($a['publish_date'] ?? $a['created_at']))) ?>')">
+                                <i class="dw dw-eye"></i> View Details
+                            </button>
+                        </div>
+                    </div>
+                <?php endforeach; ?>
+            <?php else: ?>
+                <div class="text-center text-muted py-4">
+                    <i class="dw dw-megaphone font-48"></i>
+                    <div class="mt-2">No announcements yet.</div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
@@ -184,144 +151,47 @@
                         <th class="datatable-nosort">Actions</th>
                     </tr>
                 </thead>
-                <tbody>
-                    <!-- Sample Announcement 1 -->
-                    <tr data-status="pending" data-audience="All">
-                        <td>
-                            <input type="checkbox" class="announcement-checkbox" value="1">
-                        </td>
-                        <td>
-                            <div class="font-weight-bold text-dark">School Sports Day 2024</div>
-                        </td>
-                        <td>
-                            <div class="text-truncate" style="max-width: 200px;" title="We are excited to announce our annual School Sports Day scheduled for March 15, 2024. All students, teachers, and parents are invited to participate in this fun-filled event...">
-                                We are excited to announce our annual School Sports Day scheduled for March 15, 2024...
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge badge-primary">All Users</span>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar mr-2" style="width: 30px; height: 30px; border-radius: 50%; background: #007bff; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">
-                                    AD
-                                </div>
-                                <span>Admin User</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div>2024-01-15</div>
-                            <small class="text-muted">10:30 AM</small>
-                        </td>
-                        <td>
-                            <span class="badge badge-warning">Pending</span>
-                        </td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" type="button" data-toggle="dropdown">
-                                    <i class="dw dw-more"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                    <a class="dropdown-item" href="#" onclick="viewAnnouncement(1)"><i class="dw dw-eye"></i> View</a>
-                                    <a class="dropdown-item" href="#" onclick="editAnnouncement(1)"><i class="dw dw-edit2"></i> Edit</a>
-                                    <a class="dropdown-item text-success" href="#" onclick="publishAnnouncement(1)"><i class="dw dw-checkmark"></i> Publish</a>
-                                    <a class="dropdown-item text-danger" href="#" onclick="declineAnnouncement(1)"><i class="dw dw-delete-3"></i> Decline</a>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    
-                    <!-- Sample Announcement 2 -->
-                    <tr data-status="published" data-audience="Students">
-                        <td>
-                            <input type="checkbox" class="announcement-checkbox" value="2">
-                        </td>
-                        <td>
-                            <div class="font-weight-bold text-dark">Midterm Examination Schedule</div>
-                        </td>
-                        <td>
-                            <div class="text-truncate" style="max-width: 200px;" title="Dear students, please be informed that the midterm examinations will commence on February 20, 2024. Please review the examination schedule and prepare accordingly...">
-                                Dear students, please be informed that the midterm examinations will commence on February 20, 2024...
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge badge-info">Students</span>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar mr-2" style="width: 30px; height: 30px; border-radius: 50%; background: #28a745; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">
-                                    JD
-                                </div>
-                                <span>John Doe</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div>2024-01-12</div>
-                            <small class="text-muted">2:15 PM</small>
-                        </td>
-                        <td>
-                            <span class="badge badge-success">Published</span>
-                        </td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" type="button" data-toggle="dropdown">
-                                    <i class="dw dw-more"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                    <a class="dropdown-item" href="#" onclick="viewAnnouncement(2)"><i class="dw dw-eye"></i> View</a>
-                                    <a class="dropdown-item" href="#" onclick="editAnnouncement(2)"><i class="dw dw-edit2"></i> Edit</a>
-                                    <a class="dropdown-item text-warning" href="#" onclick="unpublishAnnouncement(2)"><i class="dw dw-minus-circle"></i> Unpublish</a>
-                                    <a class="dropdown-item text-danger" href="#" onclick="deleteAnnouncement(2)"><i class="dw dw-delete-3"></i> Delete</a>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
-                    
-                    <!-- Sample Announcement 3 -->
-                    <tr data-status="declined" data-audience="Parents">
-                        <td>
-                            <input type="checkbox" class="announcement-checkbox" value="3">
-                        </td>
-                        <td>
-                            <div class="font-weight-bold text-dark">Parent-Teacher Conference</div>
-                        </td>
-                        <td>
-                            <div class="text-truncate" style="max-width: 200px;" title="We would like to invite all parents to attend the upcoming Parent-Teacher Conference scheduled for January 25, 2024. This is an important opportunity to discuss your child's progress...">
-                                We would like to invite all parents to attend the upcoming Parent-Teacher Conference...
-                            </div>
-                        </td>
-                        <td>
-                            <span class="badge badge-secondary">Parents</span>
-                        </td>
-                        <td>
-                            <div class="d-flex align-items-center">
-                                <div class="avatar mr-2" style="width: 30px; height: 30px; border-radius: 50%; background: #dc3545; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">
-                                    MS
-                                </div>
-                                <span>Mary Smith</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div>2024-01-10</div>
-                            <small class="text-muted">9:45 AM</small>
-                        </td>
-                        <td>
-                            <span class="badge badge-danger">Declined</span>
-                        </td>
-                        <td>
-                            <div class="dropdown">
-                                <button class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" type="button" data-toggle="dropdown">
-                                    <i class="dw dw-more"></i>
-                                </button>
-                                <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
-                                    <a class="dropdown-item" href="#" onclick="viewAnnouncement(3)"><i class="dw dw-eye"></i> View</a>
-                                    <a class="dropdown-item" href="#" onclick="editAnnouncement(3)"><i class="dw dw-edit2"></i> Edit</a>
-                                    <a class="dropdown-item text-success" href="#" onclick="republishAnnouncement(3)"><i class="dw dw-checkmark"></i> Re-publish</a>
-                                    <a class="dropdown-item text-danger" href="#" onclick="deleteAnnouncement(3)"><i class="dw dw-delete-3"></i> Delete</a>
-                                </div>
-                            </div>
-                        </td>
-                    </tr>
+                <tbody id="announcementsTableBody">
+                    <?php if (!empty($announcements)): ?>
+                        <?php foreach ($announcements as $a): ?>
+                            <?php 
+                                $date = strtotime($a['publish_date'] ?? $a['created_at']);
+                                $aud = $a['audience_type'] ?? 'All';
+                                $audClass = $aud==='All'?'primary':($aud==='Students'?'info':($aud==='Teachers'?'warning':'secondary'));
+                            ?>
+                            <tr data-status="published" data-audience="<?= esc($aud) ?>">
+                                <td><input type="checkbox" class="announcement-checkbox" value="<?= (int)$a['id'] ?>"></td>
+                                <td><div class="font-weight-bold text-dark"><?= esc($a['title']) ?></div></td>
+                                <td>
+                                    <div class="text-truncate" style="max-width: 200px;" title="<?= esc($a['content']) ?>">
+                                        <?= esc(mb_strimwidth($a['content'], 0, 80, '...')) ?>
+                                    </div>
+                                </td>
+                                <td><span class="badge badge-<?= $audClass ?>"><?= esc($aud) ?></span></td>
+                                <td><span><?= esc($a['sender_type'] ?? 'admin') ?></span></td>
+                                <td>
+                                    <div><?= esc(date('M d, Y', $date)) ?></div>
+                                    <small class="text-muted"><?= esc(date('h:i A', $date)) ?></small>
+                                </td>
+                                <td><span class="badge badge-success">Published</span></td>
+                                <td>
+                                    <div class="dropdown">
+                                        <button class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" type="button" data-toggle="dropdown">
+                                            <i class="dw dw-more"></i>
+                                        </button>
+                                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+                                            <a class="dropdown-item" href="#" onclick="viewAnnouncement(<?= (int)$a['id'] ?>)"><i class="dw dw-eye"></i> View</a>
+                                            <a class="dropdown-item" href="#" onclick="editAnnouncement(<?= (int)$a['id'] ?>)"><i class="dw dw-edit2"></i> Edit</a>
+                                            <a class="dropdown-item text-warning" href="#" onclick="unpublishAnnouncement(<?= (int)$a['id'] ?>)"><i class="dw dw-minus-circle"></i> Unpublish</a>
+                                            <a class="dropdown-item text-danger" href="#" onclick="deleteAnnouncement(<?= (int)$a['id'] ?>)"><i class="dw dw-delete-3"></i> Delete</a>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <tr><td colspan="8" class="text-center py-4"><i class="dw dw-megaphone font-24"></i><div class="mt-2">No announcements found.</div></td></tr>
+                    <?php endif; ?>
                 </tbody>
             </table>
         </div>
@@ -461,7 +331,7 @@ function editAnnouncement(id) {
 function publishAnnouncement(id) {
     if (confirm('Are you sure you want to publish this announcement?')) {
         // Update status in the table
-        const row = document.querySelector(`tr input[value="${id}"]`).closest('tr');
+        const row = document.querySelector(tr input[value="${id}"]).closest('tr');
         row.dataset.status = 'published';
         row.querySelector('.badge').className = 'badge badge-success';
         row.querySelector('.badge').textContent = 'Published';
@@ -482,7 +352,7 @@ function publishAnnouncement(id) {
 function declineAnnouncement(id) {
     if (confirm('Are you sure you want to decline this announcement?')) {
         // Update status in the table
-        const row = document.querySelector(`tr input[value="${id}"]`).closest('tr');
+        const row = document.querySelector(tr input[value="${id}"]).closest('tr');
         row.dataset.status = 'declined';
         row.querySelector('.badge').className = 'badge badge-danger';
         row.querySelector('.badge').textContent = 'Declined';
@@ -503,7 +373,7 @@ function declineAnnouncement(id) {
 function unpublishAnnouncement(id) {
     if (confirm('Are you sure you want to unpublish this announcement?')) {
         // Update status in the table
-        const row = document.querySelector(`tr input[value="${id}"]`).closest('tr');
+        const row = document.querySelector(tr input[value="${id}"]).closest('tr');
         row.dataset.status = 'pending';
         row.querySelector('.badge').className = 'badge badge-warning';
         row.querySelector('.badge').textContent = 'Pending';
@@ -520,7 +390,7 @@ function republishAnnouncement(id) {
 
 function deleteAnnouncement(id) {
     if (confirm('Are you sure you want to delete this announcement? This action cannot be undone.')) {
-        const row = document.querySelector(`tr input[value="${id}"]`).closest('tr');
+        const row = document.querySelector(tr input[value="${id}"]).closest('tr');
         row.remove();
         alert('Announcement deleted successfully!');
     }
@@ -601,9 +471,146 @@ function printAnnouncement() {
     printWindow.print();
 }
 
-// Initialize page
+// Load announcements dynamically
+function loadAnnouncements() {
+    fetch('<?= site_url('admin/getAnnouncements') ?>')
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                displayAnnouncements(data.announcements);
+            } else {
+                console.error('Failed to load announcements:', data.message);
+                showNoAnnouncements();
+            }
+        })
+        .catch(error => {
+            console.error('Error loading announcements:', error);
+            showNoAnnouncements();
+        });
+}
+
+function displayAnnouncements(announcements) {
+    const announcementList = document.getElementById('announcementList');
+    const tableBody = document.getElementById('announcementsTableBody');
+    const loadingElement = document.getElementById('loadingAnnouncements');
+    
+    // Hide loading
+    if (loadingElement) {
+        loadingElement.style.display = 'none';
+    }
+    
+    if (announcements.length === 0) {
+        showNoAnnouncements();
+        return;
+    }
+    
+    // Display recent announcements in the list
+    let listHtml = '';
+    announcements.slice(0, 3).forEach(announcement => {
+        const date = new Date(announcement.publish_date || announcement.created_at).toLocaleDateString();
+        const time = new Date(announcement.publish_date || announcement.created_at).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const priorityClass = announcement.priority === 'urgent' ? 'danger' : announcement.priority === 'high' ? 'warning' : 'success';
+        
+        listHtml += `
+            <div class="list-group-item flex-column align-items-start mb-2 rounded shadow-sm">
+                <div class="d-flex w-100 justify-content-between">
+                    <h5 class="mb-1 text-dark">${announcement.title}</h5>
+                    <small class="text-muted"><i class="dw dw-time"></i> ${date}</small>
+                </div>
+                <p class="mb-1 text-secondary">${announcement.content.substring(0, 150)}${announcement.content.length > 150 ? '...' : ''}</p>
+                <div class="d-flex justify-content-between align-items-center">
+                    <div class="d-flex align-items-center">
+                        <small class="text-info mr-3"><i class="dw dw-user1"></i> ${announcement.audience_type}</small>
+                        <span class="badge badge-${priorityClass}">${announcement.priority}</span>
+                        <span class="badge badge-success ml-2">Published</span>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="viewAnnouncement(${announcement.id}, '${announcement.title.replace(/'/g, "\\'")}', '${announcement.content.replace(/'/g, "\\'")}', '${announcement.audience_type}', '${date} ${time}')">
+                        <i class="dw dw-eye"></i> View Details
+                    </button>
+                </div>
+            </div>
+        `;
+    });
+    
+    announcementList.innerHTML = listHtml;
+    
+    // Display all announcements in the table
+    let tableHtml = '';
+    announcements.forEach(announcement => {
+        const date = new Date(announcement.publish_date || announcement.created_at);
+        const formattedDate = date.toLocaleDateString();
+        const formattedTime = date.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        const audienceClass = announcement.audience_type === 'All' ? 'primary' : 
+                             announcement.audience_type === 'Students' ? 'info' : 
+                             announcement.audience_type === 'Teachers' ? 'warning' : 'secondary';
+        
+        tableHtml += `
+            <tr data-status="published" data-audience="${announcement.audience_type}">
+                <td>
+                    <input type="checkbox" class="announcement-checkbox" value="${announcement.id}">
+                </td>
+                <td>
+                    <div class="font-weight-bold text-dark">${announcement.title}</div>
+                </td>
+                <td>
+                    <div class="text-truncate" style="max-width: 200px;" title="${announcement.content}">
+                        ${announcement.content.substring(0, 80)}${announcement.content.length > 80 ? '...' : ''}
+                    </div>
+                </td>
+                <td>
+                    <span class="badge badge-${audienceClass}">${announcement.audience_type}</span>
+                </td>
+                <td>
+                    <div class="d-flex align-items-center">
+                        <div class="avatar mr-2" style="width: 30px; height: 30px; border-radius: 50%; background: #007bff; display: flex; align-items: center; justify-content: center; color: white; font-size: 12px; font-weight: bold;">
+                            ${announcement.sender_type.charAt(0).toUpperCase()}
+                        </div>
+                        <span>${announcement.sender_type}</span>
+                    </div>
+                </td>
+                <td>
+                    <div>${formattedDate}</div>
+                    <small class="text-muted">${formattedTime}</small>
+                </td>
+                <td>
+                    <span class="badge badge-success">Published</span>
+                </td>
+                <td>
+                    <div class="dropdown">
+                        <button class="btn btn-link font-24 p-0 line-height-1 no-arrow dropdown-toggle" type="button" data-toggle="dropdown">
+                            <i class="dw dw-more"></i>
+                        </button>
+                        <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list">
+                            <a class="dropdown-item" href="#" onclick="viewAnnouncement(${announcement.id})"><i class="dw dw-eye"></i> View</a>
+                            <a class="dropdown-item" href="#" onclick="editAnnouncement(${announcement.id})"><i class="dw dw-edit2"></i> Edit</a>
+                            <a class="dropdown-item text-warning" href="#" onclick="unpublishAnnouncement(${announcement.id})"><i class="dw dw-minus-circle"></i> Unpublish</a>
+                            <a class="dropdown-item text-danger" href="#" onclick="deleteAnnouncement(${announcement.id})"><i class="dw dw-delete-3"></i> Delete</a>
+                        </div>
+                    </div>
+                </td>
+            </tr>
+        `;
+    });
+    
+    tableBody.innerHTML = tableHtml;
+}
+
+function showNoAnnouncements() {
+    const announcementList = document.getElementById('announcementList');
+    const tableBody = document.getElementById('announcementsTableBody');
+    const noAnnouncements = document.getElementById('noAnnouncements');
+    
+    if (announcementList) {
+        announcementList.innerHTML = '<div class="text-center text-muted py-4"><i class="dw dw-megaphone font-48"></i><div class="mt-2">No announcements yet.</div></div>';
+    }
+    
+    if (tableBody) {
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center py-4"><i class="dw dw-megaphone font-24"></i><div class="mt-2">No announcements found.</div></td></tr>';
+    }
+}
+
+// Initialize page (server-rendered; keep JS filters working)
 document.addEventListener('DOMContentLoaded', function() {
-    // Set default filter values
     document.getElementById('statusFilter').value = 'all';
 });
 

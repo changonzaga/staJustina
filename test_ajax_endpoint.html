@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Teacher Search AJAX</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <h1>Test Teacher Search AJAX Endpoint</h1>
+    <input type="text" id="searchInput" placeholder="Search for teachers..." style="width: 300px; padding: 10px;">
+    <div id="results" style="margin-top: 20px;"></div>
+
+    <script>
+        $(document).ready(function() {
+            $('#searchInput').on('input', function() {
+                const searchTerm = $(this).val();
+                if (searchTerm.length >= 2) {
+                    $.ajax({
+                        url: 'http://localhost:8080/admin/department/teachers',
+                        method: 'GET',
+                        data: { search: searchTerm },
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log('Response:', response);
+                            let html = '<h3>Search Results:</h3>';
+                            if (response.results && response.results.length > 0) {
+                                response.results.forEach(function(teacher) {
+                                    html += '<div style="padding: 10px; border: 1px solid #ccc; margin: 5px 0;">';
+                                    html += '<strong>' + teacher.full_name + '</strong><br>';
+                                    html += 'Position: ' + teacher.position + '<br>';
+                                    html += 'Status: ' + teacher.status + '<br>';
+                                    html += 'ID: ' + teacher.id;
+                                    html += '</div>';
+                                });
+                            } else {
+                                html += '<p>No teachers found</p>';
+                            }
+                            $('#results').html(html);
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Error:', error);
+                            $('#results').html('<p style="color: red;">Error: ' + error + '</p>');
+                        }
+                    });
+                } else {
+                    $('#results').html('');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

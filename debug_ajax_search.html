@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AJAX Search Debug Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .debug-info { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .error { color: red; }
+        .success { color: green; }
+        .search-results-container { position: relative; }
+        .search-results-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; z-index: 1000; max-height: 200px; overflow-y: auto; }
+        .teacher-search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+        .teacher-search-item:hover { background-color: #f0f0f0; }
+    </style>
+</head>
+<body>
+    <h1>AJAX Search Debug Test</h1>
+    
+    <div class="test-section">
+        <h2>Test 1: Check if JavaScript is Working</h2>
+        <button onclick="testJavaScript()">Test JavaScript</button>
+        <div id="jsTestResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 2: Check AJAX Endpoint</h2>
+        <button onclick="testAjaxEndpoint()">Test AJAX Endpoint</button>
+        <div id="ajaxTestResult"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 3: Simulate Search Input</h2>
+        <input type="text" id="testSearchInput" placeholder="Type to test search..." style="width: 300px; padding: 10px;">
+        <div id="searchResults" class="search-results-container" style="display: none;">
+            <div id="searchList" class="search-results-list"></div>
+        </div>
+        <div id="searchDebug"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Test 4: Check Console Logs</h2>
+        <p>Open browser console (F12) to see detailed logs</p>
+        <button onclick="showConsoleInstructions()">Show Console Instructions</button>
+        <div id="consoleInstructions"></div>
+    </div>
+
+    <script>
+        function testJavaScript() {
+            const result = document.getElementById('jsTestResult');
+            try {
+                if (typeof $ !== 'undefined') {
+                    result.innerHTML = '<div class="success">✅ jQuery is loaded</div>';
+                } else {
+                    result.innerHTML = '<div class="error">❌ jQuery is not loaded</div>';
+                }
+                
+                // Test if we can find elements
+                const searchInput = $('#testSearchInput');
+                if (searchInput.length > 0) {
+                    result.innerHTML += '<div class="success">✅ Search input element found</div>';
+                } else {
+                    result.innerHTML += '<div class="error">❌ Search input element not found</div>';
+                }
+            } catch (error) {
+                result.innerHTML = '<div class="error">❌ JavaScript error: ' + error.message + '</div>';
+            }
+        }
+        
+        function testAjaxEndpoint() {
+            const result = document.getElementById('ajaxTestResult');
+            result.innerHTML = '<div>Testing AJAX endpoint...</div>';
+            
+            $.ajax({
+                url: 'http://localhost:8080/admin/department/teachers',
+                method: 'GET',
+                data: { search: 'test' },
+                dataType: 'json',
+                beforeSend: function(xhr) {
+                    console.log('AJAX request starting...');
+                },
+                success: function(response) {
+                    console.log('AJAX Success:', response);
+                    result.innerHTML = '<div class="success">✅ AJAX endpoint working! Response: ' + JSON.stringify(response) + '</div>';
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', { status, error, xhr });
+                    let errorMsg = '❌ AJAX Error: ';
+                    if (xhr.status === 401) {
+                        errorMsg += 'Authentication required (401)';
+                    } else if (xhr.status === 403) {
+                        errorMsg += 'Access denied (403)';
+                    } else if (xhr.status === 404) {
+                        errorMsg += 'Not found (404)';
+                    } else if (xhr.status === 500) {
+                        errorMsg += 'Server error (500)';
+                    } else {
+                        errorMsg += status + ' - ' + error;
+                    }
+                    result.innerHTML = '<div class="error">' + errorMsg + '</div>';
+                }
+            });
+        }
+        
+        function showConsoleInstructions() {
+            const instructions = document.getElementById('consoleInstructions');
+            instructions.innerHTML = `
+                <div class="debug-info">
+                    <strong>Console Debug Instructions:</strong><br>
+                    1. Open browser console (F12)<br>
+                    2. Go to Console tab<br>
+                    3. Type in the search input above<br>
+                    4. Look for these log messages:<br>
+                    &nbsp;&nbsp;- "Search input changed: [your text]"<br>
+                    &nbsp;&nbsp;- "Making AJAX request to: [URL]"<br>
+                    &nbsp;&nbsp;- "AJAX request starting..."<br>
+                    &nbsp;&nbsp;- "Search response received: [data]" or error messages<br>
+                    5. If you see authentication errors, you need to log in first
+                </div>
+            `;
+        }
+        
+        // Set up search input test
+        $(document).ready(function() {
+            console.log('Debug test page loaded');
+            
+            $('#testSearchInput').on('input', function() {
+                const searchTerm = $(this).val();
+                console.log('Search input changed:', searchTerm);
+                
+                const debugDiv = document.getElementById('searchDebug');
+                debugDiv.innerHTML = '<div class="debug-info">Search term: "' + searchTerm + '"</div>';
+                
+                if (searchTerm.length >= 2) {
+                    // Show loading
+                    $('#searchList').html('<div style="padding: 10px;">Searching...</div>');
+                    $('#searchResults').show();
+                    
+                    // Make AJAX request
+                    $.ajax({
+                        url: 'http://localhost:8080/admin/department/teachers',
+                        method: 'GET',
+                        data: { search: searchTerm },
+                        dataType: 'json',
+                        success: function(response) {
+                            console.log('Search response:', response);
+                            if (response.results && response.results.length > 0) {
+                                let html = '';
+                                response.results.forEach(function(teacher) {
+                                    html += '<div class="teacher-search-item" data-id="' + teacher.id + '">';
+                                    html += '<strong>' + teacher.full_name + '</strong><br>';
+                                    html += teacher.position + ' - ' + teacher.status;
+                                    html += '</div>';
+                                });
+                                $('#searchList').html(html);
+                                debugDiv.innerHTML += '<div class="success">✅ Found ' + response.results.length + ' teachers</div>';
+                            } else {
+                                $('#searchList').html('<div style="padding: 10px;">No teachers found</div>');
+                                debugDiv.innerHTML += '<div>No teachers found</div>';
+                            }
+                        },
+                        error: function(xhr, status, error) {
+                            console.error('Search error:', { status, error, xhr });
+                            $('#searchList').html('<div style="padding: 10px; color: red;">Error: ' + error + '</div>');
+                            debugDiv.innerHTML += '<div class="error">❌ Error: ' + error + '</div>';
+                        }
+                    });
+                } else {
+                    $('#searchResults').hide();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+

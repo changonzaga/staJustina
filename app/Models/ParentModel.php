@@ -13,7 +13,11 @@ class ParentModel extends Model
     protected $useSoftDeletes = false;
     protected $protectFields = true;
     protected $allowedFields = [
-        'first_name', 'middle_name', 'last_name', 'contact_number'];
+        'first_name',
+        'middle_name',
+        'last_name',
+        'contact_number',
+    ];
 
     protected bool $allowEmptyInserts = false;
     protected bool $updateOnlyChanged = true;
@@ -317,7 +321,8 @@ class ParentModel extends Model
             LEFT JOIN student_parent_relationships spr ON p.id = spr.parent_id
             LEFT JOIN students s ON spr.student_id = s.id
             LEFT JOIN student_personal_info spi ON s.id = spi.student_id
-            LEFT JOIN student_parent_address spa ON spr.student_id = spa.student_id AND BINARY spa.parent_type = BINARY spr.relationship_type
+            LEFT JOIN student_parent_address spa ON p.id = spa.parent_id
+            GROUP BY p.id, spr.id
             ORDER BY p.first_name, p.last_name
             $limitClause $offsetClause
         ");

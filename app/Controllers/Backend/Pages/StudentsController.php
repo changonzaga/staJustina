@@ -36,11 +36,15 @@ class StudentsController extends BaseController
             $model = new StudentModel();
             $isAjax = $this->request->isAJAX();
 
+            // Debug: log full POST payload to trace missing fields from form
+            log_message('debug', 'StudentsController::store payload: ' . print_r($this->request->getPost(), true));
+
             // Validation rules and messages (consolidated)
             $validationRules = [
-                'lrn' => 'required|exact_length[12]|is_unique[students.lrn]|numeric',
+                // Ensure LRN is trimmed and exactly 12 digits
+                'lrn' => 'required|trim|regex_match[/^\d{12}$/]|is_unique[students.lrn]',
                 'grade_level' => 'required',
-                'section' => 'required',
+                'section' => 'permit_empty',
                 'gender' => 'required|in_list[Male,Female,Other]',
                 'age' => 'required|numeric|greater_than[0]',
                 'guardian' => 'permit_empty|string',
@@ -53,14 +57,54 @@ class StudentsController extends BaseController
             $validationMessages = [
                 'lrn' => [
                     'is_unique' => 'This LRN already exists in the system.',
-                    'numeric' => 'LRN must contain only numeric values.',
-                    'exact_length' => 'LRN must be exactly 12 digits'
+                    'regex_match' => 'LRN must be exactly 12 digits'
                 ]
             ];
 
+            // Conditionally require Returning Learner / Transfer fields when visible
+            $studentType = $this->request->getPost('student_type');
+            $enrollmentType = $this->request->getPost('enrollment_type');
+            $requireReturning = ($studentType === 'Returning (Balik-Aral)') || ($enrollmentType === 'Transfer Enrollment');
+
+            if ($requireReturning) {
+                $validationRules = array_merge($validationRules, [
+                    'last_grade_completed' => 'required|integer|greater_than[0]',
+                    'last_school_year' => 'required',
+                    'last_school_attended' => 'required',
+                ]);
+            }
+
+            // Conditionally require SHS details for Grade 11/12 when fields are visible
+            $gradeLevel = trim($this->request->getPost('grade_level'));
+            if (in_array($gradeLevel, ['11', '12', 'Grade 11', 'Grade 12'])) {
+                $validationRules = array_merge($validationRules, [
+                    'semester' => 'permit_empty|in_list[1st,2nd]',
+                    'track' => 'permit_empty|string',
+                    'strand' => 'permit_empty|string',
+                ]);
+            }
+
             $validation->setRules($validationRules, $validationMessages);
 
-            if (!$validation->withRequest($this->request)->run()) {
+            // Normalize LRN in POST data: strip non-digits, or reconstruct from digit boxes
+            $postData = $this->request->getPost();
+            $lrnRaw = isset($postData['lrn']) ? trim($postData['lrn']) : '';
+            $lrnSanitized = preg_replace('/\D/', '', $lrnRaw);
+            if (empty($lrnSanitized) || strlen($lrnSanitized) !== 12) {
+                $composed = '';
+                for ($i = 0; $i < 12; $i++) {
+                    $key = 'lrn_digit_' . $i;
+                    if (isset($postData[$key])) {
+                        $composed .= preg_replace('/\D/', '', $postData[$key]);
+                    }
+                }
+                if (strlen($composed) === 12) {
+                    $lrnSanitized = $composed;
+                }
+            }
+            $postData['lrn'] = $lrnSanitized ?? $lrnRaw;
+
+            if (!$validation->run($postData)) {
                 $errors = $validation->getErrors();
                 log_message('error', 'Validation failed: ' . json_encode($errors));
                 
@@ -88,76 +132,112 @@ class StudentsController extends BaseController
                 return redirect()->back()->withInput()->with('error', $errorMsg);
             }
 
-            // Prepare data
-            $data = [
+            // Prepare data for each normalized table
+            $studentsData = [
                 'account_number' => $this->generateAccountNumber(),
-                'lrn' => trim($this->request->getPost('lrn')),
+                // Use normalized LRN from validated post data
+                'lrn' => $postData['lrn'],
                 'enrollment_date' => date('Y-m-d'),
                 'grade_level' => trim($this->request->getPost('grade_level')),
                 'section' => trim($this->request->getPost('section')),
                 'academic_year' => date('Y'),
                 'student_status' => 'active',
-                // Form fields
-                'name' => trim($this->request->getPost('name')),
-                'date_of_birth' => $this->request->getPost('date_of_birth') ?: null,
-                'gender' => $this->request->getPost('gender'),
-                'age' => (int)$this->request->getPost('age'),
-                'citizenship' => trim($this->request->getPost('citizenship')) ?: 'Filipino',
-                'religion' => trim($this->request->getPost('religion')) ?: null,
-                'enrollment_status' => $this->request->getPost('enrollment_status') ?: 'new',
-                'school_assigned' => trim($this->request->getPost('school_assigned')) ?: null,
-                'school_id' => trim($this->request->getPost('school_id')) ?: null,
-                'date_of_enrollment' => $this->request->getPost('date_of_enrollment') ?: date('Y-m-d'),
-                'address' => trim($this->request->getPost('address')) ?: null,
-                'residential_address' => trim($this->request->getPost('residential_address')) ?: null,
-                'guardian' => trim($this->request->getPost('guardian')) ?: null,
-                'contact' => trim($this->request->getPost('contact')) ?: null,
-                'parent_guardian_name' => trim($this->request->getPost('parent_guardian_name')) ?: null,
-                'parent_guardian_contact' => trim($this->request->getPost('parent_guardian_contact')) ?: null,
-                'parent_guardian_email' => trim($this->request->getPost('parent_guardian_email')) ?: null,
-                'emergency_contact_name' => trim($this->request->getPost('emergency_contact_name')) ?: null,
-                'emergency_contact_number' => trim($this->request->getPost('emergency_contact_number')) ?: null,
-                'special_education_needs' => trim($this->request->getPost('special_education_needs')) ?: null,
-                'health_conditions' => trim($this->request->getPost('health_conditions')) ?: null,
-                'previous_school_attended' => trim($this->request->getPost('previous_school_attended')) ?: null,
-                'previous_school_address' => trim($this->request->getPost('previous_school_address')) ?: null,
-                'birth_certificate_number' => trim($this->request->getPost('birth_certificate_number')) ?: null,
-                'remarks' => trim($this->request->getPost('remarks')) ?: null,
-                'teacher_id' => $this->request->getPost('teacher_id') && is_numeric($this->request->getPost('teacher_id')) ? $this->request->getPost('teacher_id') : null,
-                'parent_id' => $this->request->getPost('parent_id') && is_numeric($this->request->getPost('parent_id')) ? $this->request->getPost('parent_id') : null,
-                // Additional form fields
-                'permanent_house_no' => trim($this->request->getPost('permanent_house_no')) ?: null,
-                'permanent_barangay' => trim($this->request->getPost('permanent_barangay')) ?: null,
-                'permanent_municipality' => trim($this->request->getPost('permanent_municipality')) ?: null,
-                'permanent_province' => trim($this->request->getPost('permanent_province')) ?: null,
-                'permanent_zip_code' => trim($this->request->getPost('permanent_zip_code')) ?: null,
-                'father_last_name' => trim($this->request->getPost('father_last_name')) ?: null,
-                'father_first_name' => trim($this->request->getPost('father_first_name')) ?: null,
-                'father_middle_name' => trim($this->request->getPost('father_middle_name')) ?: null,
-                'father_contact' => trim($this->request->getPost('father_contact')) ?: null,
-                'father_occupation' => trim($this->request->getPost('father_occupation')) ?: null,
-                'mother_last_name' => trim($this->request->getPost('mother_last_name')) ?: null,
-                'mother_first_name' => trim($this->request->getPost('mother_first_name')) ?: null,
-                'mother_middle_name' => trim($this->request->getPost('mother_middle_name')) ?: null,
-                'mother_contact' => trim($this->request->getPost('mother_contact')) ?: null,
-                'mother_occupation' => trim($this->request->getPost('mother_occupation')) ?: null,
-                'guardian_last_name' => trim($this->request->getPost('guardian_last_name')) ?: null,
-                'guardian_first_name' => trim($this->request->getPost('guardian_first_name')) ?: null,
-                'guardian_middle_name' => trim($this->request->getPost('guardian_middle_name')) ?: null,
-                'guardian_contact_number' => trim($this->request->getPost('guardian_contact_number')) ?: null,
-                'has_disability' => $this->request->getPost('has_disability') ?: 'No',
-                'disability_types' => $this->request->getPost('disability_types') ? implode(',', $this->request->getPost('disability_types')) : null,
             ];
 
-            // Extract emergency contact data before updating student
-            $emergencyContactName = $data['emergency_contact_name'] ?? null;
-            $emergencyContactNumber = $data['emergency_contact_number'] ?? null;
-            
-            // Remove emergency contact fields from student data as they'll be handled via parent relationships
-            unset($data['emergency_contact_name'], $data['emergency_contact_number']);
+            $personalInfoData = [
+                'last_name' => trim($this->request->getPost('last_name')) ?: null,
+                'first_name' => trim($this->request->getPost('first_name')) ?: null,
+                'middle_name' => trim($this->request->getPost('middle_name')) ?: null,
+                'extension_name' => trim($this->request->getPost('extension_name')) ?: null,
+                // Map PSA Birth Certificate No. from either psa_birth_cert_no or birth_certificate_number
+                'birth_certificate_number' => (trim($this->request->getPost('psa_birth_cert_no')) ?: trim($this->request->getPost('birth_certificate_number')) ?: null),
+                'date_of_birth' => $this->request->getPost('date_of_birth') ?: null,
+                'place_of_birth' => trim($this->request->getPost('place_of_birth')) ?: null,
+                'gender' => $this->request->getPost('gender'),
+                'age' => (int)$this->request->getPost('age'),
+                'mother_tongue' => trim($this->request->getPost('mother_tongue')) ?: null,
+                // Accept either 'student_email' or generic 'email' from the form
+                'student_email' => (trim($this->request->getPost('student_email')) ?: (trim($this->request->getPost('email')) ?: null)),
+                // Accept student contact from multiple possible field names in create/edit forms
+                'student_contact' => (trim($this->request->getPost('student_contact'))
+                    ?: (trim($this->request->getPost('contact_number')) ?: (trim($this->request->getPost('contact')) ?: null))),
+                'indigenous_people' => $this->request->getPost('indigenous_people') ?: 'No',
+                'indigenous_community' => trim($this->request->getPost('indigenous_community')) ?: null,
+                'fourps_beneficiary' => $this->request->getPost('fourps_beneficiary') ?: 'No',
+                'fourps_household_id' => trim($this->request->getPost('fourps_household_id')) ?: null,
+                // Also store LRN in personal info when present
+                'lrn' => $postData['lrn'] ?? null,
+            ];
 
-            // Handle cropped image upload
-            $croppedImage = $this->request->getPost('cropped_image');
+            // Current address: support both plain and `current_` prefixed field names from the form
+            $addressData = [
+                'house_no' => (trim($this->request->getPost('house_no')) ?: trim($this->request->getPost('current_house_no')) ?: null),
+                // Fallback to combined House No./Street input if separate street is not provided
+                'street' => (trim($this->request->getPost('street'))
+                    ?: (trim($this->request->getPost('current_street'))
+                        ?: (trim($this->request->getPost('current_house_no')) ?: trim($this->request->getPost('house_no')) ?: null))),
+                // Ensure non-null for required address columns (barangay, municipality, province)
+                'barangay' => (trim($this->request->getPost('barangay')) ?: trim($this->request->getPost('current_barangay')) ?: ''),
+                'municipality' => (trim($this->request->getPost('municipality')) ?: trim($this->request->getPost('current_municipality')) ?: ''),
+                'province' => (trim($this->request->getPost('province')) ?: trim($this->request->getPost('current_province')) ?: ''),
+                'country' => (trim($this->request->getPost('country')) ?: trim($this->request->getPost('current_country')) ?: 'Philippines'),
+                'zip_code' => (trim($this->request->getPost('zip_code')) ?: trim($this->request->getPost('current_zip_code')) ?: null),
+                'address_type' => 'current',
+            ];
+
+            $sameAsCurrent = $this->request->getPost('same_as_current');
+            if ($sameAsCurrent === 'on') {
+                $permanentData = $addressData;
+                $permanentData['address_type'] = 'permanent';
+                $permanentData['is_same_as_current'] = 1;
+            } else {
+                $permanentData = [
+                    'house_no' => trim($this->request->getPost('permanent_house_no')) ?: null,
+                    // Support alternate permanent street field names
+                    'street' => (trim($this->request->getPost('permanent_street'))
+                        ?: (trim($this->request->getPost('permanent_street_name'))
+                            ?: (trim($this->request->getPost('permanent_house_street'))
+                                ?: (trim($this->request->getPost('permanent_house_no')) ?: null)))),
+                    'barangay' => trim($this->request->getPost('permanent_barangay')) ?: '',
+                    'municipality' => trim($this->request->getPost('permanent_municipality')) ?: '',
+                    'province' => trim($this->request->getPost('permanent_province')) ?: '',
+                    'country' => trim($this->request->getPost('permanent_country')) ?: 'Philippines',
+                    'zip_code' => trim($this->request->getPost('permanent_zip_code')) ?: null,
+                    'address_type' => 'permanent',
+                    'is_same_as_current' => 0,
+                ];
+            }
+
+            $academicHistoryData = [
+                'previous_gwa' => $this->request->getPost('previous_gwa') ? (float)$this->request->getPost('previous_gwa') : null,
+                // Accept performance level from visible select or hidden field
+                'performance_level' => (trim($this->request->getPost('performance_level'))
+                    ?: (trim($this->request->getPost('performance_level_hidden')) ?: null)),
+                'last_grade_completed' => $this->request->getPost('last_grade_completed') ? (int)$this->request->getPost('last_grade_completed') : null,
+                'last_school_year' => trim($this->request->getPost('last_school_year')) ?: null,
+                'last_school_attended' => trim($this->request->getPost('last_school_attended')) ?: null,
+                // school_id will be built from digit boxes below
+                'school_id' => null,
+            ];
+
+            // Concatenate school_id_digit_* inputs into a single school_id value
+            $schoolIdDigits = '';
+            for ($i = 0; $i < 7; $i++) {
+                $d = $this->request->getPost('school_id_digit_' . $i);
+                if ($d !== null && $d !== '') {
+                    $schoolIdDigits .= trim($d);
+                }
+            }
+            if ($schoolIdDigits !== '') {
+                $academicHistoryData['school_id'] = $schoolIdDigits;
+            }
+
+            // Extract emergency contact data
+            $emergencyContactName = trim($this->request->getPost('emergency_contact_name')) ?: null;
+            $emergencyContactNumber = trim($this->request->getPost('emergency_contact_number')) ?: null;
+
+            // Handle cropped image upload (support both 'cropped_image' and 'cropped_image_data')
+            $croppedImage = $this->request->getPost('cropped_image') ?: $this->request->getPost('cropped_image_data');
             if (!empty($croppedImage)) {
                 // The cropped image is a base64 encoded string
                 $uploadPath = FCPATH . 'uploads/students';
@@ -175,7 +255,7 @@ class StudentsController extends BaseController
                 
                 // Save the image
                 if (file_put_contents($filePath, $imageData)) {
-                    $data['profile_picture'] = $newFileName;
+                    $personalInfoData['profile_picture'] = $newFileName;
                 }
             } else {
                 // Fallback to regular file upload if no cropped image
@@ -188,22 +268,15 @@ class StudentsController extends BaseController
 
                     $newFileName = $profilePicture->getRandomName();
                     if ($profilePicture->move($uploadPath, $newFileName)) {
-                        $data['profile_picture'] = $newFileName;
+                        $personalInfoData['profile_picture'] = $newFileName;
                     }
                 }
             }
-            // Log the data before insertion
-            log_message('debug', 'Final data to insert: ' . json_encode($data));
-            
-            // Extract emergency contact data before inserting student
-            $emergencyContactName = $data['emergency_contact_name'] ?? null;
-            $emergencyContactNumber = $data['emergency_contact_number'] ?? null;
-            
-            // Remove emergency contact fields from student data as they'll be handled via parent relationships
-            unset($data['emergency_contact_name'], $data['emergency_contact_number']);
-            
-            //Insert data into the database
-            $insertId = $model->insert($data);
+            // Begin transaction and insert into normalized tables
+            $db->transStart();
+
+            // Insert primary student record
+            $insertId = $model->insert($studentsData);
 
             if (!$insertId) {
                 $errors = $model->errors();
@@ -220,29 +293,541 @@ class StudentsController extends BaseController
                 return redirect()->back()->withInput()->with('error', $errorMsg);
             }
 
-            // Handle emergency contact via ParentManager if provided
-            if (!empty($emergencyContactName) && !empty($emergencyContactNumber)) {
-                $parentManager = new \App\Libraries\ParentManager();
-                
-                $parentData = [
-                    'first_name' => explode(' ', $emergencyContactName)[0] ?? '',
-                    'last_name' => implode(' ', array_slice(explode(' ', $emergencyContactName), 1)) ?: 'Unknown',
-                    'contact_number' => $emergencyContactNumber
-                ];
-                
-                $result = $parentManager->addEmergencyContact(
-                    $insertId,
-                    $parentData,
-                    'Emergency Contact',
-                    true // Set as primary emergency contact
-                );
-                
-                if (!$result['success']) {
-                    log_message('warning', "Failed to add emergency contact for student ID: $insertId - " . $result['message']);
+            // Helper to check DB errors and rollback early with detailed message
+            $rollbackOnError = function(string $context) use ($db, $isAjax) {
+                $dbError = $db->error();
+                if (!empty($dbError['code'])) {
+                    $msg = "Database error during {$context}: [{$dbError['code']}] {$dbError['message']}";
+                    log_message('error', $msg);
+                    $db->transRollback();
+                    if ($isAjax) {
+                        return \Config\Services::response()->setJSON(['success' => false, 'message' => $msg]);
+                    }
+                    return redirect()->back()->withInput()->with('error', $msg);
+                }
+                return null;
+            };
+
+            // Check related tables exist to avoid transaction failure on missing tables
+            $tables = $db->listTables();
+            $hasPersonalInfo = in_array('student_personal_info', $tables);
+            $hasAddress = in_array('student_address', $tables);
+            $hasAcademicHistory = in_array('student_academic_history', $tables);
+            $hasStudentAuth = in_array('student_auth', $tables);
+            $hasUsers = in_array('users', $tables);
+            $hasStudentDisabilitiesTemp = in_array('student_disabilities_temp', $tables);
+            $hasStudentParentAddress = in_array('student_parent_address', $tables);
+            $hasShsDetails = in_array('student_shs_details', $tables);
+
+            // Insert student personal info (if table exists)
+            if ($hasPersonalInfo) {
+                $personalInfoData['student_id'] = $insertId;
+                // Debug: capture data payload and full POST before insert
+                log_message('debug', 'Data for student_personal_info insert: ' . print_r($personalInfoData, true));
+                log_message('debug', 'POST before student_personal_info insert: ' . print_r($this->request->getPost(), true));
+                $spiModel = new \App\Models\StudentPersonalInfoModel();
+                $spiModel->insert($personalInfoData);
+                $res = $rollbackOnError('student_personal_info insert');
+                if ($res !== null) { return $res; }
+            } else {
+                log_message('warning', "student_personal_info table not found; skipping personal info insert for student {$insertId}");
+            }
+
+            // Insert student disabilities temp records (if table exists)
+            if ($hasStudentDisabilitiesTemp) {
+                $hasDisability = $this->request->getPost('has_disability'); // 'Yes' or 'No'
+                $disabilityTypes = $this->request->getPost('disability_types');
+                if (!is_array($disabilityTypes)) {
+                    $disabilityTypes = $disabilityTypes ? [$disabilityTypes] : [];
+                }
+
+                if ($hasDisability === 'Yes' && !empty($disabilityTypes)) {
+                    foreach ($disabilityTypes as $dtype) {
+                        $db->table('student_disabilities_temp')->insert([
+                            'student_id' => $insertId,
+                            'has_disability' => 'Yes',
+                            'disability_type' => trim($dtype) ?: null,
+                        ]);
+                        $res = $rollbackOnError('student_disabilities_temp insert');
+                        if ($res !== null) { return $res; }
+                    }
+                } else {
+                    // Record explicit No or empty selection to indicate status captured
+                    $db->table('student_disabilities_temp')->insert([
+                        'student_id' => $insertId,
+                        'has_disability' => ($hasDisability === 'Yes' ? 'Yes' : 'No'),
+                        'disability_type' => null,
+                    ]);
+                    $res = $rollbackOnError('student_disabilities_temp insert');
+                    if ($res !== null) { return $res; }
+                }
+            } else {
+                log_message('warning', "student_disabilities_temp table not found; skipping disability insert for student {$insertId}");
+            }
+
+            // Insert current address (if table exists)
+            if ($hasAddress) {
+                $addressData['student_id'] = $insertId;
+                // Debug: capture full POST payload before insert
+                log_message('debug', 'POST before student_address current insert: ' . print_r($this->request->getPost(), true));
+                $db->table('student_address')->insert($addressData);
+                $res = $rollbackOnError('student_address current insert');
+                if ($res !== null) { return $res; }
+
+                // Insert permanent address when provided or same-as-current
+                $hasPermanentData = ($sameAsCurrent === 'on') ||
+                    (!empty($permanentData['house_no']) || !empty($permanentData['street']) || !empty($permanentData['barangay']) ||
+                     !empty($permanentData['municipality']) || !empty($permanentData['province']) || !empty($permanentData['zip_code']));
+                if ($hasPermanentData) {
+                    $permanentData['student_id'] = $insertId;
+                    // Debug: capture full POST payload before insert
+                    log_message('debug', 'POST before student_address permanent insert: ' . print_r($this->request->getPost(), true));
+                    $db->table('student_address')->insert($permanentData);
+                    $res = $rollbackOnError('student_address permanent insert');
+                    if ($res !== null) { return $res; }
+                }
+            } else {
+                log_message('warning', "student_address table not found; skipping address inserts for student {$insertId}");
+            }
+
+            // Insert academic history (if table exists)
+            if ($hasAcademicHistory) {
+                $academicHistoryData['student_id'] = $insertId;
+                // Debug: capture data payload and full POST before insert
+                log_message('debug', 'Data for student_academic_history insert: ' . print_r($academicHistoryData, true));
+                log_message('debug', 'POST before student_academic_history insert: ' . print_r($this->request->getPost(), true));
+                $academicModel = new \App\Models\StudentAcademicHistoryModel();
+                $academicModel->insert($academicHistoryData);
+                $res = $rollbackOnError('student_academic_history insert');
+                if ($res !== null) { return $res; }
+            } else {
+                log_message('warning', "student_academic_history table not found; skipping academic history insert for student {$insertId}");
+            }
+
+            // Insert SHS details (if table exists and applicable)
+            if ($hasShsDetails) {
+                // Collect SHS values from form; these may be optional based on grade level
+                $shsSemester = $this->request->getPost('semester');
+                $shsTrack = trim($this->request->getPost('track')) ?: null;
+                $shsStrand = trim($this->request->getPost('strand')) ?: null;
+                $shsSpecialization = trim($this->request->getPost('specialization')) ?: null; // optional if present
+
+                // Only insert if at least one meaningful SHS field is provided or grade level is SHS
+                if ($shsSemester || $shsTrack || $shsStrand || in_array($gradeLevel, ['11', '12', 'Grade 11', 'Grade 12'])) {
+                    $shsData = [
+                        'student_id' => $insertId,
+                        'semester' => ($shsSemester === '1st' || $shsSemester === '2nd') ? $shsSemester : null,
+                        'track' => $shsTrack,
+                        'strand' => $shsStrand,
+                        'specialization' => $shsSpecialization,
+                    ];
+                    // Debug: capture full POST payload before insert
+                    log_message('debug', 'POST before student_shs_details insert: ' . print_r($this->request->getPost(), true));
+                    $shsModel = new \App\Models\StudentShsDetailsModel();
+                    // If an SHS record already exists for this student, update it; otherwise insert
+                    $existing = $db->table('student_shs_details')->where('student_id', $insertId)->get()->getRowArray();
+                    if ($existing) {
+                        $db->table('student_shs_details')->where('id', $existing['id'])->update($shsData);
+                        $res = $rollbackOnError('student_shs_details update');
+                        if ($res !== null) { return $res; }
+                    } else {
+                        $shsModel->insert($shsData);
+                        $res = $rollbackOnError('student_shs_details insert');
+                        if ($res !== null) { return $res; }
+                    }
+                }
+            } else {
+                log_message('warning', "student_shs_details table not found; skipping SHS details insert for student {$insertId}");
+            }
+
+            // Create parent/guardian records and relationships if provided
+            $parentModel = new \App\Models\ParentModel();
+            $hasParents = in_array('parents', $tables);
+            $hasParentRelationships = in_array('student_parent_relationships', $tables);
+            if (!$hasParents || !$hasParentRelationships) {
+                log_message('warning', 'Skipping parent/guardian creation; required tables missing: ' .
+                    (!$hasParents ? 'parents ' : '') .
+                    (!$hasParentRelationships ? 'student_parent_relationships' : ''));
+            }
+
+            // Track created parent IDs for address linkage
+            $fatherId = null;
+            $motherId = null;
+            $guardianId = null;
+
+            // Father
+            $fatherLast = trim($this->request->getPost('father_last_name')) ?: null;
+            $fatherFirst = trim($this->request->getPost('father_first_name')) ?: null;
+            if ($fatherLast || $fatherFirst) {
+                if ($hasParents && $hasParentRelationships) {
+                    $fatherId = $parentModel->createOrGetParent([
+                        'first_name' => $fatherFirst ?? '',
+                        'middle_name' => trim($this->request->getPost('father_middle_name')) ?: null,
+                        'last_name' => $fatherLast ?? 'Unknown',
+                        'contact_number' => trim($this->request->getPost('father_contact')) ?: null,
+                    ]);
+                    if ($fatherId) {
+                        $parentModel->createParentStudentRelationship($insertId, $fatherId, 'father', false, false);
+                    }
+                } else {
+                    log_message('warning', "Parent tables missing; skipping father relationship for student {$insertId}");
                 }
             }
 
-            log_message('info', 'Student inserted successfully. ID: ' . $insertId);
+            // Mother
+            $motherLast = trim($this->request->getPost('mother_last_name')) ?: null;
+            $motherFirst = trim($this->request->getPost('mother_first_name')) ?: null;
+            if ($motherLast || $motherFirst) {
+                if ($hasParents && $hasParentRelationships) {
+                    $motherId = $parentModel->createOrGetParent([
+                        'first_name' => $motherFirst ?? '',
+                        'middle_name' => trim($this->request->getPost('mother_middle_name')) ?: null,
+                        'last_name' => $motherLast ?? 'Unknown',
+                        'contact_number' => trim($this->request->getPost('mother_contact')) ?: null,
+                    ]);
+                    if ($motherId) {
+                        $parentModel->createParentStudentRelationship($insertId, $motherId, 'mother', false, false);
+                    }
+                } else {
+                    log_message('warning', "Parent tables missing; skipping mother relationship for student {$insertId}");
+                }
+            }
+
+            // Guardian
+            $guardianLast = trim($this->request->getPost('guardian_last_name')) ?: null;
+            $guardianFirst = trim($this->request->getPost('guardian_first_name')) ?: null;
+            if ($guardianLast || $guardianFirst) {
+                if ($hasParents && $hasParentRelationships) {
+                    $guardianId = $parentModel->createOrGetParent([
+                        'first_name' => $guardianFirst ?? '',
+                        'middle_name' => trim($this->request->getPost('guardian_middle_name')) ?: null,
+                        'last_name' => $guardianLast ?? 'Unknown',
+                        // Align with enrollment and admin create form; support both field names
+                        'contact_number' => trim($this->request->getPost('guardian_contact') ?? $this->request->getPost('guardian_contact_number')) ?: null,
+                    ]);
+                    if ($guardianId) {
+                        // Do not set primary/emergency by default; will be set based on submitted radio selections below
+                        $parentModel->createParentStudentRelationship($insertId, $guardianId, 'guardian', false, false);
+                    }
+                } else {
+                    log_message('warning', "Parent tables missing; skipping guardian relationship for student {$insertId}");
+                }
+            }
+
+            // Process Emergency Contact selection (used as Primary Contact too)
+            $emergencyChoice = trim($this->request->getPost('emergency_contact') ?? '');
+
+            if (!$emergencyChoice) {
+                log_message('error', "Missing emergency contact selection for student {$insertId}");
+                $db->transRollback();
+                return redirect()->back()->withInput()->with('error', 'Please select an Emergency Contact. This will also serve as the Primary Contact.');
+            }
+
+            $choiceToId = [
+                'father'   => $fatherId,
+                'mother'   => $motherId,
+                'guardian' => $guardianId,
+            ];
+
+            $selectedParentId = $choiceToId[$emergencyChoice] ?? null;
+            if (!$selectedParentId) {
+                $db->transRollback();
+                return redirect()->back()->withInput()->with('error', 'Selected contact does not have a corresponding parent/guardian record.');
+            }
+
+            // Reset flags for all relationships of this student; set both flags on the selected contact
+            if ($hasParentRelationships) {
+                $db->table('student_parent_relationships')
+                    ->where('student_id', $insertId)
+                    ->update(['is_primary_contact' => 0, 'is_emergency_contact' => 0]);
+
+                $db->table('student_parent_relationships')
+                    ->where('student_id', $insertId)
+                    ->where('parent_id', $selectedParentId)
+                    ->update(['is_primary_contact' => 1, 'is_emergency_contact' => 1]);
+            }
+
+            // Insert parent/guardian address records (if table exists)
+            if ($hasStudentParentAddress) {
+                $spaModel = new \App\Models\StudentParentAddressModel();
+                // Parent's Address section (applies to both father and mother)
+                $parentSame = $this->request->getPost('parent_same_address') === 'on';
+                $baseParentAddress = [
+                    'is_same_as_student' => $parentSame ? 1 : 0,
+                    'house_number' => $parentSame ? ($addressData['house_no'] ?? null) : (trim($this->request->getPost('parent_house_no')) ?: null),
+                    // Fallback to combined House No./Street field when separate street not present
+                    'street' => $parentSame ? ($addressData['street'] ?? null) : ((trim($this->request->getPost('parent_street')) ?: (trim($this->request->getPost('parent_house_no')) ?: null))),
+                    'barangay' => $parentSame ? ($addressData['barangay'] ?? null) : (trim($this->request->getPost('parent_barangay')) ?: null),
+                    'municipality' => $parentSame ? ($addressData['municipality'] ?? null) : (trim($this->request->getPost('parent_municipality')) ?: null),
+                    'province' => $parentSame ? ($addressData['province'] ?? null) : (trim($this->request->getPost('parent_province')) ?: null),
+                    'zip_code' => $parentSame ? ($addressData['zip_code'] ?? null) : (trim($this->request->getPost('parent_zip_code')) ?: null),
+                ];
+                $hasParentAddr = array_filter([
+                    $baseParentAddress['house_number'],
+                    $baseParentAddress['street'],
+                    $baseParentAddress['barangay'],
+                    $baseParentAddress['municipality'],
+                    $baseParentAddress['province'],
+                    $baseParentAddress['zip_code'],
+                ]);
+                if ($parentSame || $hasParentAddr) {
+                    if ($fatherId) {
+                        $fatherAddress = array_merge($baseParentAddress, [
+                            'student_id' => $insertId,
+                            'parent_type' => 'father',
+                            'parent_id' => $fatherId,
+                        ]);
+                        log_message('debug', 'Data for student_parent_address father insert: ' . print_r($fatherAddress, true));
+                        log_message('debug', 'POST before student_parent_address father insert: ' . print_r($this->request->getPost(), true));
+                        $spaModel->insert($fatherAddress);
+                        $res = $rollbackOnError('student_parent_address father insert');
+                        if ($res !== null) { return $res; }
+                    }
+                    if ($motherId) {
+                        $motherAddress = array_merge($baseParentAddress, [
+                            'student_id' => $insertId,
+                            'parent_type' => 'mother',
+                            'parent_id' => $motherId,
+                        ]);
+                        log_message('debug', 'Data for student_parent_address mother insert (from parent address): ' . print_r($motherAddress, true));
+                        log_message('debug', 'POST before student_parent_address mother insert (from parent address): ' . print_r($this->request->getPost(), true));
+                        $spaModel->insert($motherAddress);
+                        $res = $rollbackOnError('student_parent_address mother insert');
+                        if ($res !== null) { return $res; }
+                    }
+                    if (!$fatherId && !$motherId) {
+                        $genericParentAddress = array_merge($baseParentAddress, [
+                            'student_id' => $insertId,
+                            'parent_type' => 'parent',
+                            'parent_id' => null,
+                        ]);
+                        log_message('debug', 'Data for student_parent_address generic parent insert: ' . print_r($genericParentAddress, true));
+                        log_message('debug', 'POST before student_parent_address generic parent insert: ' . print_r($this->request->getPost(), true));
+                        $spaModel->insert($genericParentAddress);
+                        $res = $rollbackOnError('student_parent_address parent insert');
+                        if ($res !== null) { return $res; }
+                    }
+                }
+                
+                // Guardian address section
+                $guardianSame = $this->request->getPost('guardian_same_address') === 'on';
+                $guardianAddress = [
+                    'student_id' => $insertId,
+                    'parent_type' => 'guardian',
+                    'parent_id' => $guardianId,
+                    'is_same_as_student' => $guardianSame ? 1 : 0,
+                    'house_number' => $guardianSame ? ($addressData['house_no'] ?? null) : (trim($this->request->getPost('guardian_house_no')) ?: null),
+                    'street' => $guardianSame ? ($addressData['street'] ?? null) : ((trim($this->request->getPost('guardian_street')) ?: (trim($this->request->getPost('guardian_house_no')) ?: null))),
+                    'barangay' => $guardianSame ? ($addressData['barangay'] ?? null) : (trim($this->request->getPost('guardian_barangay')) ?: null),
+                    'municipality' => $guardianSame ? ($addressData['municipality'] ?? null) : (trim($this->request->getPost('guardian_municipality')) ?: null),
+                    'province' => $guardianSame ? ($addressData['province'] ?? null) : (trim($this->request->getPost('guardian_province')) ?: null),
+                    'zip_code' => $guardianSame ? ($addressData['zip_code'] ?? null) : (trim($this->request->getPost('guardian_zip_code')) ?: null),
+                ];
+                if ($guardianSame || array_filter([$guardianAddress['house_number'], $guardianAddress['street'], $guardianAddress['barangay'], $guardianAddress['municipality'], $guardianAddress['province'], $guardianAddress['zip_code']])) {
+                    // Debug: capture data payload and full POST before insert
+                    log_message('debug', 'Data for student_parent_address guardian insert: ' . print_r($guardianAddress, true));
+                    log_message('debug', 'POST before student_parent_address guardian insert: ' . print_r($this->request->getPost(), true));
+                    $spaModel->insert($guardianAddress);
+                    $res = $rollbackOnError('student_parent_address guardian insert');
+                    if ($res !== null) { return $res; }
+                }
+            } else {
+                log_message('warning', "student_parent_address table not found; skipping parent/guardian address inserts for student {$insertId}");
+            }
+
+            // Insert student authentication record (if table exists)
+            if ($hasStudentAuth) {
+                $studentEmail = $personalInfoData['student_email'] ?? null;
+                $accountNumber = $studentsData['account_number'] ?? null;
+                // Use provided student_password if present, otherwise generate a secure one
+                $postedPassword = trim($this->request->getPost('student_password')) ?: null;
+                $passwordWasGenerated = false;
+                if ($postedPassword) {
+                    $plainPassword = $postedPassword;
+                } else {
+                    try {
+                        $plainPassword = bin2hex(random_bytes(4)); // 8-char hex, ~32 bits entropy
+                    } catch (\Throwable $e) {
+                        $plainPassword = substr(str_shuffle('ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz23456789'), 0, 8);
+                    }
+                    $passwordWasGenerated = true;
+                }
+                $hashedPassword = password_hash($plainPassword, PASSWORD_BCRYPT);
+
+                $authData = [
+                    'student_id' => $insertId,
+                    'account_number' => $accountNumber,
+                    'password_hash' => $hashedPassword,
+                    'email' => $studentEmail,
+                    'is_active' => 1,
+                    'failed_login_attempts' => 0,
+                ];
+                // Debug: capture full POST payload before insert
+                log_message('debug', 'POST before student_auth insert: ' . print_r($this->request->getPost(), true));
+                $db->table('student_auth')->insert($authData);
+                $res = $rollbackOnError('student_auth insert');
+                if ($res !== null) { return $res; }
+            } else {
+                log_message('warning', "student_auth table not found; skipping student auth insert for student {$insertId}");
+            }
+
+            // Upsert into users table for unified login (if table exists)
+            if ($hasUsers) {
+                $userModel = new \App\Models\User();
+                $fullName = trim(($personalInfoData['first_name'] ?? '') . ' ' . ($personalInfoData['middle_name'] ?? '') . ' ' . ($personalInfoData['last_name'] ?? ''));
+
+                // Accept either 'student_email' or generic 'email' from the form
+                $postedEmail = trim($this->request->getPost('student_email') ?? $this->request->getPost('email') ?? '');
+                if (empty($personalInfoData['student_email']) && $postedEmail !== '') {
+                    // Keep runtime data consistent in case other code paths reference it
+                    $personalInfoData['student_email'] = $postedEmail;
+                }
+
+                // Ensure we always have a valid email to avoid NOT NULL constraint issues
+                if ($postedEmail === '') {
+                    $postedEmail = 'student-' . ($studentsData['account_number'] ?? uniqid('acct-')) . '@local.invalid';
+                }
+
+                // Detect if users table supports student_id linkage
+                $userFields = [];
+                try {
+                    $fieldData = $db->getFieldData('users');
+                    if (is_array($fieldData)) {
+                        foreach ($fieldData as $f) {
+                            if (isset($f->name)) { $userFields[] = $f->name; }
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    log_message('debug', 'Could not introspect users table fields: ' . $e->getMessage());
+                }
+
+                $userData = [
+                    'name' => $fullName ?: null,
+                    'account_no' => $studentsData['account_number'] ?? null,
+                    'email' => $postedEmail,
+                    'password' => isset($hashedPassword) ? $hashedPassword : password_hash('12345678', PASSWORD_BCRYPT),
+                    'picture' => $personalInfoData['profile_picture'] ?? null,
+                    'auth_type' => 'student',
+                    'role' => 'student',
+                    'status' => 'active',
+                ];
+                if (in_array('student_id', $userFields)) {
+                    $userData['student_id'] = $insertId;
+                }
+
+                // Prefer matching existing record by student_id if supported, else by account_no
+                $existingUser = null;
+                if (in_array('student_id', $userFields)) {
+                    $existingUser = $userModel->where('student_id', $insertId)->first();
+                } elseif (!empty($userData['account_no'])) {
+                    $existingUser = $userModel->where('account_no', $userData['account_no'])->first();
+                } else {
+                    $existingUser = $userModel->where('email', $userData['email'])->first();
+                }
+
+                if ($existingUser) {
+                    $userModel->update($existingUser['id'], $userData);
+                    $res = $rollbackOnError('users update');
+                    if ($res !== null) { return $res; }
+                } else {
+                    $userModel->insert($userData);
+                    $res = $rollbackOnError('users insert');
+                    if ($res !== null) { return $res; }
+                }
+            } else {
+                log_message('warning', "users table not found; skipping user account sync for student {$insertId}");
+            }
+
+            // Complete transaction
+            $db->transComplete();
+            if ($db->transStatus() === false) {
+                $dbError = $db->error();
+                $errorMsg = 'Failed to create student with related records (transaction error).';
+                if (!empty($dbError['code'])) {
+                    $errorMsg .= " [{$dbError['code']}] {$dbError['message']}";
+                }
+                log_message('error', $errorMsg);
+                if ($isAjax) {
+                    return $this->response->setJSON([
+                        'success' => false,
+                        'message' => $errorMsg,
+                    ]);
+                }
+                return redirect()->back()->withInput()->with('error', $errorMsg);
+            }
+
+            // Surface generated password to admins via tempdata and trigger email hook
+            if (isset($passwordWasGenerated) && $passwordWasGenerated) {
+                try {
+                    $session = session();
+                    $session->setTempdata('student_generated_password', $plainPassword, 300); // 5 minutes
+                    $session->setTempdata('student_generated_account_no', $studentsData['account_number'] ?? null, 300);
+                    log_message('info', "Generated temp password surfaced to admin for student {$insertId} (expires in 5 minutes)");
+
+                    // Optional email notification hook (configure EmailService accordingly)
+                    $recipientEmail = $personalInfoData['student_email'] ?? null;
+                    if ($recipientEmail) {
+                        if (class_exists('\\App\\Libraries\\EmailService')) {
+                            $emailService = new \App\Libraries\EmailService();
+                            if (method_exists($emailService, 'sendStudentWelcomeEmail')) {
+                                $emailService->sendStudentWelcomeEmail(
+                                    [
+                                        'first_name' => $personalInfoData['first_name'] ?? '',
+                                        'last_name' => $personalInfoData['last_name'] ?? '',
+                                        'email' => $recipientEmail,
+                                    ],
+                                    [
+                                        'account_no' => $studentsData['account_number'] ?? '',
+                                        'password' => $plainPassword,
+                                    ]
+                                );
+                            } else {
+                                log_message('info', 'Email hook ready: implement EmailService::sendStudentWelcomeEmail to notify students.');
+                            }
+                        } else {
+                            log_message('info', 'Email hook placeholder: EmailService not found. Configure email service to notify students with credentials.');
+                        }
+                    }
+                } catch (\Throwable $e) {
+                    log_message('error', 'Failed to surface/generated password or send email: ' . $e->getMessage());
+                }
+            }
+
+            // Set primary and emergency contact based on enrollment form radio buttons
+            if ($hasParentRelationships) {
+                $primarySelection = trim($this->request->getPost('primary_contact') ?? '');
+                $emergencySelection = trim($this->request->getPost('emergency_contact') ?? '');
+
+                // Enforce only one primary and one emergency contact per student
+                $db->table('student_parent_relationships')
+                   ->where('student_id', $insertId)
+                   ->update(['is_primary_contact' => 0, 'is_emergency_contact' => 0]);
+                $res = $rollbackOnError('reset parent relationship flags');
+                if ($res !== null) { return $res; }
+
+                // Helper to set a flag on the selected relationship type if it exists
+                $applyFlag = function(string $relationshipType, string $flagField) use ($db, $insertId) {
+                    if ($relationshipType === '') { return; }
+                    $db->table('student_parent_relationships')
+                       ->where('student_id', $insertId)
+                       ->where('relationship_type', $relationshipType)
+                       ->set($flagField, 1)
+                       ->update();
+                };
+
+                // Determine final primary: prefer explicit selection; else default to emergency selection
+                $primaryFinal = $primarySelection !== '' ? $primarySelection : ($emergencySelection !== '' ? $emergencySelection : '');
+                if ($primaryFinal !== '') {
+                    $applyFlag($primaryFinal, 'is_primary_contact');
+                }
+
+                // Apply emergency contact selection when provided
+                if ($emergencySelection !== '') {
+                    $applyFlag($emergencySelection, 'is_emergency_contact');
+                }
+            }
+
+            log_message('info', 'Student inserted successfully with related records. ID: ' . $insertId);
             
             if ($isAjax) {
                 return $this->response->setJSON([
@@ -474,9 +1059,9 @@ class StudentsController extends BaseController
             $addressData = [
                 'house_no' => trim($this->request->getPost('house_no')) ?: null,
                 'street' => trim($this->request->getPost('street')) ?: null,
-                'barangay' => trim($this->request->getPost('barangay')) ?: null,
-                'municipality' => trim($this->request->getPost('municipality')) ?: null,
-                'province' => trim($this->request->getPost('province')) ?: null,
+                'barangay' => trim($this->request->getPost('barangay')) ?: '',
+                'municipality' => trim($this->request->getPost('municipality')) ?: '',
+                'province' => trim($this->request->getPost('province')) ?: '',
                 'country' => trim($this->request->getPost('country')) ?: 'Philippines',
                 'zip_code' => trim($this->request->getPost('zip_code')) ?: null,
                 'address_type' => 'current', // Set default address type
@@ -493,9 +1078,9 @@ class StudentsController extends BaseController
                 $permanentData = [
                     'house_no' => trim($this->request->getPost('permanent_house_no')) ?: null,
                     'street' => trim($this->request->getPost('permanent_street')) ?: null,
-                    'barangay' => trim($this->request->getPost('permanent_barangay')) ?: null,
-                    'municipality' => trim($this->request->getPost('permanent_municipality')) ?: null,
-                    'province' => trim($this->request->getPost('permanent_province')) ?: null,
+                    'barangay' => trim($this->request->getPost('permanent_barangay')) ?: '',
+                    'municipality' => trim($this->request->getPost('permanent_municipality')) ?: '',
+                    'province' => trim($this->request->getPost('permanent_province')) ?: '',
                     'country' => trim($this->request->getPost('permanent_country')) ?: 'Philippines',
                     'zip_code' => trim($this->request->getPost('permanent_zip_code')) ?: null,
                     'address_type' => 'permanent',
@@ -512,8 +1097,8 @@ class StudentsController extends BaseController
                 'school_id' => trim($this->request->getPost('school_id')) ?: null,
             ];
 
-            // Handle profile picture upload
-            $croppedImage = $this->request->getPost('cropped_image');
+            // Handle profile picture upload (support both 'cropped_image' and 'cropped_image_data')
+            $croppedImage = $this->request->getPost('cropped_image') ?: $this->request->getPost('cropped_image_data');
             if (!empty($croppedImage)) {
                 // The cropped image is a base64 encoded string
                 $uploadPath = FCPATH . 'uploads/students';
@@ -724,6 +1309,7 @@ class StudentsController extends BaseController
 
     public function delete($id = null)
     {
+        // Transactional cascade deletion including users cleanup via account_number
         try {
             if (!$id) {
                 if ($this->request->isAJAX()) {
@@ -748,34 +1334,75 @@ class StudentsController extends BaseController
                 return redirect()->to(route_to('admin.students.index'))->with('error', 'Student not found.');
             }
 
+            $db = \Config\Database::connect();
+            $tables = $db->listTables();
+            $hasTable = function(string $name) use ($tables) { return in_array($name, $tables); };
+
+            $db->transStart();
+
             // Delete profile picture if exists
             if (!empty($student['profile_picture'])) {
                 $uploadPath = FCPATH . 'Uploads/students';
                 $filePath = $uploadPath . '/' . $student['profile_picture'];
-                if (file_exists($filePath)) {
-                    unlink($filePath);
+                if (is_file($filePath)) { @unlink($filePath); }
+            }
+
+            // Gather linkage data
+            $accountNumber = $student['account_number'] ?? null;
+            $authEmail = null;
+            if ($hasTable('student_auth')) {
+                $saRow = $db->table('student_auth')->select('email, account_number')->where('student_id', $id)->get()->getRowArray();
+                if ($saRow) {
+                    $authEmail = $saRow['email'] ?? null;
+                    if (empty($accountNumber) && !empty($saRow['account_number'])) { $accountNumber = $saRow['account_number']; }
                 }
             }
 
-            // Delete student record
-            if (!$model->delete($id)) {
-                if ($this->request->isAJAX()) {
-                    return $this->response->setJSON([
-                        'success' => false,
-                        'message' => 'Failed to delete student.'
-                    ]);
+            // Users cleanup: strict match on account_number to avoid broad deletes
+            if ($hasTable('users') && !empty($accountNumber)) {
+                $userFields = [];
+                try {
+                    $fieldData = $db->getFieldData('users');
+                    if (is_array($fieldData)) { foreach ($fieldData as $f) { if (isset($f->name)) { $userFields[] = $f->name; } } }
+                } catch (\Throwable $e) {
+                    log_message('debug', 'Could not introspect users table fields: ' . $e->getMessage());
                 }
-                return redirect()->to(route_to('admin.students.index'))->with('error', 'Failed to delete student.');
+
+                if (in_array('account_number', $userFields)) {
+                    $db->table('users')->where('account_number', $accountNumber)->delete();
+                } elseif (in_array('account_no', $userFields)) {
+                    $db->table('users')->where('account_no', $accountNumber)->delete();
+                } else {
+                    log_message('warning', "users cleanup skipped: no account_number/account_no columns found while deleting student {$id}");
+                }
+            }
+
+            // Delete student_auth
+            if ($hasTable('student_auth')) {
+                $db->table('student_auth')->where('student_id', $id)->delete();
+            }
+
+            // Delete student record
+            $db->table('students')->where('id', $id)->delete();
+
+            $db->transComplete();
+            if ($db->transStatus() === false) {
+                $dbError = $db->error();
+                $message = 'Failed to delete student. [' . ($dbError['code'] ?? 'n/a') . '] ' . ($dbError['message'] ?? 'Unknown error');
+                if ($this->request->isAJAX()) {
+                    return $this->response->setJSON(['success' => false, 'message' => $message]);
+                }
+                return redirect()->to(route_to('admin.students.index'))->with('error', $message);
             }
 
             if ($this->request->isAJAX()) {
                 return $this->response->setJSON([
                     'success' => true,
-                    'message' => 'Student successfully deleted!',
+                    'message' => 'Student and linked user deleted successfully!',
                     'redirect' => site_url('admin/student')
                 ]);
             }
-            return redirect()->to(route_to('admin.students.index'))->with('success', 'Student successfully deleted!');
+            return redirect()->to(route_to('admin.students.index'))->with('success', 'Student and linked user deleted successfully!');
         } catch (\Exception $e) {
             log_message('error', 'Exception during student deletion: ' . $e->getMessage());
             if ($this->request->isAJAX()) {
@@ -790,11 +1417,42 @@ class StudentsController extends BaseController
 
     private function generateAccountNumber()
     {
-        $model = new StudentModel();
+        // Generate a unique, sequential account number in the format YYYY####
+        $db = \Config\Database::connect();
+        $year = date('Y');
+
         do {
-            $accountNumber = 'STU' . date('Y') . str_pad(rand(1, 9999), 4, '0', STR_PAD_LEFT);
-        } while ($model->where('account_number', $accountNumber)->first());
-        
+            // Compute max sequence for current year considering both legacy 'STUYYYY####' and new 'YYYY####' formats
+            $maxNoPrefix = 0;
+            $maxWithPrefix = 0;
+
+            $queryNoPrefix = $db->query(
+                "SELECT MAX(CAST(SUBSTRING(account_number, 5) AS UNSIGNED)) AS max_num FROM students WHERE account_number LIKE ?",
+                [$year . '%']
+            );
+            if ($queryNoPrefix !== false && $queryNoPrefix->getNumRows() > 0) {
+                $row = $queryNoPrefix->getRow();
+                $maxNoPrefix = isset($row->max_num) ? (int)$row->max_num : 0;
+            }
+
+            // Legacy format support: 'STUYYYY####' -> numbers start at position 9
+            $queryWithPrefix = $db->query(
+                "SELECT MAX(CAST(SUBSTRING(account_number, 9) AS UNSIGNED)) AS max_num FROM students WHERE account_number LIKE ?",
+                ['STU' . $year . '%']
+            );
+            if ($queryWithPrefix !== false && $queryWithPrefix->getNumRows() > 0) {
+                $row2 = $queryWithPrefix->getRow();
+                $maxWithPrefix = isset($row2->max_num) ? (int)$row2->max_num : 0;
+            }
+
+            $nextNum = max($maxNoPrefix, $maxWithPrefix) + 1;
+            $accountNumber = $year . str_pad($nextNum, 4, '0', STR_PAD_LEFT);
+
+            // Double-check uniqueness
+            $existsQuery = $db->query("SELECT id FROM students WHERE account_number = ?", [$accountNumber]);
+            $exists = ($existsQuery !== false && $existsQuery->getNumRows() > 0);
+        } while ($exists);
+
         return $accountNumber;
     }
 }

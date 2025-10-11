@@ -3,7 +3,7 @@
     "description": "CodeIgniter4 starter app",
     "license": "MIT",
     "type": "project",
-    "homepage": "https://codeigniter.com",
+    "homepage": "https://codeigniter.com",  
     "support": {
         "forum": "https://forum.codeigniter.com/",
         "source": "https://github.com/codeigniter4/CodeIgniter4",
@@ -42,4 +42,5 @@
     "scripts": {
         "test": "phpunit"
     }
+    
 }

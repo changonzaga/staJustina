@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simplified Teacher Search Test</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .test-section { margin: 20px 0; padding: 15px; border: 1px solid #ddd; }
+        .input-group { display: flex; margin: 10px 0; }
+        .input-group input { flex: 1; padding: 10px; border: 1px solid #ccc; }
+        .input-group button { padding: 10px 15px; background: #007bff; color: white; border: 1px solid #007bff; cursor: pointer; }
+        .input-group button:hover { background: #0056b3; }
+        .search-results-container { position: relative; }
+        .search-results-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid #ddd; z-index: 1000; max-height: 200px; overflow-y: auto; }
+        .teacher-search-item { padding: 10px; cursor: pointer; border-bottom: 1px solid #eee; }
+        .teacher-search-item:hover { background-color: #f0f0f0; }
+        .teacher-name { font-weight: bold; }
+        .teacher-details { font-size: 0.9em; color: #666; }
+        .success { color: green; }
+        .error { color: red; }
+        .debug-info { background: #f8f9fa; padding: 10px; margin: 10px 0; border-radius: 4px; }
+        .selected-teacher { background: #e3f2fd; padding: 10px; border-radius: 4px; margin: 10px 0; }
+        .hidden-input { background: #f0f0f0; padding: 5px; font-family: monospace; }
+    </style>
+</head>
+<body>
+    <h1>Simplified Teacher Search Test</h1>
+    <p><strong>New Feature:</strong> No dropdown selection - search input directly selects teacher as department head!</p>
+    
+    <div class="test-section">
+        <h2>Test: Direct Teacher Selection</h2>
+        <p>Type a teacher name and click search. Then click on a teacher to select them directly.</p>
+        
+        <div class="input-group">
+            <input type="text" id="teacher-search-input" placeholder="Type teacher's name to search..." autocomplete="off">
+            <button type="button" id="teacher-search-btn">🔍 Search</button>
+        </div>
+        
+        <div id="teacher-search-results" class="search-results-container" style="display: none;">
+            <div class="search-results-header">
+                <small>Search Results:</small>
+            </div>
+            <div id="teacher-search-list" class="search-results-list"></div>
+        </div>
+        
+        <!-- Hidden input for teacher ID -->
+        <input type="hidden" id="dept_head_id" name="head_id" value="">
+        
+        <!-- Selected Teacher Display -->
+        <div id="selected-teacher-display" class="selected-teacher" style="display: none;">
+            <strong>Selected Teacher:</strong> <span id="selected-teacher-name"></span>
+            <button type="button" onclick="clearSelectedTeacher()" style="margin-left: 10px;">Clear</button>
+        </div>
+        
+        <div id="searchDebug"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Debug Information</h2>
+        <button onclick="debugHiddenInput()">Check Hidden Input</button>
+        <button onclick="testSearch()">Test Search</button>
+        <div id="debugOutput"></div>
+    </div>
+    
+    <div class="test-section">
+        <h2>Form Test</h2>
+        <form id="testForm">
+            <div style="margin: 10px 0;">
+                <label>Department Name:</label>
+                <input type="text" name="department_name" value="Test Department" style="width: 200px; padding: 5px;">
+            </div>
+            
+            <div style="margin: 10px 0;">
+                <label>Head ID (Hidden):</label>
+                <div class="hidden-input" id="headIdDisplay">No teacher selected</div>
+            </div>
+            
+            <button type="submit" style="padding: 10px 20px; background: #28a745; color: white; border: none; border-radius: 4px;">Test Submit</button>
+        </form>
+        
+        <div id="formDebug" class="debug-info" style="display: none;">
+            <h3>Form Debug Info:</h3>
+            <div id="formDebugContent"></div>
+        </div>
+    </div>
+
+    <script>
+        // Simulate teacher data for testing
+        const teachers = [
+            { id: 1, text: 'Test ChangeAccount Number (Teacher 1 - Active)' },
+            { id: 2, text: 'John Doe (Teacher II - Active)' },
+            { id: 3, text: 'Jane Smith (Teacher III - Active)' },
+            { id: 4, text: 'Maria Santos (Teacher I - Active)' },
+            { id: 5, text: 'Pedro Cruz (Teacher II - Active)' }
+        ];
+        
+        function debugHiddenInput() {
+            const headId = $('#dept_head_id').val();
+            $('#debugOutput').html('<div class="debug-info">Hidden input value: "' + headId + '"</div>');
+            console.log('Hidden input value:', headId);
+        }
+        
+        function testSearch() {
+            $('#teacher-search-input').val('test');
+            $('#teacher-search-btn').click();
+        }
+        
+        function clearSelectedTeacher() {
+            $('#dept_head_id').val('');
+            $('#teacher-search-input').val('');
+            $('#selected-teacher-display').hide();
+            $('#teacher-search-results').hide();
+            $('#searchDebug').html('');
+            $('#headIdDisplay').text('No teacher selected');
+        }
+        
+        function updateHeadIdDisplay() {
+            const headId = $('#dept_head_id').val();
+            if (headId) {
+                $('#headIdDisplay').text('Teacher ID: ' + headId);
+            } else {
+                $('#headIdDisplay').text('No teacher selected');
+            }
+        }
+        
+        // Enhanced fallback search functionality (button-triggered)
+        $('#teacher-search-btn').on('click', function() {
+            const searchTerm = $('#teacher-search-input').val().toLowerCase().trim();
+            const resultsContainer = $('#teacher-search-results');
+            const searchList = $('#teacher-search-list');
+            
+            console.log('Search triggered for:', searchTerm);
+            
+            if (searchTerm.length === 0) {
+                alert('Please enter a teacher name to search.');
+                return;
+            }
+            
+            // Show loading state
+            searchList.html('<div class="search-loading">Searching teachers...</div>');
+            resultsContainer.show();
+            
+            console.log('Using fallback search for:', searchTerm);
+            console.log('Available teachers:', teachers);
+            
+            const filteredTeachers = teachers.filter(teacher => 
+                teacher.text.toLowerCase().includes(searchTerm)
+            );
+            
+            console.log('Filtered teachers:', filteredTeachers);
+            
+            if (filteredTeachers.length > 0) {
+                let html = '';
+                filteredTeachers.forEach(teacher => {
+                    const teacherName = teacher.text.split(' (')[0];
+                    const teacherDetails = teacher.text.split(' (')[1] ? teacher.text.split(' (')[1].replace(')', '') : '';
+                    
+                    html += `<div class="teacher-search-item" data-id="${teacher.id}" data-text="${teacher.text}" style="padding: 10px; cursor: pointer; border-bottom: 1px solid #eee;">
+                        <div class="teacher-name" style="font-weight: bold;">${teacherName}</div>
+                        <div class="teacher-details" style="font-size: 0.9em; color: #666;">${teacherDetails}</div>
+                    </div>`;
+                });
+                searchList.html(html);
+                
+                // Handle teacher selection
+                searchList.find('.teacher-search-item').on('click', function() {
+                    const teacherId = $(this).data('id');
+                    const teacherText = $(this).data('text');
+                    const teacherName = $(this).find('.teacher-name').text();
+                    
+                    console.log('Teacher selected:', { teacherId, teacherText, teacherName });
+                    
+                    // Update hidden input field directly
+                    $('#dept_head_id').val(teacherId);
+                    
+                    // Update search input
+                    $('#teacher-search-input').val(teacherName);
+                    
+                    // Show selected teacher display
+                    $('#selected-teacher-name').text(teacherText);
+                    $('#selected-teacher-display').show();
+                    
+                    // Hide search results
+                    resultsContainer.hide();
+                    
+                    // Update debug info
+                    $('#searchDebug').html('<div class="success">✅ Teacher selected successfully! ID: ' + teacherId + '</div>');
+                    
+                    // Update head ID display
+                    updateHeadIdDisplay();
+                    
+                    console.log('Hidden input value after selection:', $('#dept_head_id').val());
+                    console.log('Teacher selection completed');
+                });
+            } else {
+                searchList.html('<div class="search-no-results">No teachers found matching "' + searchTerm + '"</div>');
+                $('#searchDebug').html('<div class="error">❌ No teachers found matching "' + searchTerm + '"</div>');
+            }
+        });
+        
+        // Allow Enter key to trigger search
+        $('#teacher-search-input').on('keypress', function(e) {
+            if (e.which === 13) { // Enter key
+                e.preventDefault();
+                $('#teacher-search-btn').click();
+            }
+        });
+        
+        // Hide search results when clicking outside
+        $(document).on('click', function(e) {
+            if (!$(e.target).closest('#teacher-search-input, #teacher-search-results, #teacher-search-btn').length) {
+                $('#teacher-search-results').hide();
+            }
+        });
+        
+        // Form submission handler
+        $('#testForm').on('submit', function(e) {
+            e.preventDefault();
+            const headId = $('#dept_head_id').val();
+            console.log('Form submission - head_id value:', headId);
+            
+            let debugContent = `
+                <strong>Form Submission Debug:</strong><br>
+                Department Name: ${$('input[name="department_name"]').val()}<br>
+                Head ID: ${headId || 'NULL'}<br>
+            `;
+            
+            if (headId && headId !== '') {
+                debugContent += '<div class="success">✅ Head ID will be submitted: ' + headId + '</div>';
+            } else {
+                debugContent += '<div class="error">⚠️ No Head ID selected - will submit as NULL</div>';
+            }
+            
+            $('#formDebugContent').html(debugContent);
+            $('#formDebug').show();
+        });
+        
+        // Initialize when document is ready
+        $(document).ready(function() {
+            console.log('Simplified search test page loaded');
+            $('#teacher-search-input').focus();
+            updateHeadIdDisplay();
+        });
+    </script>
+</body>
+</html>
+

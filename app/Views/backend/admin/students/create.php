@@ -30,11 +30,13 @@
         position: relative;
         pointer-events: auto;
     }
+
     .profile-upload-area.dragging {
         border-color: #0d6efd;
         background: #eaf3ff;
-        box-shadow: inset 0 0 0 2px rgba(13,110,253,.25);
+        box-shadow: inset 0 0 0 2px rgba(13, 110, 253, .25);
     }
+
     .remove-file-btn {
         background: transparent;
         border: none;
@@ -45,7 +47,9 @@
         cursor: pointer;
         padding: 4px 8px;
     }
-    .remove-file-btn:hover, .remove-file-btn:focus {
+
+    .remove-file-btn:hover,
+    .remove-file-btn:focus {
         color: #b02a37;
         outline: none;
         text-decoration: none;
@@ -66,7 +70,8 @@
         border-radius: 50%;
         box-shadow: 0px 2px 5px rgba(0, 0, 0, 0.2);
     }
-/* Custom styles for image cropper */
+
+    /* Custom styles for image cropper */
     .img-container {
         overflow: hidden;
         position: relative;
@@ -307,92 +312,97 @@ Key areas to restore:
 
 <!-- Inline cropper logic copied from Edit page for consistency -->
 <script>
-// Global variables for image cropper
-let cropper;
-let imageElement;
+    // Global variables for image cropper
+    let cropper;
+    let imageElement;
 
-// Function to update data inputs
-function updateCropBoxData(e) {
-    const data = e.detail;
-    const dataXEl = document.getElementById('dataX');
-    const dataYEl = document.getElementById('dataY');
-    const dataWidthEl = document.getElementById('dataWidth');
-    const dataHeightEl = document.getElementById('dataHeight');
-    const dataRotateEl = document.getElementById('dataRotate');
-    const dataScaleXEl = document.getElementById('dataScaleX');
-    if (dataXEl) dataXEl.value = Math.round(data.x);
-    if (dataYEl) dataYEl.value = Math.round(data.y);
-    if (dataWidthEl) dataWidthEl.value = Math.round(data.width);
-    if (dataHeightEl) dataHeightEl.value = Math.round(data.height);
-    if (dataRotateEl) dataRotateEl.value = (typeof data.rotate !== 'undefined' ? data.rotate : '');
-    if (dataScaleXEl) dataScaleXEl.value = (typeof data.scaleX !== 'undefined' ? data.scaleX : '');
-}
-
-// Load image and show inline cropper
-function loadImageForCropping(event) {
-    const file = event.target.files[0];
-    if (!file) return;
-    if (!file.type.match('image.*')) {
-        alert('Please select an image file');
-        return;
+    // Function to update data inputs
+    function updateCropBoxData(e) {
+        const data = e.detail;
+        const dataXEl = document.getElementById('dataX');
+        const dataYEl = document.getElementById('dataY');
+        const dataWidthEl = document.getElementById('dataWidth');
+        const dataHeightEl = document.getElementById('dataHeight');
+        const dataRotateEl = document.getElementById('dataRotate');
+        const dataScaleXEl = document.getElementById('dataScaleX');
+        if (dataXEl) dataXEl.value = Math.round(data.x);
+        if (dataYEl) dataYEl.value = Math.round(data.y);
+        if (dataWidthEl) dataWidthEl.value = Math.round(data.width);
+        if (dataHeightEl) dataHeightEl.value = Math.round(data.height);
+        if (dataRotateEl) dataRotateEl.value = (typeof data.rotate !== 'undefined' ? data.rotate : '');
+        if (dataScaleXEl) dataScaleXEl.value = (typeof data.scaleX !== 'undefined' ? data.scaleX : '');
     }
-    const reader = new FileReader();
-    reader.onload = function(e) {
-        imageElement = document.getElementById('image-to-crop');
-        imageElement.src = e.target.result;
-        resizeCropperContainer();
-        document.getElementById('image-cropper-container').style.display = 'block';
-        const uploadAreaEl = document.getElementById('profileUploadArea');
-        if (uploadAreaEl) uploadAreaEl.style.display = 'none';
-        const previewContainer = document.getElementById('cropped-preview-container');
-        if (previewContainer) previewContainer.style.display = 'none';
-        imageElement.onload = function() {
-            if (cropper) { cropper.destroy(); }
-            cropper = new Cropper(imageElement, {
-                aspectRatio: 1,
-                viewMode: 2,
-                autoCropArea: 1,
-                responsive: true,
-                guides: true,
-                center: true,
-                dragMode: 'move',
-                zoomable: true,
-                zoomOnWheel: true,
-                cropBoxMovable: true,
-                cropBoxResizable: true,
-                ready: function() {
-                    window.dispatchEvent(new Event('resize'));
-                    const cropBoxData = cropper.getCropBoxData();
-                    const dataXEl = document.getElementById('dataX');
-                    const dataYEl = document.getElementById('dataY');
-                    const dataWidthEl = document.getElementById('dataWidth');
-                    const dataHeightEl = document.getElementById('dataHeight');
-                    const dataRotateEl = document.getElementById('dataRotate');
-                    const dataScaleXEl = document.getElementById('dataScaleX');
-                    if (dataXEl) dataXEl.value = Math.round(cropBoxData.left);
-                    if (dataYEl) dataYEl.value = Math.round(cropBoxData.top);
-                    if (dataWidthEl) dataWidthEl.value = Math.round(cropBoxData.width);
-                    if (dataHeightEl) dataHeightEl.value = Math.round(cropBoxData.height);
-                    if (dataRotateEl) dataRotateEl.value = 0;
-                    if (dataScaleXEl) dataScaleXEl.value = 1;
-                },
-                crop: updateCropBoxData,
-                toggleDragModeOnDblclick: true
-            });
-        };
-    };
-    reader.readAsDataURL(file);
-}
 
-// Dynamically size the cropper container
-function resizeCropperContainer() {
-    const container = document.querySelector('#image-cropper-container .img-container');
-    if (!container) return;
-    const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
-    const target = Math.max(320, Math.min(Math.round(vh * 0.6), 800));
-    container.style.height = target + 'px';
-}
-window.addEventListener('resize', resizeCropperContainer);
+    // Load image and show inline cropper
+    function loadImageForCropping(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        if (!file.type.match('image.*')) {
+            alert('Please select an image file');
+            return;
+        }
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            imageElement = document.getElementById('image-to-crop');
+            imageElement.src = e.target.result;
+            resizeCropperContainer();
+            document.getElementById('image-cropper-container').style.display = 'block';
+            const uploadAreaEl = document.getElementById('profileUploadArea');
+            if (uploadAreaEl) uploadAreaEl.style.display = 'none';
+            const previewContainer = document.getElementById('cropped-preview-container');
+            if (previewContainer) previewContainer.style.display = 'none';
+            imageElement.onload = function() {
+                if (cropper) {
+                    cropper.destroy();
+                }
+                cropper = new Cropper(imageElement, {
+                    aspectRatio: 1,
+                    initialAspectRatio: 1,
+                    viewMode: 2,
+                    autoCrop: true,
+                    autoCropArea: 1,
+                    responsive: true,
+                    guides: true,
+                    center: true,
+                    dragMode: 'move',
+                    movable: true,
+                    zoomable: true,
+                    zoomOnWheel: true,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    ready: function() {
+                        window.dispatchEvent(new Event('resize'));
+                        const cropBoxData = cropper.getCropBoxData();
+                        const dataXEl = document.getElementById('dataX');
+                        const dataYEl = document.getElementById('dataY');
+                        const dataWidthEl = document.getElementById('dataWidth');
+                        const dataHeightEl = document.getElementById('dataHeight');
+                        const dataRotateEl = document.getElementById('dataRotate');
+                        const dataScaleXEl = document.getElementById('dataScaleX');
+                        if (dataXEl) dataXEl.value = Math.round(cropBoxData.left);
+                        if (dataYEl) dataYEl.value = Math.round(cropBoxData.top);
+                        if (dataWidthEl) dataWidthEl.value = Math.round(cropBoxData.width);
+                        if (dataHeightEl) dataHeightEl.value = Math.round(cropBoxData.height);
+                        if (dataRotateEl) dataRotateEl.value = 0;
+                        if (dataScaleXEl) dataScaleXEl.value = 1;
+                    },
+                    crop: updateCropBoxData,
+                    toggleDragModeOnDblclick: true
+                });
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // Dynamically size the cropper container
+    function resizeCropperContainer() {
+        const container = document.querySelector('#image-cropper-container .img-container');
+        if (!container) return;
+        const vh = Math.max(document.documentElement.clientHeight || 0, window.innerHeight || 0);
+        const target = Math.max(320, Math.min(Math.round(vh * 0.6), 800));
+        container.style.height = target + 'px';
+    }
+    window.addEventListener('resize', resizeCropperContainer);
 </script>
 
 <!-- Parent/Guardian address copy functionality -->
@@ -449,7 +459,9 @@ window.addEventListener('resize', resizeCropperContainer);
                     } else {
                         setReadonly(false);
                         toggleFields(false);
-                        Object.values(target).forEach(el => { if (el) el.value = ''; });
+                        Object.values(target).forEach(el => {
+                            if (el) el.value = '';
+                        });
                     }
                 });
 
@@ -482,76 +494,119 @@ window.addEventListener('resize', resizeCropperContainer);
     });
 </script>
 <script>
-// Profile upload initializer and helpers (match Edit page)
-function initializeProfileUpload() {
-    const uploadArea = document.getElementById('profileUploadArea');
-    const fileInput = document.getElementById('profile_picture');
-    const fileInfo = document.getElementById('fileSelectedInfo');
-    const fileNameEl = document.getElementById('selectedFileName');
-    const fileSizeEl = document.getElementById('selectedFileSize');
-    const croppedPreviewContainer = document.getElementById('cropped-preview-container');
-    const cropperContainer = document.getElementById('image-cropper-container');
-    const croppedImageData = document.getElementById('cropped_image_data');
+    // Profile upload initializer and helpers (match Edit page)
+    function initializeProfileUpload() {
+        const uploadArea = document.getElementById('profileUploadArea');
+        const fileInput = document.getElementById('profile_picture');
+        const fileInfo = document.getElementById('fileSelectedInfo');
+        const fileNameEl = document.getElementById('selectedFileName');
+        const fileSizeEl = document.getElementById('selectedFileSize');
+        const croppedPreviewContainer = document.getElementById('cropped-preview-container');
+        const cropperContainer = document.getElementById('image-cropper-container');
+        const croppedImageData = document.getElementById('cropped_image_data');
 
-    if (!uploadArea || !fileInput) return;
+        if (!uploadArea || !fileInput) return;
 
-    uploadArea.addEventListener('click', () => fileInput.click());
-    ['dragenter','dragover'].forEach(ev => uploadArea.addEventListener(ev, (e) => {
-        e.preventDefault(); e.stopPropagation(); uploadArea.classList.add('dragging');
-    }));
-    ['dragleave','drop'].forEach(ev => uploadArea.addEventListener(ev, (e) => {
-        e.preventDefault(); e.stopPropagation(); uploadArea.classList.remove('dragging');
-    }));
-    uploadArea.addEventListener('drop', (e) => {
-        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
-            fileInput.files = e.dataTransfer.files;
-            const event = new Event('change');
-            fileInput.dispatchEvent(event);
+        uploadArea.addEventListener('click', () => fileInput.click());
+        ['dragenter', 'dragover'].forEach(ev => uploadArea.addEventListener(ev, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.add('dragging');
+        }));
+        ['dragleave', 'drop'].forEach(ev => uploadArea.addEventListener(ev, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            uploadArea.classList.remove('dragging');
+        }));
+        uploadArea.addEventListener('drop', (e) => {
+            if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files[0]) {
+                fileInput.files = e.dataTransfer.files;
+                const event = new Event('change');
+                fileInput.dispatchEvent(event);
+            }
+        });
+
+        fileInput.addEventListener('change', (event) => {
+            const file = fileInput.files && fileInput.files[0];
+            if (!file) {
+                fileInfo && (fileInfo.style.display = 'none');
+                return;
+            }
+            fileNameEl && (fileNameEl.textContent = file.name);
+            fileSizeEl && (fileSizeEl.textContent = `${(file.size/1024).toFixed(1)} KB`);
+            fileInfo && (fileInfo.style.display = 'block');
+            loadImageForCropping(event);
+        });
+
+        window.cropImage = function() {
+            if (!cropper) return;
+            const canvas = cropper.getCroppedCanvas({
+                width: 400,
+                height: 400,
+                fillColor: '#fff',
+                imageSmoothingEnabled: true,
+                imageSmoothingQuality: 'high'
+            });
+            const dataUrl = canvas.toDataURL('image/jpeg');
+            const preview = document.getElementById('cropped-image-preview');
+            if (preview) {
+                preview.src = dataUrl;
+                preview.style.display = 'inline-block';
+            }
+            if (croppedPreviewContainer) {
+                croppedPreviewContainer.style.display = 'block';
+            }
+            if (cropperContainer) {
+                cropperContainer.style.display = 'none';
+            }
+            if (croppedImageData) {
+                croppedImageData.value = dataUrl;
+            }
+        };
+
+        window.cancelCrop = function() {
+            if (cropper) {
+                cropper.destroy();
+                cropper = null;
+            }
+            if (cropperContainer) {
+                cropperContainer.style.display = 'none';
+            }
+            if (croppedPreviewContainer) {
+                croppedPreviewContainer.style.display = 'none';
+            }
+            const preview = document.getElementById('cropped-image-preview');
+            if (preview) {
+                preview.src = '';
+            }
+            if (fileInput) {
+                fileInput.value = '';
+            }
+            if (croppedImageData) {
+                croppedImageData.value = '';
+            }
+            if (fileInfo) {
+                fileInfo.style.display = 'none';
+            }
+            if (uploadArea) {
+                uploadArea.style.display = 'block';
+            }
+        };
+
+        window.removeSelectedFile = function() {
+            if (fileInput) fileInput.value = '';
+            if (fileInfo) fileInfo.style.display = 'none';
+            cancelCrop();
+        };
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        try {
+            initializeProfileUpload();
+        } catch (err) {
+            console.error('Profile upload init failed:', err);
         }
     });
-
-    fileInput.addEventListener('change', (event) => {
-        const file = fileInput.files && fileInput.files[0];
-        if (!file) { fileInfo && (fileInfo.style.display = 'none'); return; }
-        fileNameEl && (fileNameEl.textContent = file.name);
-        fileSizeEl && (fileSizeEl.textContent = `${(file.size/1024).toFixed(1)} KB`);
-        fileInfo && (fileInfo.style.display = 'block');
-        loadImageForCropping(event);
-    });
-
-    window.cropImage = function() {
-        if (!cropper) return;
-        const canvas = cropper.getCroppedCanvas({ width: 400, height: 400 });
-        const dataUrl = canvas.toDataURL('image/jpeg');
-        const preview = document.getElementById('cropped-image-preview');
-        if (preview) { preview.src = dataUrl; preview.style.display = 'inline-block'; }
-        if (croppedPreviewContainer) { croppedPreviewContainer.style.display = 'block'; }
-        if (cropperContainer) { cropperContainer.style.display = 'none'; }
-        if (croppedImageData) { croppedImageData.value = dataUrl; }
-    };
-
-    window.cancelCrop = function() {
-        if (cropper) { cropper.destroy(); cropper = null; }
-        if (cropperContainer) { cropperContainer.style.display = 'none'; }
-        if (croppedPreviewContainer) { croppedPreviewContainer.style.display = 'none'; }
-        const preview = document.getElementById('cropped-image-preview');
-        if (preview) { preview.src = ''; }
-        if (fileInput) { fileInput.value = ''; }
-        if (croppedImageData) { croppedImageData.value = ''; }
-        if (fileInfo) { fileInfo.style.display = 'none'; }
-        if (uploadArea) { uploadArea.style.display = 'block'; }
-    };
-
-    window.removeSelectedFile = function() {
-        if (fileInput) fileInput.value = '';
-        if (fileInfo) fileInfo.style.display = 'none';
-        cancelCrop();
-    };
-}
-
-document.addEventListener('DOMContentLoaded', function () {
-  try { initializeProfileUpload(); } catch (err) { console.error('Profile upload init failed:', err); }
-});
 </script>
 
 <script>
@@ -569,92 +624,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Global variables (cropper and imageElement are already declared earlier)
     let currentStep = 1;
     const totalSteps = 4;
-    
+
     // TESTING MODE FLAG - Set to false to re-enable all validation
     const DISABLE_ALL_VALIDATION = true;
 
-    // Function to update crop box data inputs (null-safe; supports camelCase and dash IDs)
-    function updateCropBoxData(evt) {
-        if (!cropper) return;
-
-        const data = (evt && evt.detail) ? evt.detail : cropper.getData();
-        const dataX = document.getElementById('dataX') || document.getElementById('data-x');
-        const dataY = document.getElementById('dataY') || document.getElementById('data-y');
-        const dataWidth = document.getElementById('dataWidth') || document.getElementById('data-width');
-        const dataHeight = document.getElementById('dataHeight') || document.getElementById('data-height');
-        const dataRotate = document.getElementById('dataRotate') || document.getElementById('data-rotate');
-        const dataScaleX = document.getElementById('dataScaleX') || document.getElementById('data-scale-x');
-        const dataScaleY = document.getElementById('dataScaleY') || document.getElementById('data-scale-y');
-
-        if (dataX) dataX.value = Math.round(data.x);
-        if (dataY) dataY.value = Math.round(data.y);
-        if (dataWidth) dataWidth.value = Math.round(data.width);
-        if (dataHeight) dataHeight.value = Math.round(data.height);
-        if (dataRotate) dataRotate.value = (typeof data.rotate !== 'undefined' ? Math.round(data.rotate) : '');
-        if (dataScaleX) dataScaleX.value = (typeof data.scaleX !== 'undefined' ? Number(data.scaleX).toFixed(2) : '');
-        if (dataScaleY) dataScaleY.value = (typeof data.scaleY !== 'undefined' ? Number(data.scaleY).toFixed(2) : '');
-    }
-
-    // Function to load image for cropping
-    function loadImageForCropping(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        // Check if file is an image
-        if (!file.type.match('image.*')) {
-            alert('Please select an image file');
-            return;
-        }
-
-        // Create a FileReader to read the image
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            // Get the image element
-            imageElement = document.getElementById('image-to-crop');
-
-            // Set the source of the image
-            imageElement.src = e.target.result;
-
-            // Show the cropper container
-            document.getElementById('image-cropper-container').style.display = 'block';
-
-            // Hide the upload area and any previous preview to focus on cropping
-            const uploadAreaEl = document.getElementById('profileUploadArea');
-            if (uploadAreaEl) uploadAreaEl.style.display = 'none';
-            const previewContainerEl = document.getElementById('cropped-preview-container');
-            if (previewContainerEl) previewContainerEl.style.display = 'none';
-
-            // Hide the legacy preview image if it was shown before
-            document.getElementById('cropped-image-preview').style.display = 'none';
-
-            // Initialize cropper after image is loaded
-            imageElement.onload = function() {
-                // Destroy previous cropper if exists
-                if (cropper) {
-                    cropper.destroy();
-                }
-
-                // Initialize cropper
-                cropper = new Cropper(imageElement, {
-                    aspectRatio: 1, // Square aspect ratio for profile picture
-                    viewMode: 1, // Restrict the crop box to not exceed the size of the canvas
-                    guides: true, // Show the dashed lines for guiding
-                    center: true, // Show the center indicator for guiding
-                    dragMode: 'move', // Define the dragging mode of the cropper
-                    zoomable: true, // Enable to zoom the image
-                    zoomOnWheel: true, // Enable to zoom the image by wheeling mouse
-                    cropBoxMovable: true, // Enable to move the crop box
-                    cropBoxResizable: true, // Enable to resize the crop box
-                    toggleDragModeOnDblclick: true, // Toggle drag mode between "crop" and "move" when double click on the cropper
-                    ready: updateCropBoxData,
-                    crop: updateCropBoxData
-                });
-            };
-        };
-
-        // Read the image file as a data URL
-        reader.readAsDataURL(file);
-    }
+    // Duplicate cropper helpers removed. Using single implementations declared earlier for consistency.
 
     // Function to navigate to a specific step
     function goToStep(stepNumber) {
@@ -868,16 +842,16 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const reviewStudentName = document.getElementById('review-student-name');
             if (reviewStudentName) reviewStudentName.textContent = fullName || 'Not provided';
-            
+
             const reviewBirthDate = document.getElementById('review-birth-date');
             if (reviewBirthDate) reviewBirthDate.textContent = document.getElementById('date_of_birth')?.value || 'Not provided';
-            
+
             const reviewPlaceOfBirth = document.getElementById('review-place-of-birth');
             if (reviewPlaceOfBirth) reviewPlaceOfBirth.textContent = document.getElementById('place_of_birth')?.value || 'Not provided';
-            
+
             const reviewAge = document.getElementById('review-age');
             if (reviewAge) reviewAge.textContent = document.getElementById('age')?.value || 'Not provided';
-            
+
             const reviewGender = document.getElementById('review-gender');
             if (reviewGender) reviewGender.textContent = document.getElementById('gender')?.value || 'Not provided';
 
@@ -919,52 +893,52 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             const reviewGeneralAverage = document.getElementById('review-general-average');
-            if (reviewGeneralAverage) reviewGeneralAverage.textContent = document.getElementById('general_average')?.value || 'Not provided';
-            
+            if (reviewGeneralAverage) reviewGeneralAverage.textContent = document.getElementById('previous_gwa')?.value || 'Not provided';
+
             const reviewConductGrade = document.getElementById('review-conduct-grade');
-            if (reviewConductGrade) reviewConductGrade.textContent = document.getElementById('conduct_grade')?.value || 'Not provided';
+            if (reviewConductGrade) reviewConductGrade.textContent = document.getElementById('performance_level')?.value || 'Not provided';
 
             // Current Address
             const reviewCurrentHouseNo = document.getElementById('review-current-house-no');
             if (reviewCurrentHouseNo) reviewCurrentHouseNo.textContent = document.getElementById('current_house_no')?.value || 'Not provided';
-            
+
             const reviewCurrentStreet = document.getElementById('review-current-street');
             if (reviewCurrentStreet) reviewCurrentStreet.textContent = document.getElementById('current_street')?.value || 'Not provided';
-            
+
             const reviewCurrentBarangay = document.getElementById('review-current-barangay');
             if (reviewCurrentBarangay) reviewCurrentBarangay.textContent = document.getElementById('current_barangay')?.value || 'Not provided';
-            
+
             const reviewCurrentMunicipality = document.getElementById('review-current-municipality');
             if (reviewCurrentMunicipality) reviewCurrentMunicipality.textContent = document.getElementById('current_municipality')?.value || 'Not provided';
-            
+
             const reviewCurrentProvince = document.getElementById('review-current-province');
             if (reviewCurrentProvince) reviewCurrentProvince.textContent = document.getElementById('current_province')?.value || 'Not provided';
-            
+
             const reviewCurrentCountry = document.getElementById('review-current-country');
             if (reviewCurrentCountry) reviewCurrentCountry.textContent = document.getElementById('current_country')?.value || 'Not provided';
-            
+
             const reviewCurrentZip = document.getElementById('review-current-zip');
             if (reviewCurrentZip) reviewCurrentZip.textContent = document.getElementById('current_zip_code')?.value || 'Not provided';
 
             // Permanent Address
             const reviewPermanentHouseStreet = document.getElementById('review-permanent-house-street');
             if (reviewPermanentHouseStreet) reviewPermanentHouseStreet.textContent = document.getElementById('permanent_house_no')?.value || 'Not provided';
-            
+
             const reviewPermanentStreetName = document.getElementById('review-permanent-street-name');
             if (reviewPermanentStreetName) reviewPermanentStreetName.textContent = document.getElementById('permanent_street_name')?.value || 'Not provided';
-            
+
             const reviewPermanentBarangay = document.getElementById('review-permanent-barangay');
             if (reviewPermanentBarangay) reviewPermanentBarangay.textContent = document.getElementById('permanent_barangay')?.value || 'Not provided';
-            
+
             const reviewPermanentMunicipality = document.getElementById('review-permanent-municipality');
             if (reviewPermanentMunicipality) reviewPermanentMunicipality.textContent = document.getElementById('permanent_municipality')?.value || 'Not provided';
-            
+
             const reviewPermanentProvince = document.getElementById('review-permanent-province');
             if (reviewPermanentProvince) reviewPermanentProvince.textContent = document.getElementById('permanent_province')?.value || 'Not provided';
-            
+
             const reviewPermanentCountry = document.getElementById('review-permanent-country');
             if (reviewPermanentCountry) reviewPermanentCountry.textContent = document.getElementById('permanent_country')?.value || 'Not provided';
-            
+
             const reviewPermanentZip = document.getElementById('review-permanent-zip');
             if (reviewPermanentZip) reviewPermanentZip.textContent = document.getElementById('permanent_zip_code')?.value || 'Not provided';
 
@@ -973,10 +947,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const fatherMiddleName = document.getElementById('father_middle_name')?.value || '';
             const fatherLastName = document.getElementById('father_last_name')?.value || '';
             const fatherFullName = `${fatherFirstName} ${fatherMiddleName} ${fatherLastName}`.trim();
-            
+
             const reviewFatherName = document.getElementById('review-father-name');
             if (reviewFatherName) reviewFatherName.textContent = fatherFullName || 'Not provided';
-            
+
             const reviewFatherContact = document.getElementById('review-father-contact');
             if (reviewFatherContact) reviewFatherContact.textContent = document.getElementById('father_contact')?.value || 'Not provided';
 
@@ -984,10 +958,10 @@ document.addEventListener('DOMContentLoaded', function () {
             const motherMiddleName = document.getElementById('mother_middle_name')?.value || '';
             const motherLastName = document.getElementById('mother_last_name')?.value || '';
             const motherFullName = `${motherFirstName} ${motherMiddleName} ${motherLastName}`.trim();
-            
+
             const reviewMotherName = document.getElementById('review-mother-name');
             if (reviewMotherName) reviewMotherName.textContent = motherFullName || 'Not provided';
-            
+
             const reviewMotherContact = document.getElementById('review-mother-contact');
             if (reviewMotherContact) reviewMotherContact.textContent = document.getElementById('mother_contact')?.value || 'Not provided';
 
@@ -995,41 +969,41 @@ document.addEventListener('DOMContentLoaded', function () {
             const guardianMiddleName = document.getElementById('guardian_middle_name')?.value || '';
             const guardianLastName = document.getElementById('guardian_last_name')?.value || '';
             const guardianFullName = `${guardianFirstName} ${guardianMiddleName} ${guardianLastName}`.trim();
-            
+
             const reviewGuardianName = document.getElementById('review-guardian-name');
             if (reviewGuardianName) reviewGuardianName.textContent = guardianFullName || 'Not provided';
-            
+
             const reviewGuardianContact = document.getElementById('review-guardian-contact');
             if (reviewGuardianContact) reviewGuardianContact.textContent = document.getElementById('guardian_contact_number')?.value || 'Not provided';
 
             // Parent/Guardian Address Information
             const reviewParentHouseNo = document.getElementById('review-parent-house-no');
             if (reviewParentHouseNo) reviewParentHouseNo.textContent = document.getElementById('parent_house_no')?.value || 'Not provided';
-            
+
             const reviewParentBarangay = document.getElementById('review-parent-barangay');
             if (reviewParentBarangay) reviewParentBarangay.textContent = document.getElementById('parent_barangay')?.value || 'Not provided';
-            
+
             const reviewParentMunicipality = document.getElementById('review-parent-municipality');
             if (reviewParentMunicipality) reviewParentMunicipality.textContent = document.getElementById('parent_municipality')?.value || 'Not provided';
-            
+
             const reviewParentProvince = document.getElementById('review-parent-province');
             if (reviewParentProvince) reviewParentProvince.textContent = document.getElementById('parent_province')?.value || 'Not provided';
-            
+
             const reviewParentZip = document.getElementById('review-parent-zip');
             if (reviewParentZip) reviewParentZip.textContent = document.getElementById('parent_zip_code')?.value || 'Not provided';
 
             const reviewGuardianHouseNo = document.getElementById('review-guardian-house-no');
             if (reviewGuardianHouseNo) reviewGuardianHouseNo.textContent = document.getElementById('guardian_house_no')?.value || 'Not provided';
-            
+
             const reviewGuardianBarangay = document.getElementById('review-guardian-barangay');
             if (reviewGuardianBarangay) reviewGuardianBarangay.textContent = document.getElementById('guardian_barangay')?.value || 'Not provided';
-            
+
             const reviewGuardianMunicipality = document.getElementById('review-guardian-municipality');
             if (reviewGuardianMunicipality) reviewGuardianMunicipality.textContent = document.getElementById('guardian_municipality')?.value || 'Not provided';
-            
+
             const reviewGuardianProvince = document.getElementById('review-guardian-province');
             if (reviewGuardianProvince) reviewGuardianProvince.textContent = document.getElementById('guardian_province')?.value || 'Not provided';
-            
+
             const reviewGuardianZip = document.getElementById('review-guardian-zip');
             if (reviewGuardianZip) reviewGuardianZip.textContent = document.getElementById('guardian_zip_code')?.value || 'Not provided';
 
@@ -1037,14 +1011,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const indigenousPeople = document.getElementById('is_indigenous')?.value === 'Yes' ? 'Yes' : 'No';
             const reviewIndigenousPeople = document.getElementById('review-indigenous-people');
             if (reviewIndigenousPeople) reviewIndigenousPeople.textContent = indigenousPeople;
-            
+
             const reviewIndigenousGroup = document.getElementById('review-indigenous-community');
             if (reviewIndigenousGroup) reviewIndigenousGroup.textContent = document.getElementById('indigenous_group')?.value || 'Not provided';
 
             const fourpsBeneficiary = document.getElementById('is_4ps_beneficiary')?.value === 'Yes' ? 'Yes' : 'No';
             const reviewFourpsBeneficiary = document.getElementById('review-fourps-beneficiary');
             if (reviewFourpsBeneficiary) reviewFourpsBeneficiary.textContent = fourpsBeneficiary;
-            
+
             const reviewFourpsHouseholdId = document.getElementById('review-fourps-household-id');
             if (reviewFourpsHouseholdId) reviewFourpsHouseholdId.textContent = document.getElementById('household_id')?.value || 'Not provided';
 
@@ -1057,19 +1031,72 @@ document.addEventListener('DOMContentLoaded', function () {
                     break;
                 }
             }
-            
+
             const reviewHasDisability = document.getElementById('review-has-disability');
             if (reviewHasDisability) reviewHasDisability.textContent = hasDisability;
-            
+
             // Get selected disability types
             const disabilityCheckboxes = document.querySelectorAll('input[name="disability_types[]"]:checked');
             const disabilityTypes = Array.from(disabilityCheckboxes).map(cb => cb.value).join(', ');
-            
+
             const reviewDisabilityType = document.getElementById('review-disability-type');
             if (reviewDisabilityType) reviewDisabilityType.textContent = disabilityTypes || 'Not provided';
-            
+
             const reviewAssistiveDevice = document.getElementById('review-assistive-device');
             if (reviewAssistiveDevice) reviewAssistiveDevice.textContent = document.getElementById('assistive_device')?.value || 'Not provided';
+
+            // Populate Returning/Transfer section in review
+            try {
+                const studentTypeRadiosRT = document.getElementsByName('student_type');
+                let selectedType = null;
+                for (const r of studentTypeRadiosRT) { if (r.checked) { selectedType = r.value; break; } }
+
+                const rtCard = document.getElementById('review-returning-transfer-card');
+                const rLastSchool = document.getElementById('review-last-school-attended');
+                const rLastGrade = document.getElementById('review-last-grade-completed');
+                const rLastYear = document.getElementById('review-last-school-year');
+                const rSchoolId = document.getElementById('review-school-id');
+
+                const lastSchoolAttendedVal = document.getElementById('last_school_attended')?.value || '';
+                const lastGradeCompletedVal = document.getElementById('last_grade_completed')?.value || '';
+                const lastSchoolYearVal = document.getElementById('last_school_year')?.value || '';
+                let schoolIdConcat = '';
+                for (let i = 0; i <= 6; i++) {
+                    const el = document.querySelector(`[name="school_id_digit_${i}"]`) || document.getElementById(`school_id_digit_${i}`);
+                    if (el && el.value) { schoolIdConcat += el.value; }
+                }
+
+                if (selectedType === 'Returning (Balik-Aral)' || selectedType === 'Transfer Enrollment') {
+                    if (rtCard) rtCard.style.display = 'block';
+                    if (rLastSchool) rLastSchool.textContent = lastSchoolAttendedVal || 'Not provided';
+                    if (rLastGrade) rLastGrade.textContent = lastGradeCompletedVal || 'Not provided';
+                    if (rLastYear) rLastYear.textContent = lastSchoolYearVal || 'Not provided';
+                    if (rSchoolId) rSchoolId.textContent = schoolIdConcat || 'Not provided';
+                } else {
+                    if (rtCard) rtCard.style.display = 'none';
+                }
+            } catch (e) { /* noop */ }
+
+            // Populate SHS section in review
+            try {
+                const shsCard = document.getElementById('review-shs-card');
+                const shsSemesterVal = document.querySelector('input[name="semester"]:checked')?.value || '';
+                const shsTrackVal = document.querySelector('input[name="track"]')?.value || '';
+                const shsStrandVal = document.querySelector('input[name="strand"]')?.value || '';
+
+                const rSem = document.getElementById('review-shs-semester');
+                const rTrack = document.getElementById('review-shs-track');
+                const rStrand = document.getElementById('review-shs-strand');
+
+                if (shsSemesterVal || shsTrackVal || shsStrandVal) {
+                    if (shsCard) shsCard.style.display = 'block';
+                    if (rSem) rSem.textContent = shsSemesterVal || 'Not provided';
+                    if (rTrack) rTrack.textContent = shsTrackVal || 'Not provided';
+                    if (rStrand) rStrand.textContent = shsStrandVal || 'Not provided';
+                } else {
+                    if (shsCard) shsCard.style.display = 'none';
+                }
+            } catch (e) { /* noop */ }
 
             console.log('Review data populated successfully');
         } catch (error) {
@@ -1212,120 +1239,58 @@ document.addEventListener('DOMContentLoaded', function () {
         });
 
         // Aspect ratio button handlers
-        const aspect11El = document.getElementById('aspect-1-1'); if (aspect11El) aspect11El.addEventListener('click', function() {
+        const aspect11El = document.getElementById('aspect-1-1');
+        if (aspect11El) aspect11El.addEventListener('click', function() {
             if (!cropper) return;
             cropper.setAspectRatio(1);
         });
 
-        const aspect43El = document.getElementById('aspect-4-3'); if (aspect43El) aspect43El.addEventListener('click', function() {
+        const aspect43El = document.getElementById('aspect-4-3');
+        if (aspect43El) aspect43El.addEventListener('click', function() {
             if (!cropper) return;
             cropper.setAspectRatio(4 / 3);
         });
 
-        const aspectFreeEl = document.getElementById('aspect-free'); if (aspectFreeEl) aspectFreeEl.addEventListener('click', function() {
+        const aspectFreeEl = document.getElementById('aspect-free');
+        if (aspectFreeEl) aspectFreeEl.addEventListener('click', function() {
             if (!cropper) return;
             cropper.setAspectRatio(NaN);
         });
 
-        // Crop button click event
-        const legacyCropBtn = document.getElementById('crop-image'); if (legacyCropBtn) legacyCropBtn.addEventListener('click', function() {
-            console.log('Crop button clicked');
-            if (!cropper) {
-                console.error('Cropper not initialized');
-                return;
-            }
-
-            // Get the cropped canvas
-            const canvas = cropper.getCroppedCanvas({
-                width: 300, // Output image width
-                height: 300, // Output image height
-                minWidth: 100,
-                minHeight: 100,
-                maxWidth: 1000,
-                maxHeight: 1000,
-                fillColor: '#fff',
-                imageSmoothingEnabled: true,
-                imageSmoothingQuality: 'high',
-            });
-
-            if (!canvas) {
-                console.error('Failed to get cropped canvas');
-                return;
-            }
-
-            // Convert canvas to data URL
-            const croppedImageData = canvas.toDataURL('image/jpeg', 0.8);
-            console.log('Cropped image data generated:', croppedImageData ? 'Success' : 'Failed');
-
-            // Set the value of the hidden input
-            document.getElementById('cropped_image_data').value = croppedImageData;
-            console.log('Cropped image data set to hidden input');
-
-            // Show the preview
-            document.getElementById('cropped-image-preview').style.display = 'block';
-            document.getElementById('cropped-preview').src = croppedImageData;
-            console.log('Preview updated with cropped image');
-
-            // Also update the review picture if we're already on step 3
-            if (currentStep === 3) {
-                console.log('Already on review step, updating review picture directly');
-                const reviewPicture = document.getElementById('review-profile-picture');
-                if (reviewPicture) {
-                    reviewPicture.src = croppedImageData;
-                    reviewPicture.style.display = 'block';
-                    console.log('Updated review profile picture directly');
-
-                    const noImageText = document.querySelector('#review-profile-picture-container p.text-muted');
-                    if (noImageText) {
-                        noImageText.style.display = 'none';
-                        console.log('Hidden no image text in review');
-                    } else {
-                        console.error('No image text element not found in review');
-                    }
-                } else {
-                    console.error('Review profile picture element not found');
-                }
-            }
-
-        // Hide the cropper container if present
-        const cropperContainerEl = document.getElementById('image-cropper-container');
-        if (cropperContainerEl) {
-            cropperContainerEl.style.display = 'none';
-        }
-        });
+        // Legacy crop button handler removed to avoid conflicts. Use Crop & Preview button.
 
         // Cancel button click event (guarded to avoid errors if element is absent)
         const cancelCropEl = document.getElementById('cancel-crop');
         if (cancelCropEl) {
-        cancelCropEl.addEventListener('click', function() {
-            // Hide the cropper
-            document.getElementById('image-cropper-container').style.display = 'none';
+            cancelCropEl.addEventListener('click', function() {
+                // Hide the cropper
+                document.getElementById('image-cropper-container').style.display = 'none';
 
-            // Clear the file input
-            const legacyFileInput = document.getElementById('profile_picture');
-            if (legacyFileInput) {
-                legacyFileInput.value = '';
-            }
+                // Clear the file input
+                const legacyFileInput = document.getElementById('profile_picture');
+                if (legacyFileInput) {
+                    legacyFileInput.value = '';
+                }
 
-            // Destroy the cropper
-            if (cropper) {
-                cropper.destroy();
-                cropper = null;
-            }
+                // Destroy the cropper
+                if (cropper) {
+                    cropper.destroy();
+                    cropper = null;
+                }
 
-            // Hide the preview if it was shown
-            const legacyPreview = document.getElementById('cropped-image-preview');
-            if (legacyPreview) {
-                legacyPreview.style.display = 'none';
-            }
+                // Hide the preview if it was shown
+                const legacyPreview = document.getElementById('cropped-image-preview');
+                if (legacyPreview) {
+                    legacyPreview.style.display = 'none';
+                }
 
-            // Clear data inputs (supports both camelCase and dash IDs)
-            const idsToClear = ['dataX','dataY','dataWidth','dataHeight','dataRotate','dataScaleX','dataScaleY','data-x','data-y','data-width','data-height','data-rotate','data-scale-x','data-scale-y'];
-            idsToClear.forEach(id => {
-                const el = document.getElementById(id);
-                if (el) el.value = '';
+                // Clear data inputs (supports both camelCase and dash IDs)
+                const idsToClear = ['dataX', 'dataY', 'dataWidth', 'dataHeight', 'dataRotate', 'dataScaleX', 'dataScaleY', 'data-x', 'data-y', 'data-width', 'data-height', 'data-rotate', 'data-scale-x', 'data-scale-y'];
+                idsToClear.forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.value = '';
+                });
             });
-        });
         }
 
         // TEMPORARILY DISABLED FOR TESTING - Form validation on submit
@@ -1647,34 +1612,32 @@ document.addEventListener('DOMContentLoaded', function () {
                     </div>
                 </div>
 
-                
-
                 <!-- Indigenous & Special Programs -->
                 <div class="row mb-5">
                     <div class="col-12">
-                        <h5 class="text-primary border-bottom pb-2 mb-4">Indigenous & Special Programs</h5>
+                        <h5 class="text-primary border-bottom pb-2 mb-4">Indigenous & Special Programs</h5> 
                     </div>
-                    <div class="col-12 mb-3">
-                        <label for="is_indigenous" class="font-weight-bold">Indigenous People (IP)</label>
-                        <select id="is_indigenous" name="is_indigenous" class="form-control mt-2">
-                            <option value="No" <?= old('is_indigenous') == 'No' ? 'selected' : '' ?>>No</option>
-                            <option value="Yes" <?= old('is_indigenous') == 'Yes' ? 'selected' : '' ?>>Yes</option>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Indigenous People</label>
+                        <select name="indigenous_people" class="form-control">
+                            <option value="No" <?= old('indigenous_people', 'No') == 'No' ? 'selected' : '' ?>>No</option>
+                            <option value="Yes" <?= old('indigenous_people') == 'Yes' ? 'selected' : '' ?>>Yes</option>
                         </select>
                     </div>
-                    <div class="col-12 mb-3" id="indigenous_group_container" style="display: none;">
-                        <label for="indigenous_group" class="font-weight-bold">Indigenous Group</label>
-                        <input type="text" id="indigenous_group" name="indigenous_group" value="<?= old('indigenous_group') ?>" class="form-control mt-2">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">Indigenous Community (if applicable)</label>
+                        <input type="text" name="indigenous_community" value="<?= old('indigenous_community') ?>" class="form-control" placeholder="e.g., Community name">
                     </div>
-                    <div class="col-12 mb-3">
-                        <label for="is_4ps_beneficiary" class="font-weight-bold">4Ps Beneficiary</label>
-                        <select id="is_4ps_beneficiary" name="is_4ps_beneficiary" class="form-control mt-2">
-                            <option value="No" <?= old('is_4ps_beneficiary') == 'No' ? 'selected' : '' ?>>No</option>
-                            <option value="Yes" <?= old('is_4ps_beneficiary') == 'Yes' ? 'selected' : '' ?>>Yes</option>
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">4Ps Beneficiary</label>
+                        <select name="fourps_beneficiary" class="form-control">
+                            <option value="No" <?= old('fourps_beneficiary', 'No') == 'No' ? 'selected' : '' ?>>No</option>
+                            <option value="Yes" <?= old('fourps_beneficiary') == 'Yes' ? 'selected' : '' ?>>Yes</option>
                         </select>
                     </div>
-                    <div class="col-12 mb-3" id="household_id_container" style="display: none;">
-                        <label for="household_id" class="font-weight-bold">4Ps Household ID</label>
-                        <input type="text" id="household_id" name="household_id" value="<?= old('household_id') ?>" class="form-control mt-2">
+                    <div class="col-md-6 mb-3">
+                        <label class="form-label">4Ps Household ID (if applicable)</label>
+                        <input type="text" name="fourps_household_id" value="<?= old('fourps_household_id') ?>" class="form-control" placeholder="e.g., Household ID">
                     </div>
                 </div>
 
@@ -1692,14 +1655,11 @@ document.addEventListener('DOMContentLoaded', function () {
                             <?php endfor; ?>
                         </select>
                     </div>
-                    <!-- TEMPORARILY COMMENTED OUT - Section field and container -->
-                    <!--
-                    <div class="col-md-6 mb-3">
+                    <!-- <div class="col-md-6 mb-3">
                         <label for="section" class="font-weight-bold">Section <span class="text-danger">*</span></label>
                         <input type="text" id="section" name="section" value="<?= old('section') ?>" class="form-control mt-2" data-required="true">
                         <div class="invalid-feedback">The section field is required.</div>
-                    </div>
-                    -->
+                    </div> -->
                 </div>
 
                 <!-- Step 1 Navigation -->
@@ -1815,6 +1775,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="father_contact" class="font-weight-bold">Contact Number</label>
                         <input type="text" id="father_contact" name="father_contact" value="<?= old('father_contact') ?>" class="form-control mt-2">
                     </div>
+                    <!-- Contact Role Selection -->
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check mt-4">
+                            <input type="radio" name="emergency_contact" value="father" id="father_emergency_contact" class="form-check-input">
+                            <label for="father_emergency_contact" class="form-check-label">
+                                <i class="fas fa-phone-alt text-danger me-1"></i>
+                                Select as Emergency Contact
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Mother's Information -->
@@ -1838,6 +1808,16 @@ document.addEventListener('DOMContentLoaded', function () {
                         <label for="mother_contact" class="font-weight-bold">Contact Number</label>
                         <input type="text" id="mother_contact" name="mother_contact" value="<?= old('mother_contact') ?>" class="form-control mt-2">
                     </div>
+                    <!-- Contact Role Selection -->
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check mt-4">
+                            <input type="radio" name="emergency_contact" value="mother" id="mother_emergency_contact" class="form-check-input">
+                            <label for="mother_emergency_contact" class="form-check-label">
+                                <i class="fas fa-phone-alt text-danger me-1"></i>
+                                Select as Emergency Contact
+                            </label>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Legal Guardian Information -->
@@ -1860,6 +1840,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     <div class="col-md-6 mb-3">
                         <label for="guardian_contact_number" class="font-weight-bold">Contact Number</label>
                         <input type="text" id="guardian_contact_number" name="guardian_contact_number" value="<?= old('guardian_contact_number') ?>" class="form-control mt-2">
+                    </div>
+                    <!-- Contact Role Selection -->
+                    <div class="col-md-6 mb-3">
+                        <div class="form-check mt-4">
+                            <input type="radio" name="emergency_contact" value="guardian" id="guardian_emergency_contact" class="form-check-input">
+                            <label for="guardian_emergency_contact" class="form-check-label">
+                                <i class="fas fa-phone-alt text-danger me-1"></i>
+                                Select as Emergency Contact
+                            </label>
+                        </div>
                     </div>
                 </div>
 
@@ -2060,41 +2050,76 @@ document.addEventListener('DOMContentLoaded', function () {
                         <h5 class="text-primary border-bottom pb-2 mb-4">Academic Performance</h5>
                     </div>
                     <div class="col-md-6 mb-3">
-                        <label for="general_average" class="font-weight-bold">General Average (Previous Grade)</label>
-                        <input type="number" id="general_average" name="general_average" value="<?= old('general_average') ?>" class="form-control mt-2" min="65" max="100" step="0.01" oninput="generateConductGrade()">
+                        <label for="previous_gwa" class="font-weight-bold">General Average (Previous Grade)</label>
+                        <input type="number" id="previous_gwa" name="previous_gwa" value="<?= old('previous_gwa') ?>" class="form-control mt-2" min="65" max="100" step="0.01" oninput="generateConductGrade()">
                     </div>
                     <div class="col-md-6 mb-3">
                         <label class="form-label">Academic Performance Level <span class="text-muted">(Auto-calculated)</span></label>
-                        <input type="text" id="conduct_grade" name="conduct_grade" class="form-control" readonly placeholder="Will be determined based on General Average">
+                        <input type="text" id="performance_level" name="performance_level" class="form-control" readonly placeholder="Will be determined based on General Average">
                         <small class="form-text text-muted">Conduct grade will be automatically determined based on academic performance.</small>
                     </div>
                 </div>
 
-                <!-- Senior High School Information (for Grades 11-12) -->
-                <div class="row mb-5" id="shs_info_container" style="display: none;">
-                    <div class="col-12">
-                        <h5 class="text-primary border-bottom pb-2 mb-4">Senior High School Information</h5>
+                <!-- For Returning Learner Section -->
+                <div id="returning-transfer-section" style="display: none;">
+                    <h6 class="text-primary section-header mb-3">For Returning Learning (Balik-Aral) and Transfer Students</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last Grade Level Completed</label>
+                            <input type="text" name="last_grade_completed" class="form-control">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label class="form-label">Last School Year Completed</label>
+                            <input type="text" name="last_school_year" class="form-control">
+                        </div>
                     </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="track" class="font-weight-bold">Track</label>
-                        <select id="track" name="track" class="form-control mt-2" onchange="updateStrandOptions()">
-                            <option value="">Select Track</option>
-                            <option value="Academic Track" <?= old('track') == 'Academic Track' ? 'selected' : '' ?>>Academic Track</option>
-                            <option value="Technical-Vocational-Livelihood (TVL)" <?= old('track') == 'Technical-Vocational-Livelihood (TVL)' ? 'selected' : '' ?>>Technical-Vocational-Livelihood (TVL)</option>
-                            <option value="Sports Track" <?= old('track') == 'Sports Track' ? 'selected' : '' ?>>Sports Track</option>
-                            <option value="Arts and Design Track" <?= old('track') == 'Arts and Design Track' ? 'selected' : '' ?>>Arts and Design Track</option>
-                        </select>
-                    </div>
-                    <div class="col-md-6 mb-3">
-                        <label for="strand" class="font-weight-bold">Strand</label>
-                        <select id="strand" name="strand" class="form-control mt-2">
-                            <option value="">Select Strand</option>
-                            <!-- Options will be populated by JavaScript based on track selection -->
-                        </select>
+
+                    <div class="row mb-4">
+                        <div class="col-md-8 mb-3">
+                            <label class="form-label">Last School Attended</label>
+                            <input type="text" name="last_school_attended" class="form-control">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">School ID</label>
+                            <div class="lrn-boxes">
+                                <?php for ($i = 0; $i < 7; $i++): ?>
+                                    <input type="text" name="school_id_digit_<?= $i ?>" class="lrn-box" maxlength="1">
+                                <?php endfor; ?>
+                            </div>
+                        </div>
                     </div>
                 </div>
 
-                
+                <!-- For Senior High School -->
+                <div id="shs-section" style="display: none;">
+                    <h6 class="text-primary section-header md-5">For Senior High School Students</h6>
+                    <div class="row mb-4">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Semester</label>
+                            <div class="checkbox-group">
+                                <div class="checkbox-item">
+                                    <input type="radio" name="semester" value="1st" id="sem1">
+                                    <label for="sem1">1st Semester</label>
+                                </div>
+                                <div class="checkbox-item">
+                                    <input type="radio" name="semester" value="2nd" id="sem2">
+                                    <label for="sem2">2nd Semester</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Track</label>
+                            <input type="text" name="track" class="form-control" placeholder="e.g., Academic, TVL, Sports, Arts">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label">Strand</label>
+                            <input type="text" name="strand" class="form-control" placeholder="e.g., STEM, ABM, HUMSS">
+                        </div>
+                    </div>
+                </div>
+
+
+
 
                 <!-- Step 3 Navigation -->
                 <div class="wizard-buttons mt-4 d-flex justify-content-end">
@@ -2163,6 +2188,37 @@ document.addEventListener('DOMContentLoaded', function () {
                                 <p><strong>Student Type:</strong> <span id="review-student-type">-</span></p>
                                 <p><strong>General Average:</strong> <span id="review-general-average">-</span></p>
                                 <p class="mb-0"><strong>Conduct Grade:</strong> <span id="review-conduct-grade">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Returning/Transfer and SHS Details -->
+                <div class="row mb-4">
+                    <div class="col-md-6 mb-3 d-flex">
+                        <div id="review-returning-transfer-card" class="card w-100" style="display: none;">
+                            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 text-dark">Returning/Transfer Details</h6>
+                                <a href="#" class="text-primary text-decoration-none" onclick="goToStep(1)" style="font-size: 0.875rem;"><i class="fas fa-edit me-1"></i>Edit</a>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Last School Attended:</strong> <span id="review-last-school-attended">-</span></p>
+                                <p><strong>Last Grade Completed:</strong> <span id="review-last-grade-completed">-</span></p>
+                                <p><strong>Last School Year:</strong> <span id="review-last-school-year">-</span></p>
+                                <p class="mb-0"><strong>School ID:</strong> <span id="review-school-id">-</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 mb-3 d-flex">
+                        <div id="review-shs-card" class="card w-100" style="display: none;">
+                            <div class="card-header bg-white border-bottom d-flex justify-content-between align-items-center">
+                                <h6 class="mb-0 text-dark">Senior High School Details</h6>
+                                <a href="#" class="text-primary text-decoration-none" onclick="goToStep(1)" style="font-size: 0.875rem;"><i class="fas fa-edit me-1"></i>Edit</a>
+                            </div>
+                            <div class="card-body">
+                                <p><strong>Semester:</strong> <span id="review-shs-semester">-</span></p>
+                                <p><strong>Track:</strong> <span id="review-shs-track">-</span></p>
+                                <p class="mb-0"><strong>Strand:</strong> <span id="review-shs-strand">-</span></p>
                             </div>
                         </div>
                     </div>
@@ -2332,6 +2388,137 @@ document.addEventListener('DOMContentLoaded', function () {
                 </div>
             </div>
         </form>
+        <script>
+            // Require emergency contact selection and auto-populate primary contact number
+            document.addEventListener('DOMContentLoaded', function() {
+                const form = document.querySelector('form[action*="admin/student/store"]');
+                const contactInput = document.getElementById('contact');
+
+                function updatePrimaryContactFromEmergency() {
+                    const selected = document.querySelector('input[name="emergency_contact"]:checked');
+                    if (!selected || !contactInput) return;
+                    let number = '';
+                    if (selected.value === 'father') {
+                        number = document.getElementById('father_contact')?.value || '';
+                    } else if (selected.value === 'mother') {
+                        number = document.getElementById('mother_contact')?.value || '';
+                    } else if (selected.value === 'guardian') {
+                        number = document.getElementById('guardian_contact_number')?.value || '';
+                    }
+                    contactInput.value = number;
+                }
+
+                // Hook changes for radios and contact inputs
+                const emergencyRadios = document.querySelectorAll('input[name="emergency_contact"]');
+                emergencyRadios.forEach(r => r.addEventListener('change', updatePrimaryContactFromEmergency));
+                ['father_contact','mother_contact','guardian_contact_number'].forEach(id => {
+                    const el = document.getElementById(id);
+                    if (el) el.addEventListener('input', updatePrimaryContactFromEmergency);
+                });
+
+                // Enforce numeric-only and 11-digit limit on phone inputs
+                function enforcePhone(input) {
+                    if (!input) return;
+                    // Sanitize value on input
+                    input.addEventListener('input', function () {
+                        const sanitized = this.value.replace(/\D/g, '').slice(0, 11);
+                        if (this.value !== sanitized) this.value = sanitized;
+                    });
+                    // Block non-digits and extra length on keypress
+                    input.addEventListener('keypress', function (e) {
+                        const ch = e.key;
+                        if (!/[0-9]/.test(ch)) {
+                            e.preventDefault();
+                            return;
+                        }
+                        const digitsLen = (this.value.match(/\d/g) || []).length;
+                        if (digitsLen >= 11) {
+                            e.preventDefault();
+                        }
+                    });
+                    // Sanitize pasted content
+                    input.addEventListener('paste', function (e) {
+                        e.preventDefault();
+                        const pasted = (e.clipboardData || window.clipboardData).getData('text') || '';
+                        const merged = (this.value + pasted).replace(/\D/g, '').slice(0, 11);
+                        this.value = merged;
+                    });
+                }
+
+                ['phone_number','father_contact','mother_contact','guardian_contact_number'].forEach(id => {
+                    enforcePhone(document.getElementById(id));
+                });
+
+                // Toggle Indigenous Community and 4Ps Household ID fields
+                const indigenousSelect = document.querySelector('select[name="indigenous_people"]');
+                const indigenousCommunityField = document.querySelector('input[name="indigenous_community"]');
+                const fourpsSelect = document.querySelector('select[name="fourps_beneficiary"]');
+                const fourpsHouseholdField = document.querySelector('input[name="fourps_household_id"]');
+
+                const indigenousCommunityContainer = indigenousCommunityField ? indigenousCommunityField.closest('.col-md-6') : null;
+                const fourpsHouseholdContainer = fourpsHouseholdField ? fourpsHouseholdField.closest('.col-md-6') : null;
+
+                function toggleContainer(selectEl, containerEl) {
+                    if (!selectEl || !containerEl) return;
+                    containerEl.style.display = selectEl.value === 'Yes' ? '' : 'none';
+                }
+
+                if (indigenousSelect && indigenousCommunityContainer) {
+                    indigenousSelect.addEventListener('change', () => toggleContainer(indigenousSelect, indigenousCommunityContainer));
+                    // Initialize visibility on page load
+                    toggleContainer(indigenousSelect, indigenousCommunityContainer);
+                }
+                if (fourpsSelect && fourpsHouseholdContainer) {
+                    fourpsSelect.addEventListener('change', () => toggleContainer(fourpsSelect, fourpsHouseholdContainer));
+                    // Initialize visibility on page load
+                    toggleContainer(fourpsSelect, fourpsHouseholdContainer);
+                }
+
+                // Auto-calculate age when date of birth changes
+                const dobInput = document.getElementById('date_of_birth');
+                const ageInput = document.getElementById('age');
+                function calculateAgeFromDOB(dobStr) {
+                    const dob = new Date(dobStr);
+                    if (isNaN(dob.getTime())) return null;
+                    const today = new Date();
+                    let age = today.getFullYear() - dob.getFullYear();
+                    const monthDiff = today.getMonth() - dob.getMonth();
+                    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < dob.getDate())) {
+                        age--;
+                    }
+                    return age;
+                }
+                function updateAgeFromDOB() {
+                    if (!dobInput || !ageInput) return;
+                    const age = calculateAgeFromDOB(dobInput.value);
+                    if (age !== null && age >= 0) {
+                        ageInput.value = age;
+                    }
+                }
+                if (dobInput) {
+                    dobInput.addEventListener('change', updateAgeFromDOB);
+                    dobInput.addEventListener('input', updateAgeFromDOB);
+                    if (dobInput.value) updateAgeFromDOB();
+                }
+
+                if (!form) return;
+                form.addEventListener('submit', function(e) {
+                    const emergency = document.querySelector('input[name="emergency_contact"]:checked');
+                    if (!emergency) {
+                        e.preventDefault();
+                        alert('Please select an Emergency Contact. This will serve as the Primary Contact too.');
+                        return false;
+                    }
+                    // Ensure contact is populated before submit
+                    updatePrimaryContactFromEmergency();
+                    if (contactInput && !contactInput.value) {
+                        e.preventDefault();
+                        alert('Please provide a contact number for the selected Emergency Contact.');
+                        return false;
+                    }
+                });
+            });
+        </script>
     </div>
 </div>
 
@@ -2527,6 +2714,38 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         };
     }
+</script>
+
+<!-- Show/Hide SHS Section based on Grade Level -->
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const gradeSelect = document.getElementById('grade_level');
+        const shsSection = document.getElementById('shs-section');
+        const reviewShsCard = document.getElementById('review-shs-card');
+
+        function isSeniorHigh(value) {
+            return value === '11' || value === '12';
+        }
+
+        function toggleShsVisibility() {
+            if (!gradeSelect) return;
+            const value = gradeSelect.value;
+            const shouldShow = isSeniorHigh(value);
+
+            if (shsSection) {
+                shsSection.style.display = shouldShow ? '' : 'none';
+            }
+            if (reviewShsCard) {
+                reviewShsCard.style.display = shouldShow ? '' : 'none';
+            }
+        }
+
+        if (gradeSelect) {
+            gradeSelect.addEventListener('change', toggleShsVisibility);
+            // Initialize on load
+            toggleShsVisibility();
+        }
+    });
 </script>
 
 <!-- Direct button click handler -->
@@ -2807,33 +3026,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Generate conduct grade based on general average
+    // Generate performance level based on previous GWA
     function generateConductGrade() {
-        const generalAverageInput = document.getElementById('general_average');
-        const conductGradeInput = document.getElementById('conduct_grade');
+        const gwaInput = document.getElementById('previous_gwa');
+        const perfInput = document.getElementById('performance_level');
 
-        if (generalAverageInput && conductGradeInput) {
-            const average = parseFloat(generalAverageInput.value);
-            let conductGrade = '';
+        if (gwaInput && perfInput) {
+            const average = parseFloat(gwaInput.value);
+            let perf = '';
 
-            if (isNaN(average) || generalAverageInput.value === '') {
-                conductGrade = '';
+            if (isNaN(average) || gwaInput.value === '') {
+                perf = '';
             } else if (average >= 95) {
-                conductGrade = 'Excellent';
+                perf = 'Outstanding';
             } else if (average >= 90) {
-                conductGrade = 'Very Good';
+                perf = 'Very Satisfactory';
             } else if (average >= 85) {
-                conductGrade = 'Good';
+                perf = 'Satisfactory';
             } else if (average >= 80) {
-                conductGrade = 'Fair';
+                perf = 'Fairly Satisfactory';
             } else if (average >= 65) {
-                conductGrade = 'Poor';
+                perf = 'Did Not Meet Expectations';
             } else {
-                conductGrade = '';
+                perf = '';
             }
 
-            // Set the conduct grade value
-            conductGradeInput.value = conductGrade;
+            // Set the performance level value
+            perfInput.value = perf;
         }
     }
 
@@ -2842,7 +3061,7 @@ document.addEventListener('DOMContentLoaded', function () {
         // Get the selected radio button value
         const studentTypeRadios = document.getElementsByName('student_type');
         let selectedValue = null;
-        
+
         for (const radio of studentTypeRadios) {
             if (radio.checked) {
                 selectedValue = radio.value;
@@ -2855,18 +3074,20 @@ document.addEventListener('DOMContentLoaded', function () {
         const lastSchoolContainer = document.getElementById('last_school_container');
         const lastGradeContainer = document.getElementById('last_grade_container');
         const schoolYearContainer = document.getElementById('school_year_container');
+        const returningTransferSection = document.getElementById('returning-transfer-section');
 
         // Hide all containers first
         if (additionalFieldsContainer) additionalFieldsContainer.style.display = 'none';
         if (lastSchoolContainer) lastSchoolContainer.style.display = 'none';
         if (lastGradeContainer) lastGradeContainer.style.display = 'none';
         if (schoolYearContainer) schoolYearContainer.style.display = 'none';
+        if (returningTransferSection) returningTransferSection.style.display = 'none';
 
         // Clear required attributes
         const lastSchoolField = document.getElementById('last_school_attended');
         const lastGradeField = document.getElementById('last_grade_completed');
         const schoolYearField = document.getElementById('last_school_year');
-        
+
         if (lastSchoolField) lastSchoolField.removeAttribute('data-required');
         if (lastGradeField) lastGradeField.removeAttribute('data-required');
         if (schoolYearField) schoolYearField.removeAttribute('data-required');
@@ -2877,7 +3098,8 @@ document.addEventListener('DOMContentLoaded', function () {
             if (lastSchoolContainer) lastSchoolContainer.style.display = 'block';
             if (lastGradeContainer) lastGradeContainer.style.display = 'block';
             if (schoolYearContainer) schoolYearContainer.style.display = 'block';
-            
+            if (returningTransferSection) returningTransferSection.style.display = 'block';
+
             // DISABLED FOR TESTING - Don't set any validation attributes
             // if (lastSchoolField) lastSchoolField.setAttribute('data-required', 'true');
             // if (lastGradeField) lastGradeField.setAttribute('data-required', 'true');
@@ -2888,6 +3110,10 @@ document.addEventListener('DOMContentLoaded', function () {
     function toggleStudentTypeDetails() {
         toggleStudentTypeFields();
     }
+    // Ensure correct visibility on initial load (including after validation errors)
+    document.addEventListener('DOMContentLoaded', function () {
+        toggleStudentTypeFields();
+    });
 </script>
 
 <!-- Form submission handling -->
@@ -2915,7 +3141,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Keep hidden fields updated while typing
     document.addEventListener('DOMContentLoaded', function() {
-        ['first_name','middle_name','last_name','extension_name'].forEach(id => {
+        ['first_name', 'middle_name', 'last_name', 'extension_name'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', hydrateFullName);
             if (el) el.addEventListener('change', hydrateFullName);
@@ -2938,7 +3164,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 $(this).removeAttr('required').attr('data-required', 'true');
             });
             */
-            
+
             // TESTING MODE: Just remove all required attributes without marking them
             $('input[required], select[required], textarea[required]').each(function() {
                 $(this).removeAttr('required');
@@ -3001,19 +3227,19 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (field) {
                         // Always remove required attribute to prevent browser validation
                         field.removeAttribute('required');
-                        
+
                         // Check if field is currently visible and focusable
-                        const isVisible = field.offsetParent !== null && 
-                                         field.style.display !== 'none' && 
-                                         field.style.visibility !== 'hidden' &&
-                                         !field.disabled;
-                        
+                        const isVisible = field.offsetParent !== null &&
+                            field.style.display !== 'none' &&
+                            field.style.visibility !== 'hidden' &&
+                            !field.disabled;
+
                         if (isVisible) {
                             // Field is visible, ensure it's enabled
                             field.disabled = false;
                             field.removeAttribute('readonly');
                         }
-                        
+
                         // Log field status for debugging
                         console.log(`Field ${fieldId}: value="${field.value}", visible=${isVisible}, disabled=${field.disabled}, required=${field.hasAttribute('required')}`);
                     }
@@ -3022,7 +3248,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 // Custom validation for multi-step form
                 function validateRequiredFields() {
                     const validationErrors = [];
-                    
+
                     // Validate LRN
                     const lrnField = document.getElementById('lrn');
                     if (!lrnField || !lrnField.value.trim()) {
@@ -3030,7 +3256,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     } else if (!/^\d{12}$/.test(lrnField.value.trim())) {
                         validationErrors.push('LRN must be exactly 12 digits');
                     }
-                    
+
                     // Validate name fields
                     const firstNameField = document.getElementById('first_name');
                     const lastNameField = document.getElementById('last_name');
@@ -3040,26 +3266,34 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!lastNameField || !lastNameField.value.trim()) {
                         validationErrors.push('Last name is required');
                     }
-                    
+
                     // Validate other required fields
                     // TEMPORARILY REMOVED: section field from validation
-                    const requiredFields = [
-                        { id: 'grade_level', name: 'Grade level' },
+                    const requiredFields = [{
+                            id: 'grade_level',
+                            name: 'Grade level'
+                        },
                         // { id: 'section', name: 'Section' },
-                        { id: 'gender', name: 'Gender' },
-                        { id: 'age', name: 'Age' }
+                        {
+                            id: 'gender',
+                            name: 'Gender'
+                        },
+                        {
+                            id: 'age',
+                            name: 'Age'
+                        }
                     ];
-                    
+
                     requiredFields.forEach(field => {
                         const element = document.getElementById(field.id);
                         if (!element || !element.value.trim()) {
                             validationErrors.push(`${field.name} is required`);
                         }
                     });
-                    
+
                     return validationErrors;
                 }
-                
+
                 // TEMPORARILY DISABLED FOR TESTING - Custom validation
                 /*
                 // Perform validation
@@ -3146,7 +3380,7 @@ document.addEventListener('DOMContentLoaded', function () {
                                 // Check if any of the errors are related to fields in step 1
                                 // TEMPORARILY REMOVED: 'section' from step1 error handling
                                 const step1Fields = ['lrn', 'first_name', 'last_name', 'grade_level', 'gender', 'age'];
-                                const step1Error = Object.keys(response.errors).some(field => 
+                                const step1Error = Object.keys(response.errors).some(field =>
                                     step1Fields.includes(field)
                                 );
 
@@ -3158,7 +3392,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                                 // Check if any of the errors are related to address/family fields (step 2)
                                 const step2Fields = ['current_house_no', 'current_barangay', 'father_first_name', 'mother_first_name'];
-                                const step2Error = Object.keys(response.errors).some(field => 
+                                const step2Error = Object.keys(response.errors).some(field =>
                                     step2Fields.includes(field)
                                 );
 

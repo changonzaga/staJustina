@@ -22,30 +22,42 @@
                 <li> 
                     <a href="<?= route_to('admin.enrollment'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="enrollment"> 
                         <span class="micon dw dw-user-13"></span>
-                        <span class="mtext">Enrollment</span> 
+                        <span class="mtext">Enrollments</span> 
                     </a> 
                 </li>  
                 <li> 
                     <a href="<?= route_to('admin.student'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="student"> 
                         <span class="micon dw dw-mortarboard"></span>
-                        <span class="mtext">Student</span> 
+                        <span class="mtext">Students</span> 
                     </a> 
                 </li> 
                 <li> 
                     <a href="<?= route_to('admin.teacher'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="teacher"> 
                         <span class="micon bi bi-person"></span>
-                        <span class="mtext">Teacher</span> 
+                        <span class="mtext">Teachers</span> 
                     </a> 
                 </li> 
                 <li> 
                     <a href="<?= route_to('admin.parent'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="parent"> 
                         <span class="micon bi bi-people"></span>
-                        <span class="mtext">Parent/Guardian</span> 
+                        <span class="mtext">Parents/Guardians</span> 
+                    </a> 
+                </li>
+                <li> 
+                    <a href="<?= route_to('admin.department'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="department"> 
+                        <span class="micon bi bi-building"></span>
+                        <span class="mtext">Departments</span> 
+                    </a> 
+                </li>
+                <li> 
+                    <a href="<?= route_to('admin.section'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="section"> 
+                        <span class="micon bi bi-collection"></span>
+                        <span class="mtext">Sections</span> 
                     </a> 
                 </li>
                 <li> 
                     <a href="<?= route_to('admin.class'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="class"> 
-                        <span class="micon bi bi-house-door"></span>
+                        <span class="micon bi bi-mortarboard"></span>
                         <span class="mtext">Class</span> 
                     </a> 
                 </li> 
@@ -58,13 +70,13 @@
                 <li> 
                     <a href="<?= route_to('admin.announcement'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="announcement"> 
                         <span class="micon dw dw-megaphone"></span> 
-                        <span class="mtext">Announcement</span> 
+                        <span class="mtext">Announcements</span> 
                     </a> 
                 </li>
                 <li> 
                     <a href="<?= route_to('admin.event'); ?>" class="dropdown-toggle no-arrow sidebar-link" data-page="event"> 
                         <span class="micon dw dw-calendar"></span>
-                        <span class="mtext">Event</span> 
+                        <span class="mtext">Events</span> 
                     </a> 
                 </li> 
                 <li> 

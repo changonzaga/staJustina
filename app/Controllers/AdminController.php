@@ -5,6 +5,13 @@ namespace App\Controllers;
 use App\Controllers\BaseController;
 use App\Libraries\CIAuth;
 use App\Models\StudentModel;
+use App\Models\AnnouncementModel;
+use App\Models\SubjectModel;
+use App\Models\DepartmentModel;
+use App\Models\GradeModel;
+use App\Models\SectionModel;
+use App\Models\TeacherModel;
+use App\Services\EmailService;
 class AdminController extends BaseController
 {
     public function index()
@@ -750,9 +757,25 @@ class AdminController extends BaseController
         );
         return view('backend/admin/users/users', $data);
     }
+    
+    public function department(){
+        // Temporary dataset; replace with DB fetch when model is ready
+        $departments = [
+            ['id' => 1, 'code' => 'MATH', 'name' => 'Mathematics', 'head' => 'Jane Smith', 'status' => 1],
+            ['id' => 2, 'code' => 'ENG', 'name' => 'English', 'head' => 'John Doe', 'status' => 1],
+            ['id' => 3, 'code' => 'SCI', 'name' => 'Science', 'head' => '—', 'status' => 0],
+        ];
+        $data = [
+            'pageTitle' => 'Department Management',
+            'departments' => $departments,
+        ];
+        return view('backend/admin/department/department', $data);
+    }
     public function announcement(){
+        $model = new AnnouncementModel();
         $data = array(
-            'pageTitle' => 'Announcement'
+            'pageTitle' => 'Announcement',
+            'announcements' => $model->getPublishedAnnouncements('all')
         );
         return view('backend/admin/announcements/announcement', $data);
     }
@@ -763,13 +786,226 @@ class AdminController extends BaseController
         );
         return view('backend/admin/announcements/create-announcement', $data);
     }
+
+	/**
+	 * Process announcement creation form
+	 */
+	public function processAnnouncement()
+	{
+		$announcementModel = new AnnouncementModel();
+		$emailService = new EmailService();
+		$smsService = service('sms');
+		
+		// Get form data
+		$title = $this->request->getPost('title');
+		$content = $this->request->getPost('content');
+		$audience = $this->request->getPost('audience');
+		$priority = $this->request->getPost('priority');
+		$publishDate = $this->request->getPost('publish_date');
+		$expiryDate = $this->request->getPost('expiry_date');
+		$sendNotification = $this->request->getPost('send_notification');
+		
+		// Get current user info
+		$userInfo = session()->get('userdata');
+		$senderId = $userInfo['id'] ?? 1; // Default to admin ID 1 if not found
+		
+		// Prepare announcement data
+		$announcementData = [
+			'title' => $title,
+			'content' => $content,
+			'sender_id' => $senderId,
+			'sender_type' => 'admin',
+			'audience_type' => strtolower($audience),
+			'priority' => $priority,
+			'status' => 'published',
+			'publish_date' => !empty($publishDate) ? $publishDate : date('Y-m-d H:i:s'),
+			'expiry_date' => !empty($expiryDate) ? $expiryDate : null,
+			'is_scheduled' => !empty($publishDate) ? 1 : 0,
+			'is_draft' => 0
+		];
+		
+		try {
+			// Create announcement
+			$announcementId = $announcementModel->createAnnouncement($announcementData);
+			
+			if (!$announcementId) {
+				return $this->response->setJSON([
+					'success' => false,
+					'message' => 'Failed to create announcement. Please try again.'
+				]);
+			}
+			
+			// Get the created announcement for email notification
+			$announcement = $announcementModel->getAnnouncementById($announcementId);
+			
+			// Send notifications if requested
+			if ($sendNotification && $announcement) {
+				// Email notifications (existing behavior)
+				try {
+					$emailResult = $emailService->sendAnnouncementNotification($announcement, $announcementData['audience_type']);
+					log_message('info', "Announcement email sent - Success: {$emailResult['success']}, Failed: {$emailResult['failed']}");
+				} catch (\Exception $emailException) {
+					log_message('warning', 'Email notification failed but announcement created: ' . $emailException->getMessage());
+				}
+
+				// SMS to parents only
+				if ($announcementData['audience_type'] === 'parents') {
+					$smsSummary = $this->sendParentAnnouncementSMS($announcement);
+					log_message('info', 'Parent SMS summary: ' . json_encode($smsSummary));
+				}
+			}
+			
+			return $this->response->setJSON([
+				'success' => true,
+				'message' => 'Announcement created successfully!' . 
+						   ($sendNotification ? ' Email notifications have been sent.' : '')
+			]);
+			
+		} catch (\Exception $e) {
+			log_message('error', 'Failed to create announcement: ' . $e->getMessage());
+			return $this->response->setJSON([
+				'success' => false,
+				'message' => 'An error occurred while creating the announcement. Please try again.'
+			]);
+		}
+	}
     
-    public function announcementHistory(){
-        $data = array(
-            'pageTitle' => 'Announcement History'
-        );
-        return view('backend/admin/announcements/announcement-history', $data);
-    }
+	public function announcementHistory(){
+		$announcementModel = new AnnouncementModel();
+		$data = array(
+			'pageTitle' => 'Announcement History',
+			'announcements' => $announcementModel->getDashboardAnnouncements(20)
+		);
+		return view('backend/admin/announcements/announcement-history', $data);
+	}
+
+	/**
+	 * Send SMS for announcement to parents with simple rate limiting and quota handling
+	 */
+	private function sendParentAnnouncementSMS($announcement)
+	{
+		$db = \Config\Database::connect();
+		$sms = service('sms');
+
+		// Collect parent numbers from normalized parents table via relationship
+		$numbers = [];
+		$normalized = $db->query(
+			"SELECT DISTINCT p.contact_number
+			 FROM parents p
+			 JOIN student_parent_relationships spr ON spr.parent_id = p.id
+			 WHERE p.contact_number IS NOT NULL AND p.contact_number != ''"
+		);
+		if ($normalized && $normalized->getNumRows() > 0) {
+			foreach ($normalized->getResult() as $row) {
+				$numbers[] = preg_replace('/[^0-9]/', '', $row->contact_number);
+			}
+		}
+
+		// Fallback: also include legacy enrollment family info numbers (father/mother/guardian)
+		$legacy = $db->query("SELECT DISTINCT contact_number FROM enrollment_family_info WHERE contact_number IS NOT NULL AND contact_number != ''");
+		if ($legacy && $legacy->getNumRows() > 0) {
+			foreach ($legacy->getResult() as $row) {
+				$numbers[] = preg_replace('/[^0-9]/', '', $row->contact_number);
+			}
+		}
+
+		// De-duplicate numbers
+		$numbers = array_values(array_unique($numbers));
+
+		// Normalize to PH format 63xxxxxxxxxx
+		$recipients = [];
+		foreach ($numbers as $n) {
+			if (strpos($n, '09') === 0 && strlen($n) === 11) {
+				$recipients[] = '63' . substr($n, 1);
+			} elseif (strpos($n, '9') === 0 && strlen($n) === 10) {
+				$recipients[] = '63' . $n;
+			} elseif (strpos($n, '63') === 0) {
+				$recipients[] = $n;
+			}
+		}
+
+		if (empty($recipients)) {
+			log_message('info', 'Parent SMS: no recipient numbers found in parents or enrollment_family_info');
+			return [
+				'success' => false,
+				'sent' => 0,
+				'failed' => 0,
+				'limitHit' => false,
+				'message' => 'No parent phone numbers found'
+			];
+		}
+
+		// Prepare concise SMS message
+		$title = $announcement['title'] ?? ($announcement->title ?? 'Announcement');
+		$content = $announcement['content'] ?? ($announcement->content ?? '');
+		$priority = strtoupper($announcement['priority'] ?? ($announcement->priority ?? 'NORMAL'));
+		$text = mb_substr("[{$priority}] {$title}: " . strip_tags($content), 0, 300);
+
+		$sent = 0;
+		$failed = 0;
+		$limitHit = false;
+
+		$perMinute = (int) env('sms.ratePerMinute', 20); // simple rate limit
+		$delaySeconds = max(60 / max($perMinute, 1), 1);
+		$maxToSend = (int) env('sms.batchMax', 200);
+
+		$count = 0;
+		foreach ($recipients as $to) {
+			if ($count >= $maxToSend) break;
+			$count++;
+
+			$result = $sms->send($to, $text);
+			if (!empty($result['success'])) {
+				$sent++;
+			} else {
+				$failed++;
+				// Stop if provider says limit exceeded
+				if (($result['status'] ?? null) === 403) {
+					$body = $result['body'];
+					$msg = is_array($body) ? ($body['message'] ?? '') : (string) $body;
+					if (stripos($msg, 'limit') !== false) {
+						$limitHit = true;
+						break;
+					}
+				}
+			}
+
+			// drip to respect rate
+			usleep((int) ($delaySeconds * 1000000));
+		}
+
+		return [
+			'success' => !$limitHit,
+			'sent' => $sent,
+			'failed' => $failed,
+			'stopped_due_to_limit' => $limitHit,
+			'attempted' => $count
+		];
+	}
+
+	/**
+	 * Get announcements for display
+	 */
+	public function getAnnouncements()
+	{
+		$announcementModel = new AnnouncementModel();
+		$audience = strtolower($this->request->getGet('audience') ?? '');
+		
+		// Default: show published announcements suitable for admin dashboard
+		$announcements = $announcementModel->getPublishedForAdmin(50);
+		
+		// If audience filter provided, intersect by audience type (case-insensitive)
+		if (!empty($audience) && $audience !== 'all') {
+			$announcements = array_values(array_filter($announcements, function($a) use ($audience){
+				return strtolower($a['audience_type'] ?? '') === $audience;
+			}));
+		}
+		
+		return $this->response->setJSON([
+			'success' => true,
+			'announcements' => $announcements
+		]);
+	}
     
     public function enrollment(){
         // Use the new enrollment system
@@ -1379,110 +1615,187 @@ class AdminController extends BaseController
     
 
     
-    public function subjects(){
-        // Get subjects from database
-        $db = \Config\Database::connect();
-        
-        // Sample data - replace with actual database query
-        $subjects = [
-            [
-                'id' => 1,
-                'subject_code' => 'MATH7',
-                'subject_name' => 'Mathematics 7',
-                'grade_level' => 'Grade 7',
-                'description' => 'Basic mathematics concepts for Grade 7 students',
-                'units' => 3,
-                'teacher_assigned' => 'Ms. Rodriguez',
-                'status' => 'active'
-            ],
-            [
-                'id' => 2,
-                'subject_code' => 'ENG7',
-                'subject_name' => 'English 7',
-                'grade_level' => 'Grade 7',
-                'description' => 'English language and literature for Grade 7',
-                'units' => 3,
-                'teacher_assigned' => 'Mr. Santos',
-                'status' => 'active'
-            ],
-            [
-                'id' => 3,
-                'subject_code' => 'SCI7',
-                'subject_name' => 'Science 7',
-                'grade_level' => 'Grade 7',
-                'description' => 'General science concepts and experiments',
-                'units' => 3,
-                'teacher_assigned' => 'Dr. Garcia',
-                'status' => 'active'
-            ],
-            [
-                'id' => 4,
-                'subject_code' => 'FIL7',
-                'subject_name' => 'Filipino 7',
-                'grade_level' => 'Grade 7',
-                'description' => 'Filipino language and literature',
-                'units' => 3,
-                'teacher_assigned' => 'Mrs. Cruz',
-                'status' => 'active'
-            ],
-            [
-                'id' => 5,
-                'subject_code' => 'AP7',
-                'subject_name' => 'Araling Panlipunan 7',
-                'grade_level' => 'Grade 7',
-                'description' => 'Social studies and Philippine history',
-                'units' => 3,
-                'teacher_assigned' => 'Mr. Dela Cruz',
-                'status' => 'active'
-            ]
-        ];
-        
-        $data = [
-            'pageTitle' => 'Subjects Management',
-            'subjects' => $subjects
-        ];
-        return view('backend/admin/subjects/subjects', $data);
+    public function section(){
+        try {
+            $sectionModel = new SectionModel();
+            $gradeModel = new GradeModel();
+            $teacherModel = new TeacherModel();
+            
+            // Check if sections table exists
+            $db = \Config\Database::connect();
+            $tables = $db->listTables();
+            
+            if (!in_array('sections', $tables)) {
+                // Table doesn't exist, show empty state
+                $data = [
+                    'pageTitle' => 'Sections Management',
+                    'sections' => [],
+                    'grades' => [],
+                    'teachers' => [],
+                    'error' => 'Sections table does not exist. Please create the sections table first.'
+                ];
+                return view('backend/admin/sections/section', $data);
+            }
+            
+            // Get sections with grade and adviser information
+            $sections = $sectionModel->getAllSectionsWithDetails();
+            
+            // Get all grades for dropdown
+            $grades = $gradeModel->getAllGrades();
+            
+            // Get all teachers for dropdown
+            $teachers = $teacherModel->getActiveTeachers();
+
+            $data = [
+                'pageTitle' => 'Sections Management',
+                'sections' => $sections,
+                'grades' => $grades,
+                'teachers' => $teachers
+            ];
+            return view('backend/admin/sections/section', $data);
+            
+        } catch (\Exception $e) {
+            // Handle any database errors gracefully
+            $data = [
+                'pageTitle' => 'Sections Management',
+                'sections' => [],
+                'grades' => [],
+                'teachers' => [],
+                'error' => 'Database error: ' . $e->getMessage()
+            ];
+            return view('backend/admin/sections/section', $data);
+        }
     }
     
     public function storeSubject(){
-        // Handle subject creation
-        $db = \Config\Database::connect();
+        $subjectModel = new SubjectModel();
         
-        // Validate and store subject
-        // $data = $this->request->getPost();
-        // $db->table('subjects')->insert($data);
-        
-        return $this->response->setJSON([
-            'success' => true,
-            'message' => 'Subject created successfully!'
-        ]);
+        // Get form data directly matching database fields
+        $data = [
+            'subject_name' => trim((string) $this->request->getPost('subject_name')),
+            'subject_code' => trim((string) $this->request->getPost('subject_code')),
+            'grade_id' => $this->request->getPost('grade_id'),
+            'department_id' => $this->request->getPost('department_id')
+        ];
+
+        // Use model validation
+        if (!$subjectModel->validate($data)) {
+            $errors = $subjectModel->errors();
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => implode(', ', $errors)
+            ]);
+        }
+
+        // Clean data for database insertion
+        $data['subject_code'] = !empty($data['subject_code']) ? $data['subject_code'] : null;
+        $data['grade_id'] = (int) $data['grade_id'];
+        $data['department_id'] = !empty($data['department_id']) ? (int) $data['department_id'] : null;
+
+        try {
+            $insertId = $subjectModel->insert($data);
+            if (!$insertId) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'Failed to create subject'
+                ]);
+            }
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => 'Subject created successfully!',
+                'id' => $insertId
+            ]);
+        } catch (\Exception $e) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Error creating subject: ' . $e->getMessage()
+            ]);
+        }
     }
     
     public function updateSubject($id){
-        // Handle subject update
-        $db = \Config\Database::connect();
+        $subjectModel = new SubjectModel();
         
-        // Validate and update subject
-        // $data = $this->request->getPost();
-        // $db->table('subjects')->where('id', $id)->update($data);
-        
-        return $this->response->setJSON([
-            'success' => true,
-            'message' => 'Subject updated successfully!'
-        ]);
+        if (empty($id) || !ctype_digit((string) $id)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid subject ID']);
+        }
+
+        $subject = $subjectModel->find((int) $id);
+        if (!$subject) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Subject not found']);
+        }
+
+        // Get form data directly matching database fields
+        $data = [
+            'subject_name' => trim((string) $this->request->getPost('subject_name')),
+            'subject_code' => trim((string) $this->request->getPost('subject_code')),
+            'grade_id' => $this->request->getPost('grade_id'),
+            'department_id' => $this->request->getPost('department_id')
+        ];
+
+        // Use model validation
+        if (!$subjectModel->validate($data)) {
+            $errors = $subjectModel->errors();
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => implode(', ', $errors)
+            ]);
+        }
+
+        // Clean data for database update
+        $data['subject_code'] = !empty($data['subject_code']) ? $data['subject_code'] : null;
+        $data['grade_id'] = (int) $data['grade_id'];
+        $data['department_id'] = !empty($data['department_id']) ? (int) $data['department_id'] : null;
+
+        try {
+            $success = $subjectModel->update((int) $id, $data);
+            if (!$success) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Failed to update subject']);
+            }
+            return $this->response->setJSON(['success' => true, 'message' => 'Subject updated successfully!']);
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Error updating subject: ' . $e->getMessage()]);
+        }
     }
     
     public function deleteSubject($id){
-        // Handle subject deletion
-        $db = \Config\Database::connect();
+        $subjectModel = new SubjectModel();
+        if (empty($id) || !ctype_digit((string) $id)) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid subject ID']);
+        }
+        try {
+            $ok = $subjectModel->delete((int) $id);
+            if (!$ok) {
+                return $this->response->setJSON(['success' => false, 'message' => 'Failed to delete subject']);
+            }
+            return $this->response->setJSON(['success' => true, 'message' => 'Subject deleted successfully!']);
+        } catch (\Exception $e) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Error deleting subject: ' . $e->getMessage()]);
+        }
+    }
+    
+    public function getSubject($id){
+        if (!$this->request->isAJAX()) {
+            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
+        }
+
+        $subjectModel = new SubjectModel();
+        $subject = $subjectModel->find($id);
         
-        // Delete subject
-        // $db->table('subjects')->where('id', $id)->delete();
-        
-        return $this->response->setJSON([
-            'success' => true,
-            'message' => 'Subject deleted successfully!'
-        ]);
+        if ($subject) {
+            // Add grade level mapping for display purposes
+            $gradeMap = [
+                1 => 'Grade 7',
+                2 => 'Grade 8', 
+                3 => 'Grade 9',
+                4 => 'Grade 10'
+            ];
+            $subject['grade_level'] = $gradeMap[$subject['grade_id']] ?? 'Unknown';
+            
+            return $this->response->setJSON(['success' => true, 'data' => $subject]);
+        } else {
+            return $this->response->setJSON(['success' => false, 'message' => 'Subject not found']);
+        }
     }
     
     public function classManagement(){

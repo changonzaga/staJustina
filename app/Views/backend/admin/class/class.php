@@ -12,9 +12,7 @@
                             <li class="breadcrumb-item">
                                 <a href="<?= route_to('admin.home') ?>" class="text-decoration-none">Home</a>
                             </li>
-                            <li class="breadcrumb-item active" aria-current="page">
-                                Classes
-                            </li>
+                            <li class="breadcrumb-item active" aria-current="page">Classes</li>
                         </ol>
                     </nav>
                 </div>
@@ -22,9 +20,6 @@
         </div>
         <div class="col-md-6 col-sm-12 d-flex justify-content-end align-items-center">
             <div class="d-flex gap-2">
-                <button class="btn btn-outline-primary" onclick="refreshClasses()">
-                    <i class="icon-copy bi bi-arrow-clockwise"></i> Refresh
-                </button>
                 <button class="btn btn-success" onclick="showAddClassModal()">
                     <i class="icon-copy bi bi-plus-lg"></i> Add Class
                 </button>
@@ -33,12 +28,15 @@
     </div>
 </div>
 
+<!-- Alert Container -->
+<div id="alertContainer"></div>
+
 <!-- Statistics Cards -->
 <div class="row mb-4">
     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 mb-30">
         <div class="card-box pd-30 height-100-p">
             <div class="d-flex justify-content-between">
-                <div class="h5 mb-0 text-primary"><?= count($classes) ?></div>
+                <div class="h5 mb-0 text-primary" id="stat-total-classes"><?= count($classes) ?></div>
                 <div class="icon text-primary">
                     <i class="icon-copy bi bi-house-door" style="font-size: 24px;"></i>
                 </div>
@@ -49,7 +47,7 @@
     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 mb-30">
         <div class="card-box pd-30 height-100-p">
             <div class="d-flex justify-content-between">
-                <div class="h5 mb-0 text-success"><?= array_sum(array_column($classes, 'student_count')) ?></div>
+                <div class="h5 mb-0 text-success" id="stat-total-students"><?= array_sum(array_column($classes, 'student_count')) ?></div>
                 <div class="icon text-success">
                     <i class="icon-copy bi bi-people" style="font-size: 24px;"></i>
                 </div>
@@ -60,7 +58,7 @@
     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 mb-30">
         <div class="card-box pd-30 height-100-p">
             <div class="d-flex justify-content-between">
-                <div class="h5 mb-0 text-info"><?= count(array_unique(array_column($classes, 'grade_level'))) ?></div>
+                <div class="h5 mb-0 text-info" id="stat-grade-levels"><?= count(array_unique(array_column($classes, 'grade_level'))) ?></div>
                 <div class="icon text-info">
                     <i class="icon-copy bi bi-layers" style="font-size: 24px;"></i>
                 </div>
@@ -71,7 +69,9 @@
     <div class="col-xl-3 col-lg-3 col-md-6 col-sm-12 mb-30">
         <div class="card-box pd-30 height-100-p">
             <div class="d-flex justify-content-between">
-                <div class="h5 mb-0 text-warning"><?= round((array_sum(array_column($classes, 'student_count')) / array_sum(array_column($classes, 'max_capacity'))) * 100) ?>%</div>
+                <div class="h5 mb-0 text-warning" id="stat-capacity">
+                    <?= count($classes) > 0 ? round((array_sum(array_column($classes, 'student_count')) / (count($classes) * 50)) * 100) : 0 ?>%
+                </div>
                 <div class="icon text-warning">
                     <i class="icon-copy bi bi-bar-chart" style="font-size: 24px;"></i>
                 </div>
@@ -81,14 +81,14 @@
     </div>
 </div>
 
-<!-- Classes Table -->
+<!-- Classes Grid (Cards) -->
 <div class="bg-white border rounded mb-4">
     <div class="p-3 border-bottom">
         <div class="d-flex justify-content-between align-items-center">
             <h5 class="mb-0">All Classes</h5>
             <div class="d-flex gap-2">
-                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search classes..." style="width: 200px;">
-                <select class="form-control form-control-sm" id="gradeFilter" style="width: 120px;">
+                <input type="text" class="form-control form-control-sm" id="searchInput" placeholder="Search classes..." style="width: 220px;">
+                <select class="form-control form-control-sm" id="gradeFilter" style="width: 140px;">
                     <option value="">All Grades</option>
                     <option value="Grade 7">Grade 7</option>
                     <option value="Grade 8">Grade 8</option>
@@ -98,83 +98,12 @@
             </div>
         </div>
     </div>
-    
-    <div class="table-responsive">
-        <table class="table table-sm mb-0" id="classesTable">
-            <thead class="bg-light">
-                <tr>
-                    <th class="border-0 text-muted small">#</th>
-                    <th class="border-0 text-muted small">Class Name</th>
-                    <th class="border-0 text-muted small">Grade Level</th>
-                    <th class="border-0 text-muted small">Section</th>
-                    <th class="border-0 text-muted small">Adviser</th>
-                    <th class="border-0 text-muted small">Room</th>
-                    <th class="border-0 text-muted small">Students</th>
-                    <th class="border-0 text-muted small">Capacity</th>
-                    <th class="border-0 text-muted small">Status</th>
-                    <th class="border-0 text-muted small">Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php if (!empty($classes)): ?>
-                    <?php foreach ($classes as $index => $class): ?>
-                        <tr id="class-row-<?= $class['id'] ?>" class="border-bottom">
-                            <td class="text-muted small"><?= $index + 1 ?></td>
-                            <td>
-                                <div class="font-weight-medium"><?= esc($class['class_name']) ?></div>
-                                <div class="text-muted small"><?= esc($class['schedule']) ?></div>
-                            </td>
-                            <td class="small"><?= esc($class['grade_level']) ?></td>
-                            <td class="small"><?= esc($class['section']) ?></td>
-                            <td class="small"><?= esc($class['adviser']) ?></td>
-                            <td class="small"><?= esc($class['room_number']) ?></td>
-                            <td class="small">
-                                <span class="badge badge-info"><?= $class['student_count'] ?></span>
-                            </td>
-                            <td class="small">
-                                <?php 
-                                $percentage = ($class['student_count'] / $class['max_capacity']) * 100;
-                                $badgeClass = $percentage >= 90 ? 'badge-danger' : ($percentage >= 75 ? 'badge-warning' : 'badge-success');
-                                ?>
-                                <span class="badge <?= $badgeClass ?>"><?= $class['student_count'] ?>/<?= $class['max_capacity'] ?></span>
-                            </td>
-                            <td>
-                                <?php if ($class['status'] === 'active'): ?>
-                                    <span class="badge badge-success small">Active</span>
-                                <?php else: ?>
-                                    <span class="badge badge-secondary small">Inactive</span>
-                                <?php endif; ?>
-                            </td>
-                            <td>
-                                <div class="btn-group btn-group-sm">
-                                    <button class="btn btn-outline-primary btn-sm" 
-                                            onclick="editClass(<?= $class['id'] ?>)" 
-                                            title="Edit">
-                                        ✎
-                                    </button>
-                                    <button class="btn btn-outline-info btn-sm" 
-                                            onclick="viewStudents(<?= $class['id'] ?>)" 
-                                            title="View Students">
-                                        👥
-                                    </button>
-                                    <button class="btn btn-outline-danger btn-sm" 
-                                            onclick="deleteClass(<?= $class['id'] ?>)" 
-                                            title="Delete">
-                                        ✕
-                                    </button>
-                                </div>
-                            </td>
-                        </tr>
-                    <?php endforeach; ?>
-                <?php else: ?>
-                    <tr>
-                        <td colspan="10" class="text-center py-5 text-muted">
-                            <div>No classes found</div>
-                        </td>
-                    </tr>
-                <?php endif; ?>
-            </tbody>
-        </table>
+    <div class="p-3">
+        <div class="row" id="classesGrid"></div>
+        <div id="noClasses" class="text-center text-muted py-5" style="display:none;">
+            <div class="mb-2" style="font-size: 48px;"><i class="icon-copy bi bi-collection"></i></div>
+            <div>No classes found</div>
+        </div>
     </div>
 </div>
 
@@ -199,13 +128,9 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="gradeLevel">Grade Level <span class="text-danger">*</span></label>
-                                <select class="form-control" id="gradeLevel" name="grade_level" required>
+                                <label for="gradeId">Grade Level <span class="text-danger">*</span></label>
+                                <select class="form-control" id="gradeId" name="grade_id" required>
                                     <option value="">Select Grade Level</option>
-                                    <option value="Grade 7">Grade 7</option>
-                                    <option value="Grade 8">Grade 8</option>
-                                    <option value="Grade 9">Grade 9</option>
-                                    <option value="Grade 10">Grade 10</option>
                                 </select>
                             </div>
                         </div>
@@ -213,39 +138,46 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="section">Section <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="section" name="section" required>
+                                <label for="sectionId">Section <span class="text-danger">*</span></label>
+                                <select class="form-control" id="sectionId" name="section_id" required>
+                                    <option value="">Select Section</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="adviser">Class Adviser <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="adviser" name="adviser" required>
+                                <label for="subjectId">Subject <span class="text-danger">*</span></label>
+                                <select class="form-control" id="subjectId" name="subject_id" required>
+                                    <option value="">Select Subject</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="roomNumber">Room Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="roomNumber" name="room_number" required>
+                                <label for="teacherId">Class Adviser</label>
+                                <select class="form-control" id="teacherId" name="teacher_id">
+                                    <option value="">Select Teacher</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="maxCapacity">Max Capacity <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="maxCapacity" name="max_capacity" min="1" max="50" required>
+                                <label for="schoolYearId">School Year <span class="text-danger">*</span></label>
+                                <select class="form-control" id="schoolYearId" name="school_year_id" required>
+                                    <option value="">Select School Year</option>
+                                </select>
                             </div>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="schedule">Schedule</label>
-                        <input type="text" class="form-control" id="schedule" name="schedule" placeholder="e.g., Monday - Friday, 7:30 AM - 4:30 PM">
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add Class</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-text">Add Class</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -274,13 +206,9 @@
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editGradeLevel">Grade Level <span class="text-danger">*</span></label>
-                                <select class="form-control" id="editGradeLevel" name="grade_level" required>
+                                <label for="editGradeId">Grade Level <span class="text-danger">*</span></label>
+                                <select class="form-control" id="editGradeId" name="grade_id" required>
                                     <option value="">Select Grade Level</option>
-                                    <option value="Grade 7">Grade 7</option>
-                                    <option value="Grade 8">Grade 8</option>
-                                    <option value="Grade 9">Grade 9</option>
-                                    <option value="Grade 10">Grade 10</option>
                                 </select>
                             </div>
                         </div>
@@ -288,46 +216,47 @@
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editSection">Section <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editSection" name="section" required>
+                                <label for="editSectionId">Section <span class="text-danger">*</span></label>
+                                <select class="form-control" id="editSectionId" name="section_id" required>
+                                    <option value="">Select Section</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editAdviser">Class Adviser <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editAdviser" name="adviser" required>
+                                <label for="editSubjectId">Subject <span class="text-danger">*</span></label>
+                                <select class="form-control" id="editSubjectId" name="subject_id" required>
+                                    <option value="">Select Subject</option>
+                                </select>
                             </div>
                         </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editRoomNumber">Room Number <span class="text-danger">*</span></label>
-                                <input type="text" class="form-control" id="editRoomNumber" name="room_number" required>
+                                <label for="editTeacherId">Class Adviser</label>
+                                <select class="form-control" id="editTeacherId" name="teacher_id">
+                                    <option value="">Select Teacher</option>
+                                </select>
                             </div>
                         </div>
                         <div class="col-md-6">
                             <div class="form-group">
-                                <label for="editMaxCapacity">Max Capacity <span class="text-danger">*</span></label>
-                                <input type="number" class="form-control" id="editMaxCapacity" name="max_capacity" min="1" max="50" required>
+                                <label for="editSchoolYearId">School Year <span class="text-danger">*</span></label>
+                                <select class="form-control" id="editSchoolYearId" name="school_year_id" required>
+                                    <option value="">Select School Year</option>
+                                </select>
                             </div>
                         </div>
                     </div>
-                    <div class="form-group">
-                        <label for="editSchedule">Schedule</label>
-                        <input type="text" class="form-control" id="editSchedule" name="schedule" placeholder="e.g., Monday - Friday, 7:30 AM - 4:30 PM">
-                    </div>
-                    <div class="form-group">
-                        <label for="editStatus">Status</label>
-                        <select class="form-control" id="editStatus" name="status">
-                            <option value="active">Active</option>
-                            <option value="inactive">Inactive</option>
-                        </select>
                     </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Update Class</button>
+                    <button type="submit" class="btn btn-primary">
+                        <span class="btn-text">Update Class</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
                 </div>
             </form>
         </div>
@@ -355,141 +284,238 @@
 </div>
 
 <script>
-// Search functionality
-document.getElementById('searchInput').addEventListener('keyup', function() {
-    filterTable();
+// Global variables
+let classesData = <?= json_encode($classes) ?>;
+const BASE_URL = '<?= base_url() ?>';
+const SITE_URL = '<?= site_url() ?>';
+
+// Initialize on page load
+document.addEventListener('DOMContentLoaded', function() {
+    renderClasses(classesData);
+    loadFormDropdowns();
 });
 
-document.getElementById('gradeFilter').addEventListener('change', function() {
-    filterTable();
-});
-
-function filterTable() {
-    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
-    const gradeFilter = document.getElementById('gradeFilter').value;
-    const table = document.getElementById('classesTable');
-    const rows = table.getElementsByTagName('tbody')[0].getElementsByTagName('tr');
+// Render classes grid
+function renderClasses(list) {
+    const classesGridEl = document.getElementById('classesGrid');
+    const noClassesEl = document.getElementById('noClasses');
     
-    for (let i = 0; i < rows.length; i++) {
-        const row = rows[i];
-        if (row.cells.length > 1) {
-            const className = row.cells[1].textContent.toLowerCase();
-            const gradeLevel = row.cells[2].textContent;
-            const section = row.cells[3].textContent.toLowerCase();
-            const adviser = row.cells[4].textContent.toLowerCase();
-            
-            const matchesSearch = className.includes(searchTerm) || 
-                                section.includes(searchTerm) || 
-                                adviser.includes(searchTerm);
-            const matchesGrade = gradeFilter === '' || gradeLevel === gradeFilter;
-            
-            if (matchesSearch && matchesGrade) {
-                row.style.display = '';
-            } else {
-                row.style.display = 'none';
-            }
-        }
+    classesGridEl.innerHTML = '';
+    
+    if (!list || list.length === 0) {
+        noClassesEl.style.display = '';
+        return;
     }
+    
+    noClassesEl.style.display = 'none';
+    const fragment = document.createDocumentFragment();
+    
+    list.forEach(cls => {
+        const badgeClass = getCapacityBadgeClass(cls.student_count || 0, cls.max_capacity || 50);
+        const statusBadge = cls.status === 'active' 
+            ? '<span class="badge badge-success small">Active</span>' 
+            : '<span class="badge badge-secondary small">Inactive</span>';
+        
+        const col = document.createElement('div');
+        col.className = 'col-12 col-sm-6 col-md-4 col-lg-3 mb-3';
+        col.innerHTML = `
+            <div class="card h-100 shadow-sm border-0 hover-shadow" style="transition: box-shadow .2s ease;">
+                <div class="card-body d-flex flex-column">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <div>
+                            <h6 class="mb-1 text-primary">${escapeHtml(cls.class_name ?? '')}</h6>
+                            <div class="text-muted small">Section: ${escapeHtml(cls.section ?? '')}</div>
+                        </div>
+                        ${statusBadge}
+                    </div>
+                    <div class="small mb-2">
+                        <div><strong>Grade:</strong> ${escapeHtml(cls.grade_level ?? '')}</div>
+                        <div><strong>Adviser:</strong> ${escapeHtml(cls.adviser ?? '—')}</div>
+                    </div>
+                    <div class="d-flex align-items-center mb-3">
+                        <span class="badge ${badgeClass} mr-2">${cls.student_count ?? 0}/${cls.max_capacity ?? 50}</span>
+                        <span class="text-muted small">Students / Capacity</span>
+                    </div>
+                    <div class="mt-auto d-flex gap-2">
+                        <button class="btn btn-outline-info btn-sm" onclick="viewStudents(${cls.id})">
+                            <i class="bi bi-eye"></i> View
+                        </button>
+                        <button class="btn btn-outline-primary btn-sm" onclick="editClass(${cls.id})">
+                            <i class="bi bi-pencil"></i> Edit
+                        </button>
+                        <button class="btn btn-outline-danger btn-sm" onclick="deleteClass(${cls.id})">
+                            <i class="bi bi-trash"></i> Delete
+                        </button>
+                    </div>
+                </div>
+            </div>`;
+        fragment.appendChild(col);
+    });
+    
+    classesGridEl.appendChild(fragment);
 }
 
-// Modal functions
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+// Get capacity badge class
+function getCapacityBadgeClass(studentCount, maxCapacity) {
+    const percentage = (studentCount / Math.max(maxCapacity, 1)) * 100;
+    if (percentage >= 90) return 'badge-danger';
+    if (percentage >= 75) return 'badge-warning';
+    return 'badge-success';
+}
+
+// Filter and render
+function filterAndRender() {
+    const search = (document.getElementById('searchInput').value || '').toLowerCase();
+    const grade = document.getElementById('gradeFilter').value;
+    
+    const filtered = (classesData || []).filter(cls => {
+        const className = (cls.class_name || '').toLowerCase();
+        const section = (cls.section || '').toLowerCase();
+        const adviser = (cls.adviser || '').toLowerCase();
+        
+        const gradeMatch = !grade || (cls.grade_level === grade);
+        const searchMatch = !search || 
+            className.includes(search) || 
+            section.includes(search) || 
+            adviser.includes(search);
+        
+        return gradeMatch && searchMatch;
+    });
+    
+    renderClasses(filtered);
+}
+
+// Event listeners for filters
+document.getElementById('searchInput').addEventListener('keyup', filterAndRender);
+document.getElementById('gradeFilter').addEventListener('change', filterAndRender);
+
+// Load form dropdowns
+function loadFormDropdowns() {
+    console.log('Loading form dropdowns...');
+    fetch(`${SITE_URL}/admin/class/get-dropdowns`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => {
+        console.log('Dropdown response status:', response.status);
+        return response.json();
+    })
+    .then(data => {
+        console.log('Dropdown data received:', data);
+        if (data.success) {
+            populateDropdowns(data.data);
+        } else {
+            console.error('Failed to load dropdowns:', data.message);
+        }
+    })
+    .catch(error => console.error('Error loading dropdowns:', error));
+}
+
+// Populate dropdowns
+function populateDropdowns(data) {
+    // Helper function to clear and populate a select element
+    function populateSelect(selectId, items, valueKey, textKey, defaultOption = true) {
+        const select = document.getElementById(selectId);
+        if (!select) {
+            console.warn(`Select element with ID ${selectId} not found`);
+            return;
+        }
+        
+        // Clear existing options
+        select.innerHTML = '';
+        
+        // Add default option
+        if (defaultOption) {
+            const defaultOpt = document.createElement('option');
+            defaultOpt.value = '';
+            defaultOpt.textContent = '-- Select --';
+            select.appendChild(defaultOpt);
+        }
+        
+        // Add new options
+        if (items && items.length > 0) {
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                select.appendChild(option);
+            });
+            console.log(`Populated ${items.length} items for ${selectId}`);
+        } else {
+            console.warn(`No items to populate for ${selectId}`);
+        }
+    }
+    
+    // Grades
+    const gradeSelects = ['gradeId', 'editGradeId'];
+    gradeSelects.forEach(selectId => {
+        populateSelect(selectId, data.grades, 'id', 'grade_name');
+    });
+    
+    // Sections
+    const sectionSelects = ['sectionId', 'editSectionId'];
+    sectionSelects.forEach(selectId => {
+        populateSelect(selectId, data.sections, 'id', 'section_name');
+    });
+    
+    // Subjects
+    const subjectSelects = ['subjectId', 'editSubjectId'];
+    subjectSelects.forEach(selectId => {
+        populateSelect(selectId, data.subjects, 'id', 'subject_name');
+    });
+    
+    // School Years
+    const schoolYearSelects = ['schoolYearId', 'editSchoolYearId'];
+    schoolYearSelects.forEach(selectId => {
+        populateSelect(selectId, data.school_years, 'id', 'school_year', false);
+        
+        // Set active school year as selected
+        const select = document.getElementById(selectId);
+        if (select && data.school_years) {
+            const activeYear = data.school_years.find(year => year.is_active);
+            if (activeYear) {
+                select.value = activeYear.id;
+            }
+        }
+    });
+    
+    // Teachers
+    const teacherSelects = ['teacherId', 'editTeacherId'];
+    teacherSelects.forEach(selectId => {
+        populateSelect(selectId, data.teachers, 'id', 'full_name');
+    });
+}
+
+// Show add class modal
 function showAddClassModal() {
+    document.getElementById('addClassForm').reset();
     $('#addClassModal').modal('show');
 }
 
-function editClass(classId) {
-    // Load class data and show edit modal
-    $('#editClassModal').modal('show');
-}
-
-function deleteClass(classId) {
-    if (confirm('Are you sure you want to delete this class?')) {
-        fetch(`<?= site_url('admin/class/delete/') ?>${classId}`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest'
-            }
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                const row = document.getElementById(`class-row-${classId}`);
-                if (row) {
-                    row.remove();
-                }
-                showAlert('Success', data.message, 'success');
-            } else {
-                showAlert('Error', data.message || 'Failed to delete class', 'error');
-            }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            showAlert('Error', 'An error occurred while processing the request', 'error');
-        });
-    }
-}
-
-function viewStudents(classId) {
-    // Show students modal with class students
-    $('#studentsModal').modal('show');
-    
-    document.getElementById('studentsModalContent').innerHTML = `
-        <div class="text-center py-4">
-            <div class="spinner-border" role="status">
-                <span class="sr-only">Loading...</span>
-            </div>
-            <p class="mt-2">Loading students...</p>
-        </div>
-    `;
-    
-    // Simulate loading students
-    setTimeout(() => {
-        document.getElementById('studentsModalContent').innerHTML = `
-            <div class="table-responsive">
-                <table class="table table-sm">
-                    <thead>
-                        <tr>
-                            <th>#</th>
-                            <th>Student Name</th>
-                            <th>LRN</th>
-                            <th>Status</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>1</td>
-                            <td>John Doe</td>
-                            <td>123456789012</td>
-                            <td><span class="badge badge-success">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td>2</td>
-                            <td>Jane Smith</td>
-                            <td>123456789013</td>
-                            <td><span class="badge badge-success">Active</span></td>
-                        </tr>
-                        <tr>
-                            <td colspan="4" class="text-center text-muted">... and more students</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        `;
-    }, 1000);
-}
-
-function refreshClasses() {
-    location.reload();
-}
-
-// Form submissions
+// Add class form submission
 document.getElementById('addClassForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const spinner = submitBtn.querySelector('.spinner-border');
+    
+    submitBtn.disabled = true;
+    btnText.classList.add('d-none');
+    spinner.classList.remove('d-none');
+    
     const formData = new FormData(this);
     
-    fetch('<?= site_url('admin/class/store') ?>', {
+    fetch(`${SITE_URL}/admin/class/store`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -501,24 +527,69 @@ document.getElementById('addClassForm').addEventListener('submit', function(e) {
         if (data.success) {
             $('#addClassModal').modal('hide');
             showAlert('Success', data.message, 'success');
-            setTimeout(() => location.reload(), 1500);
+            refreshClasses();
         } else {
-            showAlert('Error', data.message || 'Failed to add class', 'error');
+            showAlert('Error', data.message || 'Failed to add class', 'danger');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('Error', 'An error occurred while processing the request', 'error');
+        showAlert('Error', 'An error occurred while processing the request', 'danger');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        btnText.classList.remove('d-none');
+        spinner.classList.add('d-none');
     });
 });
 
+// Edit class
+function editClass(classId) {
+    fetch(`${SITE_URL}/admin/class/get/${classId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const cls = data.data;
+            document.getElementById('editClassId').value = cls.id;
+            document.getElementById('editClassName').value = cls.class_name;
+            document.getElementById('editGradeId').value = cls.grade_id;
+            document.getElementById('editSectionId').value = cls.section_id;
+            document.getElementById('editSubjectId').value = cls.subject_id;
+            document.getElementById('editSchoolYearId').value = cls.school_year_id;
+            document.getElementById('editTeacherId').value = cls.teacher_id || '';
+            
+            $('#editClassModal').modal('show');
+        } else {
+            showAlert('Error', data.message || 'Failed to load class data', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error', 'An error occurred while loading class data', 'danger');
+    });
+}
+
+// Edit class form submission
 document.getElementById('editClassForm').addEventListener('submit', function(e) {
     e.preventDefault();
     
-    const formData = new FormData(this);
-    const classId = document.getElementById('editClassId').value;
+    const submitBtn = this.querySelector('button[type="submit"]');
+    const btnText = submitBtn.querySelector('.btn-text');
+    const spinner = submitBtn.querySelector('.spinner-border');
     
-    fetch(`<?= site_url('admin/class/update/') ?>${classId}`, {
+    submitBtn.disabled = true;
+    btnText.classList.add('d-none');
+    spinner.classList.remove('d-none');
+    
+    const classId = document.getElementById('editClassId').value;
+    const formData = new FormData(this);
+    
+    fetch(`${SITE_URL}/admin/class/update/${classId}`, {
         method: 'POST',
         body: formData,
         headers: {
@@ -530,20 +601,183 @@ document.getElementById('editClassForm').addEventListener('submit', function(e) 
         if (data.success) {
             $('#editClassModal').modal('hide');
             showAlert('Success', data.message, 'success');
-            setTimeout(() => location.reload(), 1500);
+            refreshClasses();
         } else {
-            showAlert('Error', data.message || 'Failed to update class', 'error');
+            showAlert('Error', data.message || 'Failed to update class', 'danger');
         }
     })
     .catch(error => {
         console.error('Error:', error);
-        showAlert('Error', 'An error occurred while processing the request', 'error');
+        showAlert('Error', 'An error occurred while processing the request', 'danger');
+    })
+    .finally(() => {
+        submitBtn.disabled = false;
+        btnText.classList.remove('d-none');
+        spinner.classList.add('d-none');
     });
 });
 
+// Delete class
+function deleteClass(classId) {
+    if (confirm('Are you sure you want to delete this class? This action cannot be undone.')) {
+        fetch(`${SITE_URL}/admin/class/delete/${classId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                showAlert('Success', data.message, 'success');
+                refreshClasses();
+            } else {
+                showAlert('Error', data.message || 'Failed to delete class', 'danger');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showAlert('Error', 'An error occurred while processing the request', 'danger');
+        });
+    }
+}
+
+// View students
+function viewStudents(classId) {
+    $('#studentsModal').modal('show');
+    
+    document.getElementById('studentsModalContent').innerHTML = `
+        <div class="text-center py-4">
+            <div class="spinner-border text-primary" role="status">
+                <span class="sr-only">Loading...</span>
+            </div>
+            <p class="mt-2">Loading students...</p>
+        </div>
+    `;
+    
+    fetch(`${SITE_URL}/admin/class/students/${classId}`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            const cls = data.data.class;
+            const students = data.data.students;
+            
+            let html = `
+                <div class="mb-3">
+                    <h6 class="text-primary">${escapeHtml(cls.class_name)}</h6>
+                    <p class="mb-1"><strong>Grade:</strong> ${escapeHtml(cls.grade_level)} | <strong>Section:</strong> ${escapeHtml(cls.section)}</p>
+                    <p class="mb-0"><strong>Adviser:</strong> ${escapeHtml(cls.adviser || '—')}</p>
+                </div>
+            `;
+            
+            if (students && students.length > 0) {
+                html += `
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>#</th>
+                                    <th>LRN</th>
+                                    <th>Student Name</th>
+                                    <th>Enrollment Date</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>`;
+                
+                students.forEach((student, index) => {
+                    const statusBadge = student.status === 'enrolled' 
+                        ? '<span class="badge badge-success">Enrolled</span>'
+                        : '<span class="badge badge-secondary">Inactive</span>';
+                    
+                    html += `
+                        <tr>
+                            <td>${index + 1}</td>
+                            <td>${escapeHtml(student.lrn)}</td>
+                            <td>${escapeHtml(student.student_name)}</td>
+                            <td>${escapeHtml(student.enrollment_date || '—')}</td>
+                            <td>${statusBadge}</td>
+                        </tr>`;
+                });
+                
+                html += `
+                            </tbody>
+                        </table>
+                    </div>`;
+            } else {
+                html += `
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> No students enrolled in this class yet.
+                    </div>`;
+            }
+            
+            document.getElementById('studentsModalContent').innerHTML = html;
+        } else {
+            document.getElementById('studentsModalContent').innerHTML = `
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle"></i> ${data.message || 'Failed to load students'}
+                </div>`;
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        document.getElementById('studentsModalContent').innerHTML = `
+            <div class="alert alert-danger">
+                <i class="bi bi-exclamation-triangle"></i> An error occurred while loading students
+            </div>`;
+    });
+}
+
+// Refresh classes
+function refreshClasses() {
+    fetch(`${SITE_URL}/admin/class/get-classes`, {
+        method: 'GET',
+        headers: {
+            'X-Requested-With': 'XMLHttpRequest'
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            classesData = data.data;
+            filterAndRender();
+            updateStatistics();
+            showAlert('Success', 'Classes refreshed successfully', 'success');
+        } else {
+            showAlert('Error', 'Failed to refresh classes', 'danger');
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        showAlert('Error', 'An error occurred while refreshing', 'danger');
+    });
+}
+
+// Update statistics
+function updateStatistics() {
+    const totalClasses = classesData.length;
+    const totalStudents = classesData.reduce((sum, cls) => sum + (cls.student_count || 0), 0);
+    const gradeLevels = new Set(classesData.map(cls => cls.grade_level)).size;
+    const capacityUsage = totalClasses > 0 
+        ? Math.round((totalStudents / (totalClasses * 50)) * 100) 
+        : 0;
+    
+    document.getElementById('stat-total-classes').textContent = totalClasses;
+    document.getElementById('stat-total-students').textContent = totalStudents;
+    document.getElementById('stat-grade-levels').textContent = gradeLevels;
+    document.getElementById('stat-capacity').textContent = capacityUsage + '%';
+}
+
+// Show alert
 function showAlert(title, message, type) {
     const alertClass = type === 'success' ? 'alert-success' : 
-                      type === 'error' ? 'alert-danger' : 
+                      type === 'danger' ? 'alert-danger' : 
                       type === 'warning' ? 'alert-warning' : 'alert-info';
     
     const alertHtml = `
@@ -555,11 +789,11 @@ function showAlert(title, message, type) {
         </div>
     `;
     
-    const container = document.querySelector('.page-header');
-    container.insertAdjacentHTML('afterend', alertHtml);
+    const container = document.getElementById('alertContainer');
+    container.innerHTML = alertHtml;
     
     setTimeout(() => {
-        const alert = document.querySelector('.alert');
+        const alert = container.querySelector('.alert');
         if (alert) {
             alert.remove();
         }
@@ -568,6 +802,10 @@ function showAlert(title, message, type) {
 </script>
 
 <style>
+.hover-shadow:hover {
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15) !important;
+}
+
 .table th {
     border-top: none;
     font-weight: 600;
@@ -602,6 +840,18 @@ function showAlert(title, message, type) {
 
 .modal-lg {
     max-width: 800px;
+}
+
+.gap-2 {
+    gap: 0.5rem;
+}
+
+.d-flex.gap-2 > * {
+    margin-right: 0.5rem;
+}
+
+.d-flex.gap-2 > *:last-child {
+    margin-right: 0;
 }
 </style>
 

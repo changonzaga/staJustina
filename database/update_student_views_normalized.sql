@@ -128,6 +128,7 @@ ORDER BY s.id, spr.relationship_type;
 -- =====================================================
 -- STUDENT EMERGENCY CONTACTS VIEW
 -- Combines parent emergency contacts with other emergency contacts
+-- Note: student_emergency_contacts table doesn't exist, so only showing parent contacts
 -- =====================================================
 CREATE VIEW view_student_emergency_contacts AS
 SELECT 
@@ -144,22 +145,6 @@ FROM students s
 JOIN student_personal_info spi ON s.id = spi.student_id
 JOIN student_parent_relationships spr ON s.id = spr.student_id AND spr.is_emergency_contact = TRUE
 JOIN parents p ON spr.parent_id = p.id
-
-UNION ALL
-
-SELECT 
-    s.id as student_id,
-    CONCAT(spi.first_name, ' ', spi.last_name) as student_name,
-    'emergency_contact' as contact_source,
-    CONCAT(sec.first_name, ' ', sec.last_name) as contact_name,
-    sec.relationship,
-    sec.phone_primary,
-    sec.email,
-    sec.priority_order,
-    FALSE as is_primary_contact
-FROM students s
-JOIN student_personal_info spi ON s.id = spi.student_id
-JOIN student_emergency_contacts sec ON s.id = sec.student_id AND sec.active = TRUE
 
 ORDER BY student_id, priority_order;
 

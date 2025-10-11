@@ -249,4 +249,35 @@ class EmailService
         
         return $retryCount;
     }
+
+    /**
+     * Send announcement notification emails to the specified audience.
+     * Minimal implementation to satisfy controller usage; extend as needed.
+     */
+    public function sendAnnouncementNotification($announcement, $audienceType)
+    {
+        try {
+            // Basic fan-out: for now just send to admins (or configured test email) to verify pipeline
+            $to = $announcement['test_email'] ?? ($this->config->fromEmail ?? null);
+            if (!$to) {
+                log_message('warning', 'Announcement email skipped: no recipient configured');
+                return ['success' => 0, 'failed' => 0];
+            }
+
+            $this->email->setFrom($this->config->fromEmail, $this->config->fromName);
+            $this->email->setTo($to);
+            $this->email->setSubject('[Announcement] ' . ($announcement['title'] ?? ''));
+            $message = view('email-templates/announcement-basic', [
+                'title' => $announcement['title'] ?? '',
+                'content' => $announcement['content'] ?? '',
+                'audience' => $audienceType
+            ]);
+            $this->email->setMessage($message);
+            $ok = $this->sendWithRetry();
+            return ['success' => $ok ? 1 : 0, 'failed' => $ok ? 0 : 1];
+        } catch (Exception $e) {
+            log_message('error', 'sendAnnouncementNotification error: ' . $e->getMessage());
+            return ['success' => 0, 'failed' => 1];
+        }
+    }
 }

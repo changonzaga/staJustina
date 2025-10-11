@@ -463,31 +463,8 @@ class EnrollmentModel extends Model
     {
         $db = \Config\Database::connect();
         
-        // Check for address table (try both expected name and actual temporary name)
-        $addressTableName = null;
-        
-        // First try the expected table name
-        if ($db->query("SHOW TABLES LIKE 'enrollment_addresses'")->getNumRows() > 0) {
-            $addressTableName = 'enrollment_addresses';
-        } else {
-            // Try the temporary table name
-            $tempTables = $db->query("SHOW TABLES LIKE 'enrollment_address_final'")->getResult();
-            if (!empty($tempTables)) {
-                $addressTableName = 'enrollment_address_final';
-            } else {
-                $tempTables = $db->query("SHOW TABLES LIKE 'enrollment_addresses_final_%'")->getResult();
-                if (!empty($tempTables)) {
-                    $addressTableName = array_values((array)$tempTables[0])[0];
-                }
-            }
-        }
-        
-        if (!$addressTableName) {
-            // Log that address info was skipped due to missing table
-            log_message('warning', 'Address information skipped - no enrollment_addresses table found. Enrollment ID: ' . $enrollmentId);
-            return true; // Continue without failing
-        }
-        
+        // Force use of the finalized address table
+        $addressTableName = 'enrollment_address_final';
         $addressTable = $db->table($addressTableName);
         log_message('info', 'Using address table: ' . $addressTableName . ' for enrollment ID: ' . $enrollmentId);
         
@@ -931,25 +908,12 @@ class EnrollmentModel extends Model
                                         ->get()
                                         ->getResultArray();
 
-        // Get address info (try multiple possible table names)
-        $addressTableName = null;
-        $possibleAddressTables = ['enrollment_addresses', 'enrollment_address_final'];
-        
-        foreach ($possibleAddressTables as $tableName) {
-            if ($db->query("SHOW TABLES LIKE '{$tableName}'")->getNumRows() > 0) {
-                $addressTableName = $tableName;
-                break;
-            }
-        }
-        
-        if ($addressTableName) {
-            $enrollment['address_info'] = $db->table($addressTableName)
+        // Get address info from the finalized table only
+        $addressTableName = 'enrollment_address_final';
+        $enrollment['address_info'] = $db->table($addressTableName)
                                             ->where('enrollment_id', $enrollmentId)
                                             ->get()
                                             ->getResultArray();
-        } else {
-            $enrollment['address_info'] = [];
-        }
 
         // Get documents
         $enrollment['documents'] = $db->table('enrollment_docs')

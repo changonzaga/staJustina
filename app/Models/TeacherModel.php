@@ -308,4 +308,29 @@ class TeacherModel extends Model
         
         return trim($teacher['first_name'] . ' ' . ($teacher['middle_name'] ?? '') . ' ' . $teacher['last_name']);
     }
+
+    /**
+     * Get active teachers for dropdowns with computed full_name
+     */
+    public function getActiveTeachers()
+    {
+        $builder = $this->select('id, CONCAT(first_name, " ", last_name) as full_name', false)
+                        ->orderBy('last_name', 'ASC')
+                        ->orderBy('first_name', 'ASC');
+
+        // If status column exists and is used, prefer active teachers
+        try {
+            $columns = $this->db->getFieldNames($this->table);
+            if (in_array('status', $columns)) {
+                $builder->groupStart()
+                        ->where('status', 'active')
+                        ->orWhere('status', 'Active')
+                        ->groupEnd();
+            }
+        } catch (\Throwable $e) {
+            // Fallback silently if metadata lookup fails
+        }
+
+        return $builder->findAll();
+    }
 }

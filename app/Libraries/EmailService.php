@@ -15,7 +15,57 @@ class EmailService
         $this->email = \Config\Services::email();
         $this->config = config('Email');
     }
-    
+
+    /**
+     * Send welcome email to new student with login credentials
+     */
+    public function sendStudentWelcomeEmail($studentData, $credentials)
+    {
+        try {
+            // Email configuration
+            $this->email->setFrom($this->config->fromEmail, $this->config->fromName);
+            $this->email->setTo($studentData['email']);
+            $this->email->setSubject('Welcome to Sta. Justina - Your Student Login Credentials');
+
+            // Prepare template data
+            $templateData = [
+                'studentName' => trim(($studentData['first_name'] ?? '') . ' ' . ($studentData['last_name'] ?? '')),
+                'accountNo' => $credentials['account_no'] ?? '',
+                'password' => $credentials['password'] ?? '',
+                'email' => $studentData['email'] ?? '',
+                'loginUrl' => base_url('/login'),
+            ];
+
+            // Load and render email template
+            $emailBody = view('email-templates/student-welcome', $templateData);
+            $this->email->setMessage($emailBody);
+
+            // Send email
+            if ($this->email->send()) {
+                log_message('info', 'Student welcome email sent successfully to: ' . $studentData['email']);
+                return [
+                    'success' => true,
+                    'message' => 'Student welcome email sent successfully'
+                ];
+            } else {
+                $error = $this->email->printDebugger(['headers']);
+                log_message('error', 'Failed to send student welcome email: ' . $error);
+                return [
+                    'success' => false,
+                    'message' => 'Failed to send student welcome email',
+                    'error' => $error
+                ];
+            }
+
+        } catch (\Exception $e) {
+            log_message('error', 'Email service error (student welcome): ' . $e->getMessage());
+            return [
+                'success' => false,
+                'message' => 'Email service error: ' . $e->getMessage()
+            ];
+        }
+    }
+
     /**
      * Send welcome email to new teacher with login credentials
      */

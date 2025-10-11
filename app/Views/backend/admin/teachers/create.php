@@ -1,4 +1,4 @@
-<?= $this->extend('backend/layout/pages-layout') ?>
+    <?= $this->extend('backend/layout/pages-layout') ?>
 <?= $this->section('stylesheets') ?>
 <!-- Cropper.js CSS -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">

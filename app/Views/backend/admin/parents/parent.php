@@ -263,7 +263,7 @@
                                              <div class="dropdown-menu dropdown-menu-right dropdown-menu-icon-list"> 
                                                  <a class="dropdown-item view-parent" href="#" data-id="<?= $parent['id'] ?>" data-toggle="modal" data-target="#parentViewModal"><i class="dw dw-eye"></i> View</a> 
                                                  <a class="dropdown-item" href="<?= route_to('admin.parent.edit', $parent['id']) ?>"><i class="dw dw-edit2"></i> Edit</a> 
-                                                 <a class="dropdown-item delete-parent" href="#" data-id="<?= $parent['id'] ?>"><i class="dw dw-delete-3"></i> Delete</a> 
+                                                 <a class="dropdown-item delete-parent" href="#" data-id="<?= $parent['id'] ?>"><i class="dw dw-delete-3"></i> Delete Parent</a> 
                                              </div> 
                                          </div> 
                                      </td>
@@ -390,27 +390,50 @@ function handleCopyClick(button) {
     });
 }
 
-// Add event listeners for delete buttons
+// Add event listeners to view buttons for modal
 document.addEventListener('DOMContentLoaded', function() {
-    // Add event listeners to delete buttons
-    const deleteButtons = document.querySelectorAll('.delete-parent');
-    deleteButtons.forEach(button => {
-        button.addEventListener('click', function(e) {
-            e.preventDefault();
-            const parentId = this.getAttribute('data-id');
-            
-            if (confirm('Are you sure you want to delete this parent?')) {
-                // Create a form to submit the delete request
-                const form = document.createElement('form');
-                form.method = 'POST';
-                form.action = '<?= site_url('admin/parent/delete/') ?>' + parentId;
-                document.body.appendChild(form);
-                form.submit();
-            }
-        });
-    });
-
-    // Add event listeners to view buttons for modal
+	// Add event listeners to delete buttons
+	const deleteButtons = document.querySelectorAll('.delete-parent');
+	deleteButtons.forEach(button => {
+		button.addEventListener('click', function(e) {
+			e.preventDefault();
+			const parentId = this.getAttribute('data-id');
+			
+			if (confirm('Are you sure you want to delete this parent? This will permanently remove the parent and all related data including address and relationship information. This action cannot be undone.')) {
+				// Show loading state
+				const button = this;
+				const originalText = button.innerHTML;
+				button.innerHTML = '<i class="dw dw-loading"></i> Deleting...';
+				button.style.pointerEvents = 'none';
+				
+				// Send delete request via AJAX with CSRF
+				fetch('<?= site_url('admin/parent/delete/') ?>' + parentId, {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/x-www-form-urlencoded',
+						'X-Requested-With': 'XMLHttpRequest'
+					},
+					body: new URLSearchParams({
+						'<?= csrf_token() ?>': '<?= csrf_hash() ?>',
+						'action': 'delete'
+					})
+				})
+				.then(response => {
+					if (response.ok) {
+						window.location.reload();
+					} else {
+						throw new Error('Delete failed with status: ' + response.status);
+					}
+				})
+				.catch(error => {
+					console.error('Delete error:', error);
+					alert('Failed to delete parent. Please try again.');
+					button.innerHTML = originalText;
+					button.style.pointerEvents = 'auto';
+				});
+			}
+		});
+	});
     const viewButtons = document.querySelectorAll('.view-parent');
     viewButtons.forEach(button => {
         button.addEventListener('click', function(e) {
@@ -451,12 +474,23 @@ document.addEventListener('DOMContentLoaded', function() {
                         document.getElementById('modal-student-name').textContent = parent.student_name || '-';
                         document.getElementById('modal-parent-type').textContent = parent.parent_type || '-';
                         document.getElementById('modal-same-address').textContent = parent.is_same_as_student || '-';
-                        document.getElementById('modal-house-number').textContent = parent.house_number || '-';
-                        document.getElementById('modal-street').textContent = parent.street || '-';
-                        document.getElementById('modal-barangay').textContent = parent.barangay || '-';
-                        document.getElementById('modal-municipality').textContent = parent.municipality || '-';
-                        document.getElementById('modal-province').textContent = parent.province || '-';
-                        document.getElementById('modal-zip-code').textContent = parent.zip_code || '-';
+                        
+                        // Handle address fields - show "Same as student" if is_same_as_student is Yes
+                        if (parent.is_same_as_student === 'Yes') {
+                            document.getElementById('modal-house-number').textContent = 'Same as student address';
+                            document.getElementById('modal-street').textContent = 'Same as student address';
+                            document.getElementById('modal-barangay').textContent = 'Same as student address';
+                            document.getElementById('modal-municipality').textContent = 'Same as student address';
+                            document.getElementById('modal-province').textContent = 'Same as student address';
+                            document.getElementById('modal-zip-code').textContent = 'Same as student address';
+                        } else {
+                            document.getElementById('modal-house-number').textContent = parent.house_number || '-';
+                            document.getElementById('modal-street').textContent = parent.street || '-';
+                            document.getElementById('modal-barangay').textContent = parent.barangay || '-';
+                            document.getElementById('modal-municipality').textContent = parent.municipality || '-';
+                            document.getElementById('modal-province').textContent = parent.province || '-';
+                            document.getElementById('modal-zip-code').textContent = parent.zip_code || '-';
+                        }
                         document.getElementById('modal-created-at').textContent = parent.created_at || '-';
                         document.getElementById('modal-updated-at').textContent = parent.updated_at || '-';
                         

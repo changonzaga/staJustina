@@ -508,8 +508,9 @@ function deleteStudent(studentId) {
     
     // Make AJAX call to delete the student
     $.ajax({
-        url: '<?= site_url("admin/student/delete/") ?>' + studentId,
-        type: 'GET',
+        url: '<?= site_url("admin/students/delete/") ?>' + studentId,
+        type: 'POST',
+        data: { '<?= csrf_token() ?>': '<?= csrf_hash() ?>' },
         dataType: 'json',
         success: function(response) {
             // Show the success alert regardless of server response

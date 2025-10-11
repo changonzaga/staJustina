@@ -1587,9 +1587,6 @@
                                         </div>
                                     </div>
                                 </div>
-
-                                <!-- Learning Modality Preferences section removed -->
-
                             </div>
 
                             <!-- Step 4: Document Upload -->

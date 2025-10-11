@@ -185,7 +185,7 @@ class StudentModel extends Model
                      CONCAT(COALESCE(sa.house_no, \'\'), " ", COALESCE(sa.street, \'\'), ", ", sa.barangay, ", ", sa.municipality, ", ", sa.province) as address,
                      CONCAT(COALESCE(p.first_name, \'\'), " ", COALESCE(p.last_name, \'\')) as guardian,
                      p.contact_number as contact,
-                     COALESCE(CONCAT(t.first_name, " ", COALESCE(t.middle_name, ""), " ", t.last_name), "Not Assigned") as teacher_name,
+                     "Not Assigned" as teacher_name,
                      CONCAT(p.first_name, " ", COALESCE(p.middle_name, ""), " ", p.last_name) as parent_name,
                      spi.student_email as parent_email,
                      p.contact_number as parent_contact')
@@ -193,10 +193,7 @@ class StudentModel extends Model
             ->join('student_parent_relationships spr', 's.id = spr.student_id AND spr.is_primary_contact = 1', 'left')
             ->join('parents p', 'spr.parent_id = p.id', 'left')
             ->join('student_address sa', 's.id = sa.student_id AND sa.address_type = "current"', 'left')
-            // Map teacher via class advisers: students → classes → class_advisers → teachers
-            ->join('classes c', 'c.grade_level = s.grade_level AND c.section = s.section', 'left')
-            ->join('class_advisers ca', 'ca.class_id = c.id', 'left')
-            ->join('teachers t', 't.id = ca.teacher_id', 'left')
+            // Removed class/teacher joins due to schema differences
             ->where('s.id', $id)
             ->get()
             ->getRowArray();
@@ -276,7 +273,7 @@ class StudentModel extends Model
                      spi.first_name, spi.middle_name, spi.last_name, spi.gender, spi.date_of_birth, spi.place_of_birth, spi.profile_picture as profile_picture,
                      p.first_name as guardian_first_name, p.last_name as guardian_last_name, p.contact_number as guardian_contact,
                      sa.barangay, sa.municipality, sa.province,
-                     COALESCE(CONCAT(t.first_name, " ", COALESCE(t.middle_name, ""), " ", t.last_name), "Not Assigned") as teacher_name,
+                     "Not Assigned" as teacher_name,
                      CONCAT(spi.first_name, " ", COALESCE(spi.middle_name, ""), " ", spi.last_name) as name,
                      TIMESTAMPDIFF(YEAR, spi.date_of_birth, CURDATE()) as age,
                      CONCAT(COALESCE(p.first_name, ""), " ", COALESCE(p.last_name, "")) as guardian,
@@ -289,10 +286,8 @@ class StudentModel extends Model
             ->join('student_parent_relationships spr', 's.id = spr.student_id AND spr.is_primary_contact = 1', 'left')
             ->join('parents p', 'spr.parent_id = p.id', 'left')
             ->join('student_address sa', 's.id = sa.student_id AND sa.address_type = "current"', 'left')
-            // Map teacher via class advisers: students → classes → class_advisers → teachers
-            ->join('classes c', 'c.grade_level = s.grade_level AND c.section = s.section', 'left')
-            ->join('class_advisers ca', 'ca.class_id = c.id', 'left')
-            ->join('teachers t', 't.id = ca.teacher_id', 'left')
+            // Removed class/teacher joins due to schema differences
+            ->groupBy('s.id')
             ->orderBy('s.created_at', 'DESC')
             ->get()
             ->getResultArray();

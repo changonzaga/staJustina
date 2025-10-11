@@ -60,6 +60,9 @@ $routes->group('admin', static function ($routes){
         $routes->get('announcements', 'AdminController::announcement', ['as' => 'admin.announcements']);
         $routes->get('announcements/create-announcement', 'AdminController::createAnnouncement', ['as' => 'admin.announcements.create']);
         $routes->get('announcements/history', 'AdminController::announcementHistory', ['as' => 'admin.announcements.history']);
+        // Announcement processing routes
+        $routes->post('processAnnouncement', 'AdminController::processAnnouncement', ['as' => 'admin.processAnnouncement']);
+        $routes->get('getAnnouncements', 'AdminController::getAnnouncements', ['as' => 'admin.getAnnouncements']);
         $routes->get('event', 'AdminController::event', ['as' => 'admin.event']); 
         $routes->get('users', 'AdminController::users', ['as' => 'admin.users']);
         $routes->get('student', 'AdminController::student', ['as' => 'admin.student']);
@@ -80,15 +83,40 @@ $routes->group('admin', static function ($routes){
         
         // Subjects routes
         $routes->get('subjects', 'AdminController::subjects', ['as' => 'admin.subjects']);
+        $routes->get('subjects/get/(:num)', 'AdminController::getSubject/$1', ['as' => 'admin.subjects.get']);
         $routes->post('subjects/store', 'AdminController::storeSubject', ['as' => 'admin.subjects.store']);
         $routes->post('subjects/update/(:num)', 'AdminController::updateSubject/$1', ['as' => 'admin.subjects.update']);
         $routes->post('subjects/delete/(:num)', 'AdminController::deleteSubject/$1', ['as' => 'admin.subjects.delete']);
         
+        // Department routes
+        $routes->get('department', 'DepartmentController::index', ['as' => 'admin.department']);
+        $routes->get('department/teachers', 'DepartmentController::getTeachers', ['as' => 'admin.department.teachers']);
+        $routes->post('department/store', 'DepartmentController::store', ['as' => 'admin.department.store']);
+        $routes->get('department/show/(:num)', 'DepartmentController::show/$1', ['as' => 'admin.department.show']);
+        $routes->post('department/update/(:num)', 'DepartmentController::update/$1', ['as' => 'admin.department.update']);
+        $routes->post('department/delete/(:num)', 'DepartmentController::delete/$1', ['as' => 'admin.department.delete']);
+        
+        // Section routes
+        $routes->get('section', 'SectionController::index', ['as' => 'admin.section']);
+        $routes->get('section/get-sections', 'SectionController::getSections');
+        $routes->get('section/get/(:num)', 'SectionController::getSection/$1');
+        $routes->post('section/store', 'SectionController::store');
+        $routes->post('section/update/(:num)', 'SectionController::update/$1');
+        $routes->post('section/delete/(:num)', 'SectionController::delete/$1');
+        $routes->get('section/get-dropdowns', 'SectionController::getDropdowns');
+        
         // Class routes
-        $routes->get('class', 'AdminController::classManagement', ['as' => 'admin.class']);
-        $routes->post('class/store', 'AdminController::storeClass', ['as' => 'admin.class.store']);
-        $routes->post('class/update/(:num)', 'AdminController::updateClass/$1', ['as' => 'admin.class.update']);
-        $routes->post('class/delete/(:num)', 'AdminController::deleteClass/$1', ['as' => 'admin.class.delete']);
+        $routes->get('classes', 'ClassController::index', ['as' => 'admin.classes']);
+        $routes->get('class', 'ClassController::index', ['as' => 'admin.class']); // Alias for navigation
+        
+        // AJAX endpoints
+        $routes->get('class/get-classes', 'ClassController::getClasses');
+        $routes->get('class/get/(:num)', 'ClassController::getClass/$1');
+        $routes->post('class/store', 'ClassController::store');
+        $routes->post('class/update/(:num)', 'ClassController::update/$1');
+        $routes->post('class/delete/(:num)', 'ClassController::delete/$1');
+        $routes->get('class/students/(:num)', 'ClassController::getStudents/$1');
+        $routes->get('class/get-dropdowns', 'ClassController::getDropdowns');
         
         // Settings routes
         $routes->get('settings/general', function() {
@@ -118,7 +146,7 @@ $routes->group('admin', static function ($routes){
         $routes->post('student/store', 'Backend\Pages\StudentsController::store', ['as' => 'admin.student.store']);
         $routes->get('student/edit/(:num)', 'Backend\Pages\StudentsController::edit/$1', ['as' => 'admin.student.edit']);
         $routes->post('student/update/(:num)', 'Backend\Pages\StudentsController::update/$1', ['as' => 'admin.student.update']);
-        $routes->get('student/delete/(:num)', 'Backend\Pages\StudentsController::delete/$1', ['as' => 'admin.student.delete']);
+        // $routes->get('student/delete/(:num)', 'Backend\Pages\StudentsController::delete/$1', ['as' => 'admin.student.delete']); // removed: unsafe GET delete route
         $routes->get('student/attendance/(:num)', 'Backend\Pages\StudentsController::attendance/$1', ['as' => 'admin.student.attendance']);
         $routes->get('student/grades/(:num)', 'Backend\Pages\StudentsController::grades/$1', ['as' => 'admin.student.grades']);
         $routes->get('student/parent/(:num)', 'Backend\Pages\StudentsController::parent/$1', ['as' => 'admin.student.parent']);
@@ -140,7 +168,7 @@ $routes->group('admin', static function ($routes){
         $routes->post('parent/update/(:num)', 'ParentController::update/$1', ['as' => 'admin.parent.update']);
         $routes->post('parent/delete/(:num)', 'ParentController::delete/$1', ['as' => 'admin.parent.delete']);
         $routes->get('parent/view/(:num)', 'ParentController::view/$1', ['as' => 'admin.parent.view']);
-        $routes->get('parent/data/(:num)', 'AdminController::getParentData/$1', ['as' => 'admin.parent.data']);
+        $routes->get('parent/data/(:num)', 'ParentController::data/$1', ['as' => 'admin.parent.data']);
     });
     
     // Legacy admin routes - redirect to centralized login
@@ -228,7 +256,7 @@ $routes->group('backend/admin', ['filter'=>'cifilter:auth'], static function ($r
         $routes->post('store', 'StudentsController::store');
         $routes->get('edit/(:num)', 'StudentsController::edit/$1');
         $routes->post('update/(:num)', 'StudentsController::update/$1');
-        $routes->post('delete/(:num)', 'StudentsController::delete/$1');
+        // Duplicate delete route removed to keep only admin/students/delete
         $routes->get('profile/(:num)', 'StudentsController::profile/$1');
         $routes->get('attendance/(:num)', 'StudentsController::attendance/$1');
         $routes->get('grades/(:num)', 'StudentsController::grades/$1');
